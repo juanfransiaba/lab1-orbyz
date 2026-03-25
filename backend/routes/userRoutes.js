@@ -1,9 +1,16 @@
 const express = require("express");
 const router = express.Router();
 
-// endpoint de prueba
-router.get("/test", (req, res) => {
-    res.json({ message: "Users funcionando" });
-});
+const {
+    getUsers,
+    getUserById,
+    updateUser,
+    deleteUser
+} = require("../controllers/userController");
+
+router.get("/", getUsers);
+router.get("/:id", getUserById);
+router.put("/:id", updateUser);
+router.delete("/:id", deleteUser);
 
 module.exports = router;
