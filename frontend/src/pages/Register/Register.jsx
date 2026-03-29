@@ -36,10 +36,55 @@ function Register() {
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("Registro:", form);
-        // después conectamos backend
+
+        // ✅ validar passwords
+        if (form.password !== form.confirmPassword) {
+            alert("Las contraseñas no coinciden");
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                "http://localhost:3000/auth/register",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        username: form.nombre, // ← mapping
+                        email: form.email,
+                        password: form.password,
+                    }),
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.message);
+                return;
+            }
+
+            alert("Usuario creado correctamente 🚀");
+
+            // opcional: limpiar form
+            setForm({
+                nombre: "",
+                email: "",
+                password: "",
+                confirmPassword: "",
+            });
+
+            // redirigir al login
+            window.location.href = "/login";
+
+        } catch (error) {
+            console.error(error);
+            alert("Error conectando con el servidor");
+        }
     };
 
     return (
