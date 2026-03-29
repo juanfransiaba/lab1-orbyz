@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./LandingPage.css";
+import { Link } from "react-router-dom";
 
 import img1 from "../../assets/images/imagen.jpg";
 import img2 from "../../assets/images/imagen7.jpg";
@@ -28,12 +29,12 @@ function LandingPage() {
                 </a>
 
                 <nav className="landing-nav" aria-label="Acciones principales">
-                    <a className="landing-nav-link" href="/login">
+                    <Link className="landing-nav-link" to="/login">
                         Iniciar sesion
-                    </a>
-                    <a className="landing-nav-button" href="#registro">
+                    </Link>
+                    <Link className="landing-nav-button" to="/register">
                         Registrarse
-                    </a>
+                    </Link>
                 </nav>
             </header>
 

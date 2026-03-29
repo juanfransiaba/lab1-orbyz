@@ -1,0 +1,91 @@
+.register-page {
+    width: 100%;
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.register-left {
+    min-height: 100vh;
+    background-color: var(--color-background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+}
+
+.register-content {
+    width: 100%;
+    max-width: 420px;
+}
+
+.register-tag {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-secondary);
+    margin-bottom: 18px;
+}
+
+.register-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: 32px;
+}
+
+.register-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.register-button {
+    margin-top: 10px;
+    height: 48px;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--color-secondary);
+    color: var(--color-text-light);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.register-button:hover {
+    background-color: var(--color-primary);
+}
+
+.register-links {
+    margin-top: 24px;
+}
+
+.register-links a {
+    color: var(--color-accent);
+    font-weight: 600;
+}
+
+.register-right {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.register-image {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 1s ease;
+}
+
+.register-image.active {
+    opacity: 1;
+}
+
+@media (max-width: 900px) {
+    .register-page {
+        grid-template-columns: 1fr;
+    }
+}
