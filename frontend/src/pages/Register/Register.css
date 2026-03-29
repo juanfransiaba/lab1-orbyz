@@ -20,7 +20,6 @@
 }
 
 .register-tag {
-    display: inline-block;
     font-size: 1rem;
     font-weight: 600;
     color: var(--color-secondary);
@@ -38,36 +37,6 @@
     display: flex;
     flex-direction: column;
     gap: 18px;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.form-group label {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--color-text);
-}
-
-.form-group input {
-    width: 100%;
-    height: 48px;
-    padding: 0 14px;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    background-color: var(--color-surface);
-    color: var(--color-text);
-    outline: none;
-    transition: 0.2s ease;
-}
-
-.form-group input:focus {
-    border-color: var(--color-accent);
-    background-color: var(--color-background);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
 .register-button {
@@ -89,14 +58,6 @@
 
 .register-links {
     margin-top: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.register-links p {
-    font-size: 0.92rem;
-    color: #4b5563;
 }
 
 .register-links a {
@@ -104,14 +65,9 @@
     font-weight: 600;
 }
 
-.register-links a:hover {
-    text-decoration: underline;
-}
-
 .register-right {
     position: relative;
     min-height: 100vh;
-    background: linear-gradient(135deg, var(--color-surface), #dbeafe);
     overflow: hidden;
 }
 
@@ -131,18 +87,5 @@
 @media (max-width: 900px) {
     .register-page {
         grid-template-columns: 1fr;
-    }
-
-    .register-left,
-    .register-right {
-        min-height: 50vh;
-    }
-
-    .register-left {
-        padding: 32px 24px;
-    }
-
-    .register-title {
-        font-size: 1.8rem;
     }
 }
