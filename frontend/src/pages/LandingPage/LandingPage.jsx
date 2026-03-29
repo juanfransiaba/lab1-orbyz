@@ -6,6 +6,8 @@ import img2 from "../../assets/images/imagen7.jpg";
 import img3 from "../../assets/images/imagen5.jpg";
 import img4 from "../../assets/images/imagen4.jpg";
 import img5 from "../../assets/images/imagen6.jpg";
+import logo from "../../assets/images/logo.png";
+import {Link} from "react-router-dom";
 
 function LandingPage() {
     const images = [img1, img2, img3, img4, img5];
@@ -23,17 +25,16 @@ function LandingPage() {
         <div className="landing-page">
             <header className="landing-header">
                 <a className="landing-brand" href="#inicio" aria-label="Orbyz inicio">
-                    <span className="landing-brand-mark">O</span>
-                    <span className="landing-brand-name">ORBYZ</span>
+                    <img src={logo} alt="ORBYZ logo" className="landing-logo" />
                 </a>
 
                 <nav className="landing-nav" aria-label="Acciones principales">
-                    <a className="landing-nav-link" href="/login">
-                        Iniciar sesion
-                    </a>
-                    <a className="landing-nav-button" href="#registro">
+                    <Link className="landing-nav-link" to="/login">
+                        Iniciar sesión
+                    </Link>
+                    <Link className="landing-nav-button" to="/register">
                         Registrarse
-                    </a>
+                    </Link>
                 </nav>
             </header>
 
@@ -57,18 +58,14 @@ function LandingPage() {
                         <h2>
                             Aprende geografía jugando con una experiencia clara y competitiva.
                         </h2>
-                        <p className="landing-description">
-                            Memoriza mapas, responde mas rapido y reta a tus amigos en una web
-                            pensada para aprender geografia de forma simple y entretenida.
-                        </p>
 
                         <div className="landing-actions">
-                            <a className="landing-primary-cta" href="#jugar">
+                            <Link className="landing-primary-cta" to="/register">
                                 Empezar
-                            </a>
-                            <a className="landing-secondary-cta" href="/login">
+                            </Link>
+                            <Link className="landing-secondary-cta" to="/login">
                                 Iniciar sesion
-                            </a>
+                            </Link>
                         </div>
                     </div>
                 </section>

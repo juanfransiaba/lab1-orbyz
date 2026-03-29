@@ -17,8 +17,8 @@
     align-items: center;
     justify-content: space-between;
 
-    height: 80px; /* 🔥 clave */
-    padding: 0 48px; /* sacamos padding vertical */
+    height: 80px;
+    padding: 0 28px;
 
     background: rgba(11, 30, 60, 0.3);
     backdrop-filter: blur(8px);
@@ -61,6 +61,10 @@
     gap: 12px;
 }
 
+
+
+
+
 .landing-nav-link,
 .landing-nav-button,
 .landing-primary-cta,
@@ -72,6 +76,7 @@
     padding: 0 20px;
     border-radius: 16px;
     font-weight: 600;
+    text-decoration: none;
     transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
@@ -88,12 +93,13 @@
     border: none;
 }
 
-.landing-nav-link:hover,
-.landing-nav-button:hover,
-.landing-primary-cta:hover,
-.landing-secondary-cta:hover {
+.landing-nav-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 14px 30px rgba(11, 30, 60, 0.18);
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+}
+
+.landing-nav-link:hover {
+    background: rgba(255, 255, 255, 0.22);
 }
 
 .landing-main {
@@ -102,11 +108,11 @@
     padding: 0;
 }
 
-/* HERO CON FONDO ROTATIVO */
+
 .landing-hero {
     position: relative;
     width: 100vw;
-    height: 100vh; /* 🔥 CLAVE */
+    height: 100vh;
     margin-left: calc(-50vw + 50%);
 
     display: flex;
