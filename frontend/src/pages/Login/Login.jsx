@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
-
 
 import img1 from "../../assets/images/imagen.jpg";
 import img2 from "../../assets/images/imagen2.jpg";
@@ -10,21 +10,25 @@ import img5 from "../../assets/images/imagen5.jpg";
 import img6 from "../../assets/images/imagen6.jpg";
 import img7 from "../../assets/images/imagen7.jpg";
 
-
-
-
-
 function Login() {
-    const images = [img1, img2, img3,img4,img5,img6,img7];
+    const images = [img1, img2, img3, img4, img5, img6, img7];
     const [current, setCurrent] = useState(0);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const interval = setInterval(() => {
             setCurrent((prev) => (prev + 1) % images.length);
-        }, 3000); // cambia cada 3s
+        }, 3000);
 
         return () => clearInterval(interval);
     }, [images.length]);
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        // aca despues vas a poner la validacion real con backend
+        navigate("/mainmenu");
+    };
 
     return (
         <div className="login-page">
@@ -34,7 +38,7 @@ function Login() {
 
                     <h1 className="login-title">Bienvenido de vuelta</h1>
 
-                    <form className="login-form">
+                    <form className="login-form" onSubmit={handleSubmit}>
                         <div className="form-group">
                             <label htmlFor="name">Nombre</label>
                             <input type="text" id="name" placeholder="Ingresá tu nombre" />
@@ -65,16 +69,15 @@ function Login() {
 
                     <div className="login-links">
                         <p>
-                            No tenés cuenta? <a href="/register">Registrarse</a>
+                            No tenés cuenta? <Link to="/register">Registrarse</Link>
                         </p>
                         <p>
-                            ¿Olvidaste tu contraseña? <a href="/recover">Recuperar</a>
+                            ¿Olvidaste tu contraseña? <Link to="/recover">Recuperar</Link>
                         </p>
                     </div>
                 </div>
             </section>
 
-            {/* 🔥 CAROUSEL CON FADE */}
             <section className="login-right">
                 {images.map((img, index) => (
                     <img
