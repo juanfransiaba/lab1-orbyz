@@ -1,18 +1,61 @@
-import { Link } from "react-router-dom";
+import { Link , useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "./Profile.css";
 import logo from "../../assets/images/logo.png";
 
 function Profile() {
+    const navigate = useNavigate();
+
     const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        navigate("/login");
+    };
 
     useEffect(() => {
-        const storedUser = localStorage.getItem("user");
+        const token = localStorage.getItem("token");
 
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
+        if (!token) {
+            navigate("/login");
+            return;
         }
-    }, []);
+
+        const fetchProfile = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/user/profile`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    localStorage.removeItem("token");
+                    navigate("/login");
+                    return;
+                }
+
+                setUser(data);
+            } catch (error) {
+                navigate("/login");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        void fetchProfile();
+    }, [navigate]);
+
+    if (loading) {
+        return (
+            <div className="profile-page">
+                <div className="profile-loading">Cargando perfil...</div>
+            </div>
+        );
+    }
 
     return (
         <div className="profile-page">
@@ -91,7 +134,7 @@ function Profile() {
                             </Link>
                         </div>
 
-                        <button className="profile-logout-button">
+                        <button className="profile-logout-button" onClick={handleLogout}>
                             Cerrar sesión
                         </button>
                     </aside>

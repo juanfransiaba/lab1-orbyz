@@ -5,6 +5,7 @@ import LandingPage from "./pages/LandingPage/LandingPage.jsx";
 import Register from "./pages/Register/Register.jsx";
 import MainMenu from "./pages/Menu/MainMenu.jsx";
 import Profile from "./pages/Profile/Profile.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 function App() {
     return (
@@ -13,8 +14,23 @@ function App() {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                <Route path={"/mainMenu"} element={<MainMenu />} />
-                <Route path={"/profile"} element={<Profile />} />
+
+                <Route path={"/mainMenu"}
+                       element={
+                        <ProtectedRoute>
+                        <MainMenu />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/profile"
+                    element={
+                        <ProtectedRoute>
+                            <Profile />
+                        </ProtectedRoute>
+                    }
+                />
 
             </Routes>
         </BrowserRouter>

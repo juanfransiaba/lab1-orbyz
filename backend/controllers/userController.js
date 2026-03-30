@@ -34,6 +34,26 @@ const getUserById = async (req, res) => {
     }
 };
 
+
+
+const getProfile = async (req, res) => {
+    try {
+        const result = await pool.query(
+            "SELECT user_id, username, email, score FROM users WHERE user_id = $1",
+            [req.user.user_id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error("Error en getProfile:", error);
+        res.status(500).json({ message: "Error del servidor" });
+    }
+};
+
 const updateUser = async (req, res) => {
     try {
         const { id } = req.params;
@@ -93,11 +113,16 @@ const deleteUser = async (req, res) => {
         console.error("Error al eliminar usuario:", error);
         res.status(500).json({ message: "Error del servidor" });
     }
+
+
+
+
 };
 
 module.exports = {
     getUsers,
     getUserById,
     updateUser,
-    deleteUser
+    deleteUser,
+    getProfile
 };

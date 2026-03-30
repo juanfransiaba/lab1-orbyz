@@ -1,16 +1,15 @@
 const pool = require("../db");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 const register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
 
-        // 1. validar datos básicos
         if (!username || !email || !password) {
             return res.status(400).json({ message: "Faltan datos" });
         }
 
-        // 2. verificar si ya existe usuario
         const existingUser = await pool.query(
             "SELECT * FROM users WHERE email = $1 OR username = $2",
             [email, username]
@@ -20,39 +19,43 @@ const register = async (req, res) => {
             return res.status(400).json({ message: "Usuario ya existe" });
         }
 
-        // 3. hashear password
         const passwordHash = await bcrypt.hash(password, 10);
 
-        // 4. insertar usuario
         const result = await pool.query(
             "INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING user_id, username, email, score",
             [username, email, passwordHash]
         );
 
-        // 5. devolver usuario creado
+        const user = result.rows[0];
+
+        const token = jwt.sign(
+            {
+                user_id: user.user_id,
+                email: user.email,
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+        );
+
         res.status(201).json({
             message: "Usuario creado correctamente",
-            user: result.rows[0]
+            token,
+            user,
         });
-
     } catch (error) {
         console.error("Error en register:", error);
         res.status(500).json({ message: "Error del servidor" });
     }
 };
 
-
-
 const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // 1. validar datos
         if (!email || !password) {
             return res.status(400).json({ message: "Faltan datos" });
         }
 
-        // 2. buscar usuario
         const result = await pool.query(
             "SELECT * FROM users WHERE email = $1",
             [email]
@@ -64,24 +67,31 @@ const login = async (req, res) => {
 
         const user = result.rows[0];
 
-        // 3. comparar contraseña
         const match = await bcrypt.compare(password, user.password_hash);
 
         if (!match) {
             return res.status(400).json({ message: "Password incorrecto" });
         }
 
-        // 4. respuesta OK
+        const token = jwt.sign(
+            {
+                user_id: user.user_id,
+                email: user.email,
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+        );
+
         res.json({
             message: "Login exitoso",
+            token,
             user: {
                 user_id: user.user_id,
                 username: user.username,
                 email: user.email,
-                score: user.score
+                score: user.score,
             }
         });
-
     } catch (error) {
         console.error("Error en login:", error);
         res.status(500).json({ message: "Error del servidor" });

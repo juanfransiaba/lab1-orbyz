@@ -60,6 +60,7 @@ function Login() {
                 return;
             }
 
+            localStorage.setItem("token", data.token);
             navigate("/mainmenu");
         } catch (err) {
             setError("Error al conectar con el servidor.");
