@@ -128,6 +128,13 @@
     opacity: 1;
 }
 
+.login-error {
+    margin-top: 10px;
+    color: #dc2626;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
 
 
 @media (max-width: 900px) {

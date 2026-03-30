@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import "./Register.css";
 
 import img1 from "../../assets/images/imagen.jpg";
@@ -13,13 +14,66 @@ function Register() {
     const images = [img1, img2, img3, img4, img5, img6, img7];
     const [current, setCurrent] = useState(0);
 
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const navigate = useNavigate();
+
     useEffect(() => {
         const interval = setInterval(() => {
             setCurrent((prev) => (prev + 1) % images.length);
         }, 3000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [images.length]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError("");
+
+        if (!name || !email || !password || !confirmPassword) {
+            setError("Completá todos los campos.");
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            setError("Las contraseñas no coinciden.");
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/register`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    username: name,
+                    email: email,
+                    password: password,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                setError(data.message || "No se pudo registrar el usuario.");
+                return;
+            }
+
+            navigate("/mainmenu");
+        } catch (err) {
+            setError("Error al conectar con el servidor.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="register-page">
@@ -29,10 +83,16 @@ function Register() {
 
                     <h1 className="register-title">Crear cuenta</h1>
 
-                    <form className="register-form">
+                    <form className="register-form" onSubmit={handleSubmit}>
                         <div className="form-group">
                             <label htmlFor="name">Nombre</label>
-                            <input type="text" id="name" placeholder="Ingresá tu nombre" />
+                            <input
+                                type="text"
+                                id="name"
+                                placeholder="Ingresá tu nombre"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                            />
                         </div>
 
                         <div className="form-group">
@@ -41,6 +101,8 @@ function Register() {
                                 type="email"
                                 id="email"
                                 placeholder="Ingresá tu correo"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                             />
                         </div>
 
@@ -50,6 +112,8 @@ function Register() {
                                 type="password"
                                 id="password"
                                 placeholder="Ingresá tu contraseña"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                             />
                         </div>
 
@@ -59,17 +123,21 @@ function Register() {
                                 type="password"
                                 id="confirm-password"
                                 placeholder="Repetí tu contraseña"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
                             />
                         </div>
 
-                        <button type="submit" className="register-button">
-                            Registrarse
+                        {error && <p className="register-error">{error}</p>}
+
+                        <button type="submit" className="register-button" disabled={loading}>
+                            {loading ? "Registrando..." : "Registrarse"}
                         </button>
                     </form>
 
                     <div className="register-links">
                         <p>
-                            ¿Ya tenés cuenta? <a href="/login">Iniciar sesión</a>
+                            ¿Ya tenés cuenta? <Link to="/login">Iniciar sesión</Link>
                         </p>
                     </div>
                 </div>
@@ -81,9 +149,7 @@ function Register() {
                         key={index}
                         src={img}
                         alt="Register visual"
-                        className={`register-image ${
-                            index === current ? "active" : ""
-                        }`}
+                        className={`register-image ${index === current ? "active" : ""}`}
                     />
                 ))}
             </section>

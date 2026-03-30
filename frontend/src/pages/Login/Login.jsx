@@ -15,6 +15,12 @@ function Login() {
     const [current, setCurrent] = useState(0);
     const navigate = useNavigate();
 
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+
     useEffect(() => {
         const interval = setInterval(() => {
             setCurrent((prev) => (prev + 1) % images.length);
@@ -23,11 +29,43 @@ function Login() {
         return () => clearInterval(interval);
     }, [images.length]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setError("");
 
-        // aca despues vas a poner la validacion real con backend
-        navigate("/mainmenu");
+        if (!email || !password) {
+            setError("Completá email y contraseña.");
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    username: name,
+                    email,
+                    password,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                setError(data.message || "No se pudo iniciar sesión.");
+                return;
+            }
+
+            navigate("/mainmenu");
+        } catch (err) {
+            setError("Error al conectar con el servidor.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -41,7 +79,13 @@ function Login() {
                     <form className="login-form" onSubmit={handleSubmit}>
                         <div className="form-group">
                             <label htmlFor="name">Nombre</label>
-                            <input type="text" id="name" placeholder="Ingresá tu nombre" />
+                            <input
+                                type="text"
+                                id="name"
+                                placeholder="Ingresá tu nombre"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                            />
                         </div>
 
                         <div className="form-group">
@@ -50,6 +94,8 @@ function Login() {
                                 type="email"
                                 id="email"
                                 placeholder="Ingresá tu correo"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                             />
                         </div>
 
@@ -59,11 +105,15 @@ function Login() {
                                 type="password"
                                 id="password"
                                 placeholder="Ingresá tu contraseña"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                             />
                         </div>
 
-                        <button type="submit" className="login-button">
-                            Iniciar sesión
+                        {error && <p className="login-error">{error}</p>}
+
+                        <button type="submit" className="login-button" disabled={loading}>
+                            {loading ? "Ingresando..." : "Iniciar sesión"}
                         </button>
                     </form>
 
@@ -84,9 +134,7 @@ function Login() {
                         key={index}
                         src={img}
                         alt="Login visual"
-                        className={`login-image ${
-                            index === current ? "active" : ""
-                        }`}
+                        className={`login-image ${index === current ? "active" : ""}`}
                     />
                 ))}
             </section>
