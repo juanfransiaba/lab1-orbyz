@@ -50,15 +50,17 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { identifier, password } = req.body;
 
-        if (!email || !password) {
+        if (!identifier || !password) {
             return res.status(400).json({ message: "Faltan datos" });
         }
 
+        const cleanIdentifier = identifier.trim();
+
         const result = await pool.query(
-            "SELECT * FROM users WHERE email = $1",
-            [email]
+            "SELECT * FROM users WHERE LOWER(email) = LOWER($1) OR LOWER(username) = LOWER($1)",
+            [cleanIdentifier]
         );
 
         if (result.rows.length === 0) {

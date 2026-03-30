@@ -15,8 +15,7 @@ function Login() {
     const [current, setCurrent] = useState(0);
     const navigate = useNavigate();
 
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
+    const [identifier, setIdentifier] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
@@ -33,8 +32,8 @@ function Login() {
         e.preventDefault();
         setError("");
 
-        if (!email || !password) {
-            setError("Completá email y contraseña.");
+        if (!identifier || !password) {
+            setError("Completá usuario/email y contraseña.");
             return;
         }
 
@@ -47,8 +46,7 @@ function Login() {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    username: name,
-                    email,
+                    identifier,
                     password,
                 }),
             });
@@ -79,24 +77,13 @@ function Login() {
 
                     <form className="login-form" onSubmit={handleSubmit}>
                         <div className="form-group">
-                            <label htmlFor="name">Nombre</label>
+                            <label htmlFor="identifier">Correo electrónico o usuario</label>
                             <input
                                 type="text"
-                                id="name"
-                                placeholder="Ingresá tu nombre"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="email">Correo electrónico</label>
-                            <input
-                                type="email"
-                                id="email"
-                                placeholder="Ingresá tu correo"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                id="identifier"
+                                placeholder="Ingresá tu email o nombre de usuario"
+                                value={identifier}
+                                onChange={(e) => setIdentifier(e.target.value)}
                             />
                         </div>
 
@@ -120,7 +107,7 @@ function Login() {
 
                     <div className="login-links">
                         <p>
-                            No tenés cuenta? <Link to="/register">Registrarse</Link>
+                            ¿No tenés cuenta? <Link to="/register">Registrarse</Link>
                         </p>
                         <p>
                             ¿Olvidaste tu contraseña? <Link to="/recover">Recuperar</Link>
