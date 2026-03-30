@@ -54,23 +54,32 @@ const getProfile = async (req, res) => {
     }
 };
 
-const updateUser = async (req, res) => {
+const updateProfile = async (req, res) => {
     try {
-        const { id } = req.params;
-        const { username, email, password, score } = req.body;
+        const { username, email, password } = req.body;
+        const userId = req.user.user_id;
+
+        if (!username && !email && !password) {
+            return res.status(400).json({ message: "No se enviaron datos para actualizar" });
+        }
 
         const existingUser = await pool.query(
             "SELECT * FROM users WHERE user_id = $1",
-            [id]
+            [userId]
         );
 
         if (existingUser.rows.length === 0) {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
-        let passwordHash = existingUser.rows[0].password_hash;
+        const currentUser = existingUser.rows[0];
 
-        if (password) {
+        const newUsername = username?.trim() || currentUser.username;
+        const newEmail = email?.trim() || currentUser.email;
+
+        let passwordHash = currentUser.password_hash;
+
+        if (password && password.trim() !== "") {
             passwordHash = await bcrypt.hash(password, 10);
         }
 
@@ -78,43 +87,40 @@ const updateUser = async (req, res) => {
             `UPDATE users
              SET username = $1,
                  email = $2,
-                 password_hash = $3,
-                 score = $4
-             WHERE user_id = $5
-             RETURNING user_id, username, email, score`,
-            [username, email, passwordHash, score, id]
+                 password_hash = $3
+             WHERE user_id = $4
+                 RETURNING user_id, username, email, score`,
+            [newUsername, newEmail, passwordHash, userId]
         );
 
         res.json({
-            message: "Usuario actualizado correctamente",
+            message: "Perfil actualizado correctamente",
             user: result.rows[0]
         });
     } catch (error) {
-        console.error("Error al actualizar usuario:", error);
+        console.error("Error al actualizar perfil:", error);
         res.status(500).json({ message: "Error del servidor" });
     }
 };
 
-const deleteUser = async (req, res) => {
+const deleteProfile = async (req, res) => {
     try {
-        const { id } = req.params;
+        const userId = req.user.user_id;
 
         const result = await pool.query(
             "DELETE FROM users WHERE user_id = $1 RETURNING user_id",
-            [id]
+            [userId]
         );
 
         if (result.rows.length === 0) {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
-        res.json({ message: "Usuario eliminado correctamente" });
+        res.json({ message: "Cuenta eliminada correctamente" });
     } catch (error) {
-        console.error("Error al eliminar usuario:", error);
+        console.error("Error al eliminar perfil:", error);
         res.status(500).json({ message: "Error del servidor" });
     }
-
-
 
 
 };
@@ -122,7 +128,7 @@ const deleteUser = async (req, res) => {
 module.exports = {
     getUsers,
     getUserById,
-    updateUser,
-    deleteUser,
+    updateProfile,
+    deleteProfile,
     getProfile
 };

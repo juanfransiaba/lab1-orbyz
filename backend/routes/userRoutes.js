@@ -6,16 +6,19 @@ const verifyToken = require("../middleware/authMiddleware");
 const {
     getUsers,
     getUserById,
-    updateUser,
-    deleteUser,
-    getProfile
+    getProfile,
+    updateProfile,
+    deleteProfile
 } = require("../controllers/userController");
 
+
 router.get("/profile", verifyToken, getProfile);
+router.put("/profile", verifyToken, updateProfile);
+router.delete("/profile", verifyToken, deleteProfile);
+
 
 router.get("/", getUsers);
 router.get("/:id", getUserById);
-router.put("/:id", updateUser);
-router.delete("/:id", deleteUser);
+
 
 module.exports = router;
