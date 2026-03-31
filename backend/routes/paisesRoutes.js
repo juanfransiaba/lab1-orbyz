@@ -1,5 +1,9 @@
 const express = require('express');
 const router = express.Router();
+
+const verifyToken = require('../middleware/authMiddleware');
+const isAdmin = require('../middleware/adminMiddleware');  // ← agregado
+
 const {
     obtenerTodosLosPaises,
     obtenerPaisPorId,
@@ -7,18 +11,19 @@ const {
     crearPais,
     actualizarPais,
     eliminarPaisPorId,
-    eliminarPaisPorCampo,
+    eliminarPaisPorCampo
 } = require('../controllers/paisesController');
 
+// Rutas públicas - cualquiera puede consultar
 router.get('/', obtenerTodosLosPaises);
 router.get('/buscar', buscar);
 router.get('/:id', obtenerPaisPorId);
-router.post('/', crearPais);
-router.put('/:id', actualizarPais);
-router.patch('/:id', actualizarPais);
-router.delete('/:id', eliminarPaisPorId);
-router.delete('/eliminar', eliminarPaisPorCampo);
 
-
+// Rutas solo para admin
+router.post('/', verifyToken, isAdmin, crearPais);
+router.put('/:id', verifyToken, isAdmin, actualizarPais);
+router.patch('/:id', verifyToken, isAdmin, actualizarPais);
+router.delete('/eliminar', verifyToken, isAdmin, eliminarPaisPorCampo);
+router.delete('/:id', verifyToken, isAdmin, eliminarPaisPorId);
 
 module.exports = router;
