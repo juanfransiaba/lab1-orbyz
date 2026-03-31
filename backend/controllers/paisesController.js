@@ -116,7 +116,7 @@ const actualizarPais = async (req, res) => {
     }
 };
 
-const eliminarPais = async (req, res) => {
+const eliminarPaisPorId = async (req, res) => {
     try {
         const { id } = req.params;
         const { rows } = await pool.query(
@@ -135,11 +135,54 @@ const eliminarPais = async (req, res) => {
     }
 };
 
+const eliminarPaisPorCampo = async (req, res) => {
+    try {
+        const { nombre, capital, continente } = req.query;
+
+        if (!nombre && !capital && !continente) {
+            return res.status(400).json({ error: 'Debe enviar al menos un filtro: nombre, capital o continente' });
+        }
+
+        let query = `DELETE FROM paises WHERE 1=1`;
+        const values = [];
+        let i = 1;
+
+        if (nombre) {
+            query += ` AND LOWER(nombre) = LOWER($${i++})`;
+            values.push(nombre);
+        }
+
+        if (capital) {
+            query += ` AND LOWER(capital) = LOWER($${i++})`;
+            values.push(capital);
+        }
+
+        if (continente) {
+            query += ` AND LOWER(continente) = LOWER($${i++})`;
+            values.push(continente);
+        }
+
+        query += ` RETURNING *`;
+
+        const { rows } = await pool.query(query, values);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'No se encontraron países con esos filtros' });
+        }
+
+        res.json({ mensaje: `Se eliminaron ${rows.length} país/es`, paises: rows });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al eliminar' });
+    }
+};
+
 module.exports = {
     obtenerTodosLosPaises,
     obtenerPaisPorId,
     buscar,
     crearPais,
     actualizarPais,
-    eliminarPais
+    eliminarPaisPorId,
+    eliminarPaisPorCampo
 };

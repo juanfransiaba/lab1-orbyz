@@ -6,7 +6,8 @@ const {
     buscar,
     crearPais,
     actualizarPais,
-    eliminarPais
+    eliminarPaisPorId,
+    eliminarPaisPorCampo,
 } = require('../controllers/paisesController');
 
 router.get('/', obtenerTodosLosPaises);
@@ -15,6 +16,9 @@ router.get('/:id', obtenerPaisPorId);
 router.post('/', crearPais);
 router.put('/:id', actualizarPais);
 router.patch('/:id', actualizarPais);
-router.delete('/:id', eliminarPais);
+router.delete('/:id', eliminarPaisPorId);
+router.delete('/eliminar', eliminarPaisPorCampo);
+
+
 
 module.exports = router;
