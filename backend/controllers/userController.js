@@ -1,10 +1,12 @@
 const pool = require("../db");
 const bcrypt = require("bcrypt");
 
+const VALID_ROLES = ["user", "admin"];
+
 const getUsers = async (req, res) => {
     try {
         const result = await pool.query(
-            "SELECT user_id, username, email, score FROM users"
+            "SELECT user_id, username, email, score, roles FROM users ORDER BY username ASC"
         );
 
         res.json(result.rows);
@@ -19,7 +21,7 @@ const getUserById = async (req, res) => {
         const { id } = req.params;
 
         const result = await pool.query(
-            "SELECT user_id, username, email, score FROM users WHERE user_id = $1",
+            "SELECT user_id, username, email, score, roles FROM users WHERE user_id = $1",
             [id]
         );
 
@@ -34,12 +36,10 @@ const getUserById = async (req, res) => {
     }
 };
 
-
-
 const getProfile = async (req, res) => {
     try {
         const result = await pool.query(
-            "SELECT user_id, username, email, score FROM users WHERE user_id = $1",
+            "SELECT user_id, username, email, score, roles FROM users WHERE user_id = $1",
             [req.user.user_id]
         );
 
@@ -89,7 +89,7 @@ const updateProfile = async (req, res) => {
                  email = $2,
                  password_hash = $3
              WHERE user_id = $4
-                 RETURNING user_id, username, email, score`,
+             RETURNING user_id, username, email, score, roles`,
             [newUsername, newEmail, passwordHash, userId]
         );
 
@@ -99,6 +99,37 @@ const updateProfile = async (req, res) => {
         });
     } catch (error) {
         console.error("Error al actualizar perfil:", error);
+        res.status(500).json({ message: "Error del servidor" });
+    }
+};
+
+const updateUserRole = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { role } = req.body;
+
+        if (!VALID_ROLES.includes(role)) {
+            return res.status(400).json({ message: "Rol invalido" });
+        }
+
+        const result = await pool.query(
+            `UPDATE users
+             SET roles = $1
+             WHERE user_id = $2
+             RETURNING user_id, username, email, score, roles`,
+            [role, id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+
+        res.json({
+            message: "Rol actualizado correctamente",
+            user: result.rows[0],
+        });
+    } catch (error) {
+        console.error("Error al actualizar rol:", error);
         res.status(500).json({ message: "Error del servidor" });
     }
 };
@@ -121,14 +152,13 @@ const deleteProfile = async (req, res) => {
         console.error("Error al eliminar perfil:", error);
         res.status(500).json({ message: "Error del servidor" });
     }
-
-
 };
 
 module.exports = {
     getUsers,
     getUserById,
     updateProfile,
+    updateUserRole,
     deleteProfile,
     getProfile
 };

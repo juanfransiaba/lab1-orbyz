@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import "./MainMenu.css";
 import logo from "../../assets/images/logo.png";
 
@@ -8,12 +9,15 @@ import perfilImg from "../../assets/images/imagen5.jpg";
 import rankingImg from "../../assets/images/imagen2.jpg";
 
 function MainMenu() {
+    const navigate = useNavigate();
+    const [user, setUser] = useState(null);
+
     const menuOptions = [
         {
             title: "Jugar",
             eyebrow: "Modo principal",
             description: "Explorá los modos principales y empezá una nueva partida.",
-            to: "/jugar",
+            to: "/offline",
             image: jugarImg,
         },
         {
@@ -39,6 +43,39 @@ function MainMenu() {
         },
     ];
 
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            navigate("/login");
+            return;
+        }
+
+        const fetchProfile = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/user/profile`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    localStorage.removeItem("token");
+                    navigate("/login");
+                    return;
+                }
+
+                setUser(data);
+            } catch (error) {
+                navigate("/login");
+            }
+        };
+
+        void fetchProfile();
+    }, [navigate]);
+
     return (
         <div className="main-menu-page">
             <header className="main-menu-header">
@@ -53,7 +90,13 @@ function MainMenu() {
                     <h1 className="main-menu-title">ORBYZ</h1>
                 </div>
 
-                <div className="main-menu-header-spacer" />
+                <div className="main-menu-header-actions">
+                    {user?.roles === "admin" && (
+                        <Link to="/admin" className="main-menu-manage-button">
+                            Gestionar
+                        </Link>
+                    )}
+                </div>
             </header>
 
             <section className="main-menu-options">
