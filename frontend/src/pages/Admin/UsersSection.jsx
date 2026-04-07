@@ -12,6 +12,7 @@ function UsersSection({
     const [savingUserId, setSavingUserId] = useState(null);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setRoleDrafts(
             users.reduce((acc, user) => {
                 acc[user.id] = user.role;

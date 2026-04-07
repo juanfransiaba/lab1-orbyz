@@ -177,6 +177,77 @@ const eliminarPaisPorCampo = async (req, res) => {
     }
 };
 
+// ─────────────────────────────────────────────
+// MINIJUEGOS — funciones nuevas
+// ─────────────────────────────────────────────
+
+// Trae N países al azar de toda la tabla
+// Usado por: CountryByCapital, CapitalByCountry, CountryByShape
+// Query param: ?limit=4 (por defecto 4)
+const obtenerPaisesRandom = async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 4;
+
+        const { rows } = await pool.query(
+            `SELECT * FROM paises ORDER BY RANDOM() LIMIT $1`,
+            [limit]
+        );
+
+        res.json(rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al obtener países aleatorios' });
+    }
+};
+
+// Trae todos los países de un continente específico
+// Usado por: CountryByContinent
+// URL param: /continente/:continente (ej: /continente/Europa)
+const obtenerPaisesPorContinente = async (req, res) => {
+    try {
+        const { continente } = req.params;
+
+        const { rows } = await pool.query(
+            `SELECT * FROM paises WHERE LOWER(continente) = LOWER($1) ORDER BY nombre ASC`,
+            [continente]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'No se encontraron países para ese continente' });
+        }
+
+        res.json(rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al obtener países por continente' });
+    }
+};
+
+// Trae N países al azar de un continente específico
+// Usado por: CountryByContinent para armar las opciones de respuesta
+// URL param: /continente/:continente/random
+// Query param: ?limit=4
+const obtenerPaisesPorContinenteRandom = async (req, res) => {
+    try {
+        const { continente } = req.params;
+        const limit = parseInt(req.query.limit) || 4;
+
+        const { rows } = await pool.query(
+            `SELECT * FROM paises WHERE LOWER(continente) = LOWER($1) ORDER BY RANDOM() LIMIT $2`,
+            [continente, limit]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'No se encontraron países para ese continente' });
+        }
+
+        res.json(rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al obtener países aleatorios por continente' });
+    }
+};
+
 module.exports = {
     obtenerTodosLosPaises,
     obtenerPaisPorId,
@@ -184,5 +255,10 @@ module.exports = {
     crearPais,
     actualizarPais,
     eliminarPaisPorId,
-    eliminarPaisPorCampo
+    eliminarPaisPorCampo,
+
+    // ── nuevas para minijuegos ──
+    obtenerPaisesRandom,
+    obtenerPaisesPorContinente,
+    obtenerPaisesPorContinenteRandom,
 };
