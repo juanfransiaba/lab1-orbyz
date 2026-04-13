@@ -14,8 +14,7 @@ const OFFLINE_MODES = [
     {
         id: "capital-by-country",
         title: "Adivinar capital por país",
-        description:
-            "Descubrí si recordás las capitales del mundo.",
+        description: "Descubrí si recordás las capitales del mundo.",
         route: "/offline/capital-by-country",
         imageAlt: "Imagen ilustrativa del modo adivinar capital por país",
     },
@@ -30,9 +29,8 @@ const OFFLINE_MODES = [
     {
         id: "country-by-continent",
         title: "Adivinar país por continente",
-        description:
-            "Adivina el pais jugando en un continente especifico.",
-        route: "/offline/ContinentSelection",
+        description: "Adiviná el país jugando en un continente específico.",
+        route: "/offline/continent-selection",
         imageAlt: "Imagen ilustrativa del modo adivinar país por continente",
     },
 ];

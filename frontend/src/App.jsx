@@ -9,6 +9,10 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Admin from "./pages/Admin/Admin.jsx";
 import PlayOffline from "./pages/PlayOffline/PlayOffline.jsx";
 import ContinentSelection from "./pages/PlayOffline/ContinentSelection.jsx";
+import CountryByCapital from "./pages/PlayOffline/modes/CountryByCapital.jsx";
+import CapitalByCountry from "./pages/PlayOffline/modes/CapitalByCountry.jsx";
+import CountryByShape from "./pages/PlayOffline/modes/CountryByShape.jsx";
+import CountryByContinent from "./pages/PlayOffline/modes/CountryByContinent.jsx";
 
 function App() {
     return (
@@ -56,21 +60,33 @@ function App() {
 
                 <Route
                     path="/offline/country-by-capital"
-                    element={<Navigate to="/offline" replace />}
+                    element={
+                        <ProtectedRoute>
+                            <CountryByCapital />
+                        </ProtectedRoute>
+                    }
                 />
 
                 <Route
                     path="/offline/capital-by-country"
-                    element={<Navigate to="/offline" replace />}
+                    element={
+                        <ProtectedRoute>
+                            <CapitalByCountry />
+                        </ProtectedRoute>
+                    }
                 />
 
                 <Route
                     path="/offline/country-by-shape"
-                    element={<Navigate to="/offline" replace />}
+                    element={
+                        <ProtectedRoute>
+                            <CountryByShape />
+                        </ProtectedRoute>
+                    }
                 />
 
                 <Route
-                    path="/offline/ContinentSelection"
+                    path="/offline/continent-selection"
                     element={
                         <ProtectedRoute>
                             <ContinentSelection />
@@ -80,7 +96,11 @@ function App() {
 
                 <Route
                     path="/offline/continent-selection/:continent"
-                    element={<Navigate to="/offline/continent-selection" replace />}
+                    element={
+                        <ProtectedRoute>
+                            <CountryByContinent />
+                        </ProtectedRoute>
+                    }
                 />
 
                 <Route path="*" element={<Navigate to="/" replace />} />

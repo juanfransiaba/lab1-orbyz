@@ -90,6 +90,18 @@ export async function getCountries() {
     return Array.isArray(data) ? data.map(normalizeCountry) : [];
 }
 
+export async function getRandomCountries(limit = 4) {
+    const data = await requestJSON(`/api/paises/random?limit=${limit}`);
+    return Array.isArray(data) ? data.map(normalizeCountry) : [];
+}
+
+export async function getRandomCountriesByContinent(continent, limit = 4) {
+    const data = await requestJSON(
+        `/api/paises/continente/${encodeURIComponent(continent)}/random?limit=${limit}`
+    );
+    return Array.isArray(data) ? data.map(normalizeCountry) : [];
+}
+
 export async function createCountry(payload) {
     return requestJSON("/api/paises", {
         method: "POST",

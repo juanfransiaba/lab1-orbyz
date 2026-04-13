@@ -201,7 +201,7 @@ const obtenerPaisesRandom = async (req, res) => {
 };
 
 // Trae todos los países de un continente específico
-// Usado por: CountryByContinent
+// Usado por: CountryByContinent.jsx
 // URL param: /continente/:continente (ej: /continente/Europa)
 const obtenerPaisesPorContinente = async (req, res) => {
     try {
@@ -224,7 +224,7 @@ const obtenerPaisesPorContinente = async (req, res) => {
 };
 
 // Trae N países al azar de un continente específico
-// Usado por: CountryByContinent para armar las opciones de respuesta
+// Usado por: CountryByContinent.jsx para armar las opciones de respuesta
 // URL param: /continente/:continente/random
 // Query param: ?limit=4
 const obtenerPaisesPorContinenteRandom = async (req, res) => {

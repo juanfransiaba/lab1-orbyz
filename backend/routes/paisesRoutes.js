@@ -36,11 +36,11 @@ router.get('/random', obtenerPaisesRandom);
 
 router.get('/continente/:continente', obtenerPaisesPorContinente);
 // GET /api/paises/continente/Europa
-// Devuelve todos los países de ese continente — usado en CountryByContinent
+// Devuelve todos los países de ese continente — usado en CountryByContinent.jsx
 
 router.get('/continente/:continente/random', obtenerPaisesPorContinenteRandom);
 // GET /api/paises/continente/Europa/random?limit=4
-// Devuelve N países al azar de ese continente — usado para armar opciones en CountryByContinent
+// Devuelve N países al azar de ese continente — usado para armar opciones en CountryByContinent.jsx
 
 router.get('/:id', obtenerPaisPorId);
 // Va al final para que no capture las rutas de arriba
