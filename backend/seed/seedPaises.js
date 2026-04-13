@@ -106,6 +106,8 @@ async function seedPaises() {
 
         // Llama al seed de siluetas una vez insertados todos los países
         execSync('node seed/seedSiluetas.js', { stdio: 'inherit' });
+        console.log('\n➡️  Ejecutando seed de imágenes...');
+        execSync('node seed/seedImagenesPaises.js', { stdio: 'inherit' });
 
     } catch (error) {
         console.error('❌ Error durante el seed:', error);
