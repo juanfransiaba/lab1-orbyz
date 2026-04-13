@@ -1,4 +1,6 @@
-const { Pool } = require('pg');
+﻿const { Pool } = require('pg');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
 const pool = new Pool({
@@ -9,83 +11,60 @@ const pool = new Pool({
     port: process.env.DB_PORT,
 });
 
-const WIKIPEDIA_NOMBRES = {
-    'Bolivia': 'Bolivia',
-    'Brunei': 'Brunei',
-    'Cape Verde': 'Cape_Verde',
-    'Comoros': 'Comoros',
-    'DR Congo': 'Democratic_Republic_of_the_Congo',
-    'Dominican Republic': 'Dominican_Republic',
-    'Eswatini': 'Eswatini',
-    'Ivory Coast': "Ivory_Coast",
-    'Laos': 'Laos',
-    'Marshall Islands': 'Marshall_Islands',
-    'Micronesia': 'Federated_States_of_Micronesia',
-    'Myanmar': 'Myanmar',
-    'New Zealand': 'New_Zealand',
-    'North Korea': 'North_Korea',
-    'North Macedonia': 'North_Macedonia',
-    'Papua New Guinea': 'Papua_New_Guinea',
-    'Republic of the Congo': 'Republic_of_the_Congo',
-    'Russia': 'Russia',
-    'Saint Kitts and Nevis': 'Saint_Kitts_and_Nevis',
-    'Saint Lucia': 'Saint_Lucia',
-    'Saint Vincent and the Grenadines': 'Saint_Vincent_and_the_Grenadines',
-    'San Marino': 'San_Marino',
-    'Saudi Arabia': 'Saudi_Arabia',
-    'Sierra Leone': 'Sierra_Leone',
-    'Solomon Islands': 'Solomon_Islands',
-    'South Africa': 'South_Africa',
-    'South Korea': 'South_Korea',
-    'South Sudan': 'South_Sudan',
-    'Sri Lanka': 'Sri_Lanka',
-    'São Tomé and Príncipe': 'São_Tomé_and_Príncipe',
-    'Timor-Leste': 'East_Timor',
-    'Trinidad and Tobago': 'Trinidad_and_Tobago',
-    'United Arab Emirates': 'United_Arab_Emirates',
-    'United Kingdom': 'United_Kingdom',
-    'United States': 'United_States',
-    'Vatican City': 'Vatican_City',
-};
+function loadCountryImages() {
+    const filePath = path.join(__dirname, 'countryImages.js');
+    const raw = fs.readFileSync(filePath, 'utf8').replace(/^\uFEFF/, '').trim();
+    const data = JSON.parse(raw);
 
-async function fetchImagenWikipedia(nombre) {
-    const wikiNombre = WIKIPEDIA_NOMBRES[nombre] || nombre.replace(/ /g, '_');
-    const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiNombre)}`;
-
-    try {
-        const res = await fetch(url);
-        if (!res.ok) return null;
-        const data = await res.json();
-        return data?.thumbnail?.source || null;
-    } catch (error) {
-        return null;
+    if (!Array.isArray(data)) {
+        throw new Error('countryImages.js no contiene un array JSON valido.');
     }
+
+    return data;
 }
 
 async function seedImagenesPaises() {
     try {
-        const { rows: paises } = await pool.query(
-            `SELECT id_pais, nombre FROM paises ORDER BY nombre ASC`
-        );
+        console.log('🖼️  Actualizando imagen_pais desde countryImages.js...');
 
+        const countryImages = loadCountryImages();
         let actualizados = 0;
+        let sinCoincidencia = 0;
+        let sinImagen = 0;
 
-        for (const pais of paises) {
-            const imagen = await fetchImagenWikipedia(pais.nombre);
-            if (imagen) {
-                await pool.query(
-                    `UPDATE paises SET imagen_pais = $1 WHERE id_pais = $2`,
-                    [imagen, pais.id_pais]
-                );
-                actualizados++;
+        for (const pais of countryImages) {
+            const nombre = pais?.nombre?.trim();
+            const imagenPais = pais?.imagen_pais?.trim() || '';
+
+            if (!nombre) {
+                continue;
             }
-            await new Promise((resolve) => setTimeout(resolve, 200));
+
+            if (!imagenPais) {
+                sinImagen++;
+                continue;
+            }
+
+            const result = await pool.query(
+                `UPDATE paises
+                 SET imagen_pais = $1
+                 WHERE nombre = $2`,
+                [imagenPais, nombre]
+            );
+
+            if (result.rowCount > 0) {
+                actualizados += result.rowCount;
+            } else {
+                sinCoincidencia++;
+                console.warn(`⚠️  No se encontro el pais en la base: ${nombre}`);
+            }
         }
 
-        console.log(`✅ ${actualizados}/${paises.length} imágenes actualizadas correctamente`);
-
+        console.log(`✅ ${actualizados} paises actualizados correctamente`);
+        console.log(`ℹ️  ${sinImagen} paises sin imagen_pais en el archivo`);
+        console.log(`ℹ️  ${sinCoincidencia} paises del archivo no coincidieron con la base`);
     } catch (error) {
-        console.error('❌ Error general:', error);
+        console.error('❌ Error al actualizar imagen_pais:', error);
     } finally {
         await pool.end();
     }
