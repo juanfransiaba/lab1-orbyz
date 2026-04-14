@@ -87,7 +87,7 @@ function CountryByCapital() {
         setRoundNumber((n) => n + 1);
 
         setRound({
-            prompt: `¿Qué país corresponde a esta capital? ${correctCountry.capital}`,
+            prompt: `${correctCountry.capital}`,
             imageSrc: correctCountry.imagen_pais,
             imageAlt: `Bandera o referencia visual de ${correctCountry.nombre}`,
             options: finalOptions.map((country) => ({

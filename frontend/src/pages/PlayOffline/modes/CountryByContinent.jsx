@@ -103,7 +103,7 @@ function CountryByContinent() {
         setRoundNumber((n) => n + 1);
 
         setRound({
-            prompt: `¿Qué país pertenece a este continente? ${continentName}`,
+            prompt: `${continentName}`,
             imageSrc: correctCountry.imagen_pais,
             imageAlt: `Referencia visual de ${correctCountry.nombre}`,
             options: finalOptions.map((country) => ({
