@@ -1,52 +1,49 @@
-import { useNavigate } from "react-router-dom";
+﻿import { useNavigate } from "react-router-dom";
 import logo from "../../assets/images/logo.png";
 import "./ContinentSelection.css";
 
 const CONTINENT_OPTIONS = [
     {
         id: "america",
-        title: "América",
-        description:
-            "Jugá con países del continente americano y recorré desde el norte hasta el sur.",
+        title: "America",
+        description: "Recorre paises de norte a sur con partidas variadas y dinamicas.",
         route: "/offline/continent-selection/america",
-        imageAlt: "Imagen ilustrativa del continente América",
+        label: "Extenso",
     },
     {
         id: "europa",
         title: "Europa",
-        description:
-            "Poné a prueba tus conocimientos con capitales, países y mapas del continente europeo.",
+        description: "Un mapa mas compacto para rondas agiles y nombres muy reconocibles.",
         route: "/offline/continent-selection/europa",
-        imageAlt: "Imagen ilustrativa del continente Europa",
+        label: "Clasico",
     },
     {
         id: "asia",
         title: "Asia",
-        description:
-            "Explorá una región enorme y diversa con desafíos centrados en geografía asiática.",
+        description: "Mayor diversidad de paises y un reto geografico mas amplio.",
         route: "/offline/continent-selection/asia",
-        imageAlt: "Imagen ilustrativa del continente Asia",
+        label: "Desafiante",
     },
     {
         id: "africa",
-        title: "África",
-        description:
-            "Entrená tu memoria regional con países, capitales y referencias del continente africano.",
+        title: "Africa",
+        description: "Ideal para practicar ubicacion, capitales y reconocimiento visual.",
         route: "/offline/continent-selection/africa",
-        imageAlt: "Imagen ilustrativa del continente África",
+        label: "Equilibrado",
     },
     {
         id: "oceania",
-        title: "Oceanía",
-        description:
-            "Elegí una partida enfocada en Oceanía y repasá sus países y ubicaciones más representativas.",
+        title: "Oceania",
+        description: "Una seleccion mas acotada para partidas rapidas y precisas.",
         route: "/offline/continent-selection/oceania",
-        imageAlt: "Imagen ilustrativa del continente Oceanía",
+        label: "Rapido",
     },
 ];
 
 function ContinentSelection() {
     const navigate = useNavigate();
+    const topRow = CONTINENT_OPTIONS.slice(0, 3);
+    const bottomRow = CONTINENT_OPTIONS.slice(3);
 
     return (
         <div className="continent-selection-page">
@@ -67,7 +64,7 @@ function ContinentSelection() {
                         alt="Logo ORBYZ"
                         className="continent-selection-header-logo"
                     />
-                    <h1>Seleccionar continente</h1>
+                    <h1>Por continente</h1>
                 </div>
 
                 <div className="continent-selection-header-right" />
@@ -78,33 +75,55 @@ function ContinentSelection() {
                     className="continent-selection-grid"
                     aria-label="Continentes disponibles"
                 >
-                    {CONTINENT_OPTIONS.map((continent) => (
-                        <button
-                            key={continent.id}
-                            type="button"
-                            className={`continent-selection-card continent-selection-card-${continent.id}`}
-                            onClick={() => navigate(continent.route)}
-                        >
-                            <div className="continent-selection-card-image-wrap">
-                                <div className="continent-selection-card-image-placeholder">
-                                    <span>Espacio para imagen</span>
+                    <div className="continent-selection-row-grid is-top-row">
+                        {topRow.map((continent) => (
+                            <button
+                                key={continent.id}
+                                type="button"
+                                className="continent-selection-card"
+                                onClick={() => navigate(continent.route)}
+                            >
+                                <div className="continent-selection-card-image-wrap">
+                                    <div className="continent-selection-card-image-placeholder">
+                                        <span>Espacio para imagen</span>
+                                    </div>
                                 </div>
-                                <img
-                                    src=""
-                                    alt={continent.imageAlt}
-                                    className="continent-selection-card-image"
-                                />
-                            </div>
 
-                            <div className="continent-selection-card-content">
-                                <span className="continent-selection-card-tag">
-                                    Continente
-                                </span>
-                                <h3>{continent.title}</h3>
-                                <p>{continent.description}</p>
-                            </div>
-                        </button>
-                    ))}
+                                <div className="continent-selection-card-content">
+                                    <span className="continent-selection-card-label">
+                                        {continent.label}
+                                    </span>
+                                    <h2>{continent.title}</h2>
+                                    <p>{continent.description}</p>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="continent-selection-row-grid is-bottom-row">
+                        {bottomRow.map((continent) => (
+                            <button
+                                key={continent.id}
+                                type="button"
+                                className="continent-selection-card"
+                                onClick={() => navigate(continent.route)}
+                            >
+                                <div className="continent-selection-card-image-wrap">
+                                    <div className="continent-selection-card-image-placeholder">
+                                        <span>Espacio para imagen</span>
+                                    </div>
+                                </div>
+
+                                <div className="continent-selection-card-content">
+                                    <span className="continent-selection-card-label">
+                                        {continent.label}
+                                    </span>
+                                    <h2>{continent.title}</h2>
+                                    <p>{continent.description}</p>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
                 </section>
             </main>
         </div>
