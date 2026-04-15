@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import logo from "../../assets/images/logo.png";
 import capitalImage from "../../assets/images/imagen.jpg";
 import countryImage from "../../assets/images/imagen2.jpg";
 import shapeImage from "../../assets/images/imagen6.jpg";
@@ -55,7 +54,9 @@ function PlayOffline() {
     return (
         <div className="play-offline-page">
             <header className="play-offline-header">
-                <div className="play-offline-header-left">
+                <div className="play-offline-header-glow" />
+
+                <div className="play-offline-header-actions">
                     <button
                         type="button"
                         className="play-offline-back-button"
@@ -65,16 +66,14 @@ function PlayOffline() {
                     </button>
                 </div>
 
-                <div className="play-offline-header-center">
-                    <img
-                        src={logo}
-                        alt="Logo ORBYZ"
-                        className="play-offline-header-logo"
-                    />
-                    <h1>Modo Offline</h1>
+                <div className="play-offline-title-wrap">
+                    <span className="play-offline-title-kicker">
+                        Geography Game System
+                    </span>
+                    <h1 className="play-offline-title">Modo Offline</h1>
                 </div>
 
-                <div className="play-offline-header-right" />
+                <div className="play-offline-header-spacer" />
             </header>
 
             <main className="play-offline-main">

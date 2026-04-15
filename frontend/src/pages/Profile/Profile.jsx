@@ -1,7 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import "./Profile.css";
-import logo from "../../assets/images/logo.png";
 
 function Profile() {
     const navigate = useNavigate();
@@ -216,16 +215,20 @@ function Profile() {
     return (
         <div className="profile-page">
             <header className="profile-header">
-                <div className="profile-header-left">
+                <div className="profile-header-glow" />
+
+                <div className="profile-header-actions">
                     <Link to="/mainmenu" className="profile-back-button">
                         Volver
                     </Link>
                 </div>
 
-                <div className="profile-header-center">
-                    <img src={logo} alt="Logo ORBYZ" className="profile-header-logo" />
-                    <h1>Perfil</h1>
+                <div className="profile-title-wrap">
+                    <span className="profile-title-kicker">Geography Game System</span>
+                    <h1 className="profile-title">Perfil</h1>
                 </div>
+
+                <div className="profile-header-spacer" />
             </header>
 
             <main className="profile-main">

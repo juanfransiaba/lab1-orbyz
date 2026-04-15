@@ -4,43 +4,48 @@ import OfflineGameLayout from "../components/OfflineGameLayout.jsx";
 import { getRandomCountries } from "../../../services/AdminService.js";
 
 function shuffle(arr) {
-    const a = [...arr];
-    for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
+    const cloned = [...arr];
+
+    for (let index = cloned.length - 1; index > 0; index--) {
+        const randomIndex = Math.floor(Math.random() * (index + 1));
+        [cloned[index], cloned[randomIndex]] = [
+            cloned[randomIndex],
+            cloned[index],
+        ];
     }
-    return a;
+
+    return cloned;
 }
 
-function pickOptions(correct, bank) {
-    console.log("bank size:", bank.length);
+function dedupeCountries(countries) {
+    const seen = new Set();
 
-    const others = bank.filter((c) => c.id !== correct.id);
-    console.log("others size:", others.length);
+    return countries.filter((country) => {
+        const key = String(
+            country?.id ?? country?.id_pais ?? country?.nombre ?? ""
+        ).toLowerCase();
 
-    const shuffled = shuffle(others);
-    const distractors = shuffled.slice(0, 3);
+        if (!key || seen.has(key)) {
+            return false;
+        }
 
-    console.log("distractors:", distractors.length);
+        seen.add(key);
+        return true;
+    });
+}
 
-    const options = shuffle([correct, ...distractors]);
+function pickOptions(correctCountry, bank) {
+    const others = bank.filter((country) => country.id !== correctCountry.id);
+    const distractors = shuffle(others).slice(0, 3);
 
-    console.log(
-        "FINAL OPTIONS:",
-        options.map((o) => ({
-            id: o.id,
-            capital: o.capital,
-        }))
-    );
-
-    return options;
+    return shuffle([correctCountry, ...distractors]);
 }
 
 function CapitalByCountry() {
     const navigate = useNavigate();
 
-    const poolRef = useRef([]);   // países correctos pendientes (se va vaciando)
-    const bankRef = useRef([]);   // todos los países, solo para distractores
+    const poolRef = useRef([]);
+    const bankRef = useRef([]);
 
     const [initialized, setInitialized] = useState(false);
     const [round, setRound] = useState(null);
@@ -49,40 +54,47 @@ function CapitalByCountry() {
     const [feedback, setFeedback] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [score, setScore] = useState(0);
+
     const [roundNumber, setRoundNumber] = useState(0);
     const [totalRounds, setTotalRounds] = useState(0);
-    const [gameOver, setGameOver] = useState(false);
+
     const [correctCount, setCorrectCount] = useState(0);
     const [wrongCount, setWrongCount] = useState(0);
-    const maxErrors = 3;
+    const [lives, setLives] = useState(3);
+    const [gameOver, setGameOver] = useState(false);
+    const [resultState, setResultState] = useState("lost");
+
+    const maxLives = 3;
 
     useEffect(() => {
         const init = async () => {
             setLoading(true);
             setError("");
+
             try {
                 const all = await getRandomCountries(300);
-                const valid = all.filter(
-                    (c) => c.nombre && c.capital && c.imagen_pais
+                const valid = dedupeCountries(
+                    all.filter(
+                        (country) =>
+                            country.nombre && country.capital && country.imagen_pais
+                    )
                 );
+
                 if (valid.length < 4) {
-                    throw new Error("No hay suficientes países válidos.");
+                    throw new Error("No hay suficientes paises validos.");
                 }
+
                 bankRef.current = valid;
                 poolRef.current = shuffle([...valid]);
 
-                console.log("banco cargado:", bankRef.current.length);
-                console.log("ejemplo país:", bankRef.current[0]); // 👈 AGREGÁ ESTE
-
                 setTotalRounds(valid.length);
-                console.log("banco cargado:", bankRef.current.length); // ← agregá esto
                 setInitialized(true);
             } catch (err) {
                 setError(err.message || "No se pudo cargar el juego.");
                 setLoading(false);
             }
         };
+
         void init();
     }, []);
 
@@ -93,38 +105,43 @@ function CapitalByCountry() {
         setError("");
 
         if (poolRef.current.length === 0) {
+            setResultState("completed");
             setGameOver(true);
             setLoading(false);
             return;
         }
 
-        const correct = poolRef.current.shift();
-        const options = pickOptions(correct, bankRef.current);
+        setLoading(true);
 
-        console.log("options length:", options.length);
-        console.log("options:", options.map(c => ({ id: c.id_pais, capital: c.capital })));
+        const correctCountry = poolRef.current.shift();
+        const options = pickOptions(correctCountry, bankRef.current);
 
-        setRoundNumber((n) => n + 1);
+        setRoundNumber((currentRound) => currentRound + 1);
         setRound({
-            prompt: `${correct.nombre}?`,
-            imageSrc: correct.imagen_pais,
-            imageAlt: `Bandera de ${correct.nombre}`,
-            options: options.map((c) => ({
-                id: c.id_pais,
-                value: c.capital,
-                label: c.capital,
+            prompt: `${correctCountry.nombre}`,
+            imageSrc: correctCountry.imagen_pais,
+            imageAlt: `Referencia visual de ${correctCountry.nombre}`,
+            options: options.map((country) => ({
+                id: country.id,
+                value: country.capital,
+                label: country.capital,
             })),
-            correctValue: correct.capital,
+            correctValue: correctCountry.capital,
         });
+
         setLoading(false);
     }, []);
 
     useEffect(() => {
-        if (initialized) nextRound();
+        if (initialized) {
+            nextRound();
+        }
     }, [initialized, nextRound]);
 
     function handleSelectOption(option) {
-        if (!round || selectedOption) return;
+        if (!round || selectedOption || gameOver) {
+            return;
+        }
 
         const isCorrect = option === round.correctValue;
 
@@ -132,62 +149,101 @@ function CapitalByCountry() {
         setCorrectOption(round.correctValue);
 
         if (isCorrect) {
-            setScore((s) => s + 1);
-            setCorrectCount((c) => c + 1);
-            setFeedback("Correcto.");
-        } else {
-            setWrongCount((w) => {
-                const newWrong = w + 1;
-
-                if (newWrong >= maxErrors) {
-                    setGameOver(true);
-                }
-
-                return newWrong;
-            });
-
-            setFeedback(`Incorrecto. La respuesta era ${round.correctValue}.`);
+            setCorrectCount((currentCorrect) => currentCorrect + 1);
+            setFeedback("Correcto. La capital coincidia.");
+            return;
         }
+
+        setWrongCount((currentWrong) => currentWrong + 1);
+        setLives((currentLives) => {
+            const nextLives = Math.max(currentLives - 1, 0);
+
+            if (nextLives === 0) {
+                setResultState("lost");
+                setGameOver(true);
+            }
+
+            return nextLives;
+        });
+        setFeedback(`Incorrecto. La respuesta correcta era ${round.correctValue}.`);
     }
 
     function handleReplay() {
         poolRef.current = shuffle([...bankRef.current]);
-        setScore(0);
-        setRoundNumber(0);
-        setGameOver(false);
 
         setCorrectCount(0);
         setWrongCount(0);
-
+        setLives(maxLives);
+        setRoundNumber(0);
+        setGameOver(false);
+        setResultState("lost");
+        setRound(null);
+        setSelectedOption(null);
+        setCorrectOption(null);
+        setFeedback("");
         setLoading(true);
         setInitialized(false);
+
         setTimeout(() => setInitialized(true), 0);
     }
 
+    const progressText = totalRounds > 0 ? `${roundNumber}/${totalRounds}` : "0/0";
+    const answeredRounds = correctCount + wrongCount;
+    const accuracy = answeredRounds
+        ? Math.round((correctCount / answeredRounds) * 100)
+        : 0;
+
     if (gameOver) {
         return (
-            <div style={{ padding: "2rem", textAlign: "center" }}>
-                <h2>Partida terminada</h2>
-                <p style={{ fontSize: "1.25rem", margin: "1rem 0" }}>
-                    Respondiste {score} de {totalRounds} correctamente.
-                </p>
-                <button onClick={handleReplay} style={{ marginRight: "1rem" }}>
-                    Jugar de nuevo
-                </button>
-                <button onClick={() => navigate("/offline")}>Volver</button>
-            </div>
+            <OfflineGameLayout
+                title="Capital por pais"
+                progressText={progressText}
+                lives={lives}
+                maxLives={maxLives}
+                prompt={
+                    resultState === "completed"
+                        ? "Completaste la partida"
+                        : "Te quedaste sin vidas"
+                }
+                resultSubtitle={
+                    resultState === "completed"
+                        ? "Jugaste todas las rondas disponibles en este modo."
+                        : "La partida termino, pero ya tenes una base mejor para la siguiente."
+                }
+                resultStats={[
+                    { label: "Rondas jugadas", value: answeredRounds },
+                    { label: "Aciertos", value: correctCount },
+                    { label: "Errores", value: wrongCount },
+                    { label: "Precision", value: `${accuracy}%` },
+                ]}
+                isResultScreen
+                resultVariant={resultState === "completed" ? "success" : "error"}
+                feedback={
+                    resultState === "completed"
+                        ? "Buen trabajo. Cerraste completo el modo capital por pais."
+                        : `Llegaste hasta la ronda ${roundNumber}. Aciertos: ${correctCount}.`
+                }
+                feedbackTone={resultState === "completed" ? "success" : "error"}
+                onBack={() => navigate("/offline")}
+                actionLabel="Jugar de nuevo"
+                onAction={handleReplay}
+            />
         );
     }
 
-    const prompt = loading
-        ? "Cargando..."
-        : error
-            ? "No pudimos preparar esta partida"
-            : round?.prompt ?? "Preparando...";
-
     return (
         <OfflineGameLayout
-            title={`Capital por país • ${roundNumber}/${totalRounds} • ✅ ${correctCount} ❌ ${wrongCount}/${maxErrors}`}            prompt={prompt}
+            title="Capital por pais"
+            progressText={progressText}
+            lives={lives}
+            maxLives={maxLives}
+            prompt={
+                loading
+                    ? "Cargando..."
+                    : error
+                    ? "No pudimos preparar esta partida"
+                    : round?.prompt ?? "Preparando..."
+            }
             imageSrc={!loading && !error ? round?.imageSrc : ""}
             imageAlt={round?.imageAlt}
             options={loading || error ? [] : round?.options ?? []}
@@ -198,13 +254,14 @@ function CapitalByCountry() {
                 loading
                     ? "Estamos preparando las opciones..."
                     : error
-                        ? error
-                        : feedback
+                    ? error
+                    : feedback
             }
+            feedbackTone={error ? "error" : undefined}
             onBack={() => navigate("/offline")}
             actionLabel={
                 poolRef.current.length === 0 && selectedOption
-                    ? "Ver resultados"
+                    ? "Finalizar"
                     : "Siguiente"
             }
             onAction={nextRound}

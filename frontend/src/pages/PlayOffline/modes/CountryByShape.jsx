@@ -7,6 +7,23 @@ function shuffle(arr) {
     return [...arr].sort(() => Math.random() - 0.5);
 }
 
+function dedupeCountries(countries) {
+    const seen = new Set();
+
+    return countries.filter((country) => {
+        const key = String(
+            country?.id ?? country?.id_pais ?? country?.nombre ?? ""
+        ).toLowerCase();
+
+        if (!key || seen.has(key)) {
+            return false;
+        }
+
+        seen.add(key);
+        return true;
+    });
+}
+
 function CountryByShape() {
     const navigate = useNavigate();
 
@@ -26,9 +43,11 @@ function CountryByShape() {
 
     const [correctCount, setCorrectCount] = useState(0);
     const [wrongCount, setWrongCount] = useState(0);
+    const [lives, setLives] = useState(3);
     const [gameOver, setGameOver] = useState(false);
+    const [resultState, setResultState] = useState("lost");
 
-    const maxErrors = 3;
+    const maxLives = 3;
 
     useEffect(() => {
         const init = async () => {
@@ -37,13 +56,15 @@ function CountryByShape() {
 
             try {
                 const countries = await getCountries();
-                const valid = countries.filter(
-                    (c) => c.nombre && c.imagen_silueta
+                const valid = dedupeCountries(
+                    countries.filter(
+                        (country) => country.nombre && country.imagen_silueta
+                    )
                 );
 
                 if (valid.length < 4) {
                     throw new Error(
-                        "No hay suficientes países con silueta disponible para este modo."
+                        "No hay suficientes paises con silueta disponible para este modo."
                     );
                 }
 
@@ -69,25 +90,23 @@ function CountryByShape() {
         setFeedback("");
 
         if (poolRef.current.length === 0) {
+            setResultState("completed");
             setGameOver(true);
             setLoading(false);
             return;
         }
 
         const correctCountry = poolRef.current.shift();
-
         const others = bankRef.current.filter(
-            (c) => c.id !== correctCountry.id
+            (country) => country.id !== correctCountry.id
         );
-
         const distractors = shuffle(others).slice(0, 3);
-
         const finalOptions = shuffle([correctCountry, ...distractors]);
 
-        setRoundNumber((n) => n + 1);
+        setRoundNumber((currentRound) => currentRound + 1);
 
         setRound({
-            prompt: "¿Qué país corresponde a esta silueta?",
+            prompt: "Que pais corresponde a esta silueta?",
             imageSrc: correctCountry.imagen_silueta,
             imageAlt: `Silueta de ${correctCountry.nombre}`,
             options: finalOptions.map((country) => ({
@@ -102,11 +121,15 @@ function CountryByShape() {
     }, []);
 
     useEffect(() => {
-        if (initialized) loadRound();
+        if (initialized) {
+            loadRound();
+        }
     }, [initialized, loadRound]);
 
     function handleSelectOption(option) {
-        if (!round || selectedOption) return;
+        if (!round || selectedOption || gameOver) {
+            return;
+        }
 
         const isCorrect = option === round.correctValue;
 
@@ -114,21 +137,23 @@ function CountryByShape() {
         setCorrectOption(round.correctValue);
 
         if (isCorrect) {
-            setCorrectCount((c) => c + 1);
-            setFeedback("Correcto. Reconociste la silueta correctamente.");
-        } else {
-            setWrongCount((w) => {
-                const newWrong = w + 1;
-
-                if (newWrong >= maxErrors) {
-                    setGameOver(true);
-                }
-
-                return newWrong;
-            });
-
-            setFeedback(`Incorrecto. La respuesta correcta era ${round.correctValue}.`);
+            setCorrectCount((currentCorrect) => currentCorrect + 1);
+            setFeedback("Correcto. Reconociste la silueta.");
+            return;
         }
+
+        setWrongCount((currentWrong) => currentWrong + 1);
+        setLives((currentLives) => {
+            const nextLives = Math.max(currentLives - 1, 0);
+
+            if (nextLives === 0) {
+                setResultState("lost");
+                setGameOver(true);
+            }
+
+            return nextLives;
+        });
+        setFeedback(`Incorrecto. La respuesta correcta era ${round.correctValue}.`);
     }
 
     function handleReplay() {
@@ -136,47 +161,80 @@ function CountryByShape() {
 
         setCorrectCount(0);
         setWrongCount(0);
+        setLives(maxLives);
         setRoundNumber(0);
         setGameOver(false);
-
+        setResultState("lost");
+        setRound(null);
+        setSelectedOption(null);
+        setCorrectOption(null);
+        setFeedback("");
         setLoading(true);
         setInitialized(false);
+
         setTimeout(() => setInitialized(true), 0);
     }
 
+    const progressText = totalRounds > 0 ? `${roundNumber}/${totalRounds}` : "0/0";
+    const answeredRounds = correctCount + wrongCount;
+    const accuracy = answeredRounds
+        ? Math.round((correctCount / answeredRounds) * 100)
+        : 0;
+
     if (gameOver) {
         return (
-            <div style={{ padding: "2rem", textAlign: "center" }}>
-                <h2>Partida terminada</h2>
-                <p>✅ Correctas: {correctCount}</p>
-                <p>❌ Incorrectas: {wrongCount}</p>
-
-                <button onClick={handleReplay} style={{ marginRight: "1rem" }}>
-                    Jugar de nuevo
-                </button>
-
-                <button onClick={() => navigate("/offline")}>
-                    Volver
-                </button>
-            </div>
+            <OfflineGameLayout
+                title="Pais por silueta"
+                progressText={progressText}
+                lives={lives}
+                maxLives={maxLives}
+                prompt={
+                    resultState === "completed"
+                        ? "Completaste la partida"
+                        : "Te quedaste sin vidas"
+                }
+                resultSubtitle={
+                    resultState === "completed"
+                        ? "Terminaste todas las rondas del modo por silueta."
+                        : "La partida termino, pero ya entrenaste bastante el reconocimiento visual."
+                }
+                resultStats={[
+                    { label: "Rondas jugadas", value: answeredRounds },
+                    { label: "Aciertos", value: correctCount },
+                    { label: "Errores", value: wrongCount },
+                    { label: "Precision", value: `${accuracy}%` },
+                ]}
+                isResultScreen
+                resultVariant={resultState === "completed" ? "success" : "error"}
+                feedback={
+                    resultState === "completed"
+                        ? "Excelente. Superaste todo el recorrido de siluetas."
+                        : `Llegaste hasta la ronda ${roundNumber}. Aciertos: ${correctCount}.`
+                }
+                feedbackTone={resultState === "completed" ? "success" : "error"}
+                onBack={() => navigate("/offline")}
+                actionLabel="Jugar de nuevo"
+                onAction={handleReplay}
+            />
         );
     }
 
-    const prompt = loading
-        ? "Cargando nueva ronda..."
-        : error
-            ? "No pudimos preparar esta partida"
-            : round?.prompt || "Preparando desafío...";
-
-    const options = loading || error ? [] : round?.options || [];
-
     return (
         <OfflineGameLayout
-            title={`País por silueta • ${roundNumber}/${totalRounds} • ✅ ${correctCount} ❌ ${wrongCount}/${maxErrors}`}
-            prompt={prompt}
+            title="Pais por silueta"
+            progressText={progressText}
+            lives={lives}
+            maxLives={maxLives}
+            prompt={
+                loading
+                    ? "Cargando nueva ronda..."
+                    : error
+                    ? "No pudimos preparar esta partida"
+                    : round?.prompt || "Preparando desafio..."
+            }
             imageSrc={!loading && !error ? round?.imageSrc : ""}
             imageAlt={round?.imageAlt}
-            options={options}
+            options={loading || error ? [] : round?.options || []}
             onSelectOption={handleSelectOption}
             selectedOption={selectedOption}
             correctOption={correctOption}
@@ -184,13 +242,14 @@ function CountryByShape() {
                 loading
                     ? "Estamos preparando las opciones..."
                     : error
-                        ? error
-                        : feedback
+                    ? error
+                    : feedback
             }
+            feedbackTone={error ? "error" : undefined}
             onBack={() => navigate("/offline")}
             actionLabel={
                 poolRef.current.length === 0 && selectedOption
-                    ? "Ver resultados"
+                    ? "Finalizar"
                     : "Siguiente"
             }
             onAction={loadRound}
