@@ -1,27 +1,20 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import logo from "../../assets/images/logo.png";
 
 import "./Admin.css";
 import CountriesSection from "./CountriesSection.jsx";
-import QuestionsSection from "./QuestionsSection.jsx";
 import UsersSection from "./UsersSection.jsx";
 import {
     getCountries,
     createCountry,
     updateCountry,
     deleteCountry,
-    getQuestions,
-    createQuestion,
-    updateQuestion,
-    deleteQuestion,
     getUsers,
     updateUserRole,
 } from "../../services/AdminService.js";
 
 const ADMIN_TABS = [
     { id: "countries", label: "Paises" },
-    { id: "questions", label: "Preguntas y respuestas" },
     { id: "users", label: "Usuarios" },
 ];
 
@@ -29,30 +22,25 @@ function Admin() {
     const [activeTab, setActiveTab] = useState("countries");
 
     const [countries, setCountries] = useState([]);
-    const [questions, setQuestions] = useState([]);
     const [users, setUsers] = useState([]);
 
     const [loading, setLoading] = useState({
         countries: false,
-        questions: false,
         users: false,
     });
 
     const [error, setError] = useState({
         countries: "",
-        questions: "",
         users: "",
     });
 
     const [success, setSuccess] = useState({
         countries: "",
-        questions: "",
         users: "",
     });
 
     useEffect(() => {
         fetchCountries();
-        fetchQuestions();
         fetchUsers();
     }, []);
 
@@ -75,23 +63,6 @@ function Admin() {
             }));
         } finally {
             setLoading((prev) => ({ ...prev, countries: false }));
-        }
-    }
-
-    async function fetchQuestions() {
-        setLoading((prev) => ({ ...prev, questions: true }));
-        setError((prev) => ({ ...prev, questions: "" }));
-
-        try {
-            const data = await getQuestions();
-            setQuestions(data);
-        } catch (err) {
-            setError((prev) => ({
-                ...prev,
-                questions: err.message || "No se pudieron cargar las preguntas.",
-            }));
-        } finally {
-            setLoading((prev) => ({ ...prev, questions: false }));
         }
     }
 
@@ -159,53 +130,6 @@ function Admin() {
         }
     }
 
-    async function handleSaveQuestion(payload, editingId) {
-        clearSectionMessage("questions");
-
-        try {
-            if (editingId) {
-                await updateQuestion(editingId, payload);
-                setSuccess((prev) => ({
-                    ...prev,
-                    questions: "Pregunta actualizada correctamente.",
-                }));
-            } else {
-                await createQuestion(payload);
-                setSuccess((prev) => ({
-                    ...prev,
-                    questions: "Pregunta creada correctamente.",
-                }));
-            }
-
-            await fetchQuestions();
-            return true;
-        } catch (err) {
-            setError((prev) => ({
-                ...prev,
-                questions: err.message || "No se pudo guardar la pregunta.",
-            }));
-            return false;
-        }
-    }
-
-    async function handleDeleteQuestion(questionId) {
-        clearSectionMessage("questions");
-
-        try {
-            await deleteQuestion(questionId);
-            setSuccess((prev) => ({
-                ...prev,
-                questions: "Pregunta eliminada correctamente.",
-            }));
-            await fetchQuestions();
-        } catch (err) {
-            setError((prev) => ({
-                ...prev,
-                questions: err.message || "No se pudo eliminar la pregunta.",
-            }));
-        }
-    }
-
     async function handleUpdateUserRole(userId, role) {
         clearSectionMessage("users");
 
@@ -229,25 +153,29 @@ function Admin() {
     return (
         <div className="admin-page">
             <header className="admin-header">
-                <div className="admin-header-left">
+                <div className="admin-header-glow" />
+
+                <div className="admin-header-actions">
                     <Link to="/mainmenu" className="admin-back-button">
                         Volver
                     </Link>
                 </div>
 
-                <div className="admin-header-center">
-                    <img src={logo} alt="Logo ORBYZ" className="admin-header-logo" />
-                    <h1>Panel de administracion</h1>
+                <div className="admin-title-wrap">
+                    <span className="admin-title-kicker">Geography Game System</span>
+                    <h1 className="admin-title">Administracion</h1>
                 </div>
+
+                <div className="admin-header-spacer" />
             </header>
 
             <section className="admin-hero">
                 <div className="admin-hero-copy">
-                    <span className="admin-eyebrow">Gestion interna</span>
-                    <h2>Herramientas de control</h2>
+                    <span className="admin-eyebrow">Administracion interna</span>
+                    <h2>Control operativo</h2>
                     <p>
-                        Administra paises, preguntas y usuarios desde una unica
-                        interfaz.
+                        Gestiona paises y usuarios desde un panel mas claro, mas
+                        ordenado y enfocado en tareas reales de administracion.
                     </p>
                 </div>
 
@@ -255,14 +183,13 @@ function Admin() {
                     <article className="admin-stat-card">
                         <span className="admin-stat-label">Paises</span>
                         <strong>{countries.length}</strong>
+                        <span className="admin-stat-note">Registros disponibles</span>
                     </article>
-                    <article className="admin-stat-card">
-                        <span className="admin-stat-label">Preguntas</span>
-                        <strong>{questions.length}</strong>
-                    </article>
+
                     <article className="admin-stat-card">
                         <span className="admin-stat-label">Usuarios</span>
                         <strong>{users.length}</strong>
+                        <span className="admin-stat-note">Cuentas registradas</span>
                     </article>
                 </div>
             </section>
@@ -290,19 +217,6 @@ function Admin() {
                         onSave={handleSaveCountry}
                         onDelete={handleDeleteCountry}
                         onClearMessages={() => clearSectionMessage("countries")}
-                    />
-                )}
-
-                {activeTab === "questions" && (
-                    <QuestionsSection
-                        countries={countries}
-                        questions={questions}
-                        loading={loading.questions}
-                        error={error.questions}
-                        success={success.questions}
-                        onSave={handleSaveQuestion}
-                        onDelete={handleDeleteQuestion}
-                        onClearMessages={() => clearSectionMessage("questions")}
                     />
                 )}
 

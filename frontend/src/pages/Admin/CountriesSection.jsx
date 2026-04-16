@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 const EMPTY_COUNTRY_FORM = {
     nombre: "",
@@ -7,6 +7,8 @@ const EMPTY_COUNTRY_FORM = {
     imagen_pais: "",
     imagen_silueta: "",
 };
+
+const INITIAL_VISIBLE_COUNTRIES = 5;
 
 function CountriesSection({
                               countries,
@@ -20,6 +22,32 @@ function CountriesSection({
     const [form, setForm] = useState(EMPTY_COUNTRY_FORM);
     const [editingId, setEditingId] = useState(null);
     const [submitting, setSubmitting] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [showAll, setShowAll] = useState(false);
+
+    const filteredCountries = useMemo(() => {
+        const normalizedSearch = searchTerm.trim().toLowerCase();
+
+        if (!normalizedSearch) {
+            return countries;
+        }
+
+        return countries.filter((country) => {
+            const searchableValues = [
+                country.nombre,
+                country.capital,
+                country.continente,
+            ];
+
+            return searchableValues.some((value) =>
+                String(value || "").toLowerCase().includes(normalizedSearch)
+            );
+        });
+    }, [countries, searchTerm]);
+
+    const visibleCountries = showAll
+        ? filteredCountries
+        : filteredCountries.slice(0, INITIAL_VISIBLE_COUNTRIES);
 
     function resetForm() {
         setForm(EMPTY_COUNTRY_FORM);
@@ -65,20 +93,34 @@ function CountriesSection({
         setSubmitting(false);
     }
 
+    function handleReset() {
+        onClearMessages();
+        resetForm();
+    }
+
+    function handleSearchChange(event) {
+        setSearchTerm(event.target.value);
+        setShowAll(false);
+    }
+
     return (
         <section className="admin-section">
             <div className="admin-section-header">
                 <div>
                     <h2>Paises</h2>
-                    <p>Crea, edita y elimina registros de paises.</p>
+                    <p>Administra el catalogo de paises disponible en la plataforma.</p>
                 </div>
             </div>
 
-            <div className="admin-grid">
+            <div className="admin-grid admin-grid-align-start">
                 <article className="admin-panel">
                     <div className="admin-panel-header">
                         <h3>{editingId ? "Editar pais" : "Nuevo pais"}</h3>
-                        <p>Formulario conectado a `/api/paises`.</p>
+                        <p>
+                            {editingId
+                                ? "Actualiza la informacion del registro seleccionado."
+                                : "Carga un nuevo pais para dejarlo disponible en el sistema."}
+                        </p>
                     </div>
 
                     <form className="admin-form" onSubmit={handleSubmit}>
@@ -144,16 +186,16 @@ function CountriesSection({
                                 {submitting
                                     ? "Guardando..."
                                     : editingId
-                                        ? "Actualizar pais"
-                                        : "Agregar pais"}
+                                        ? "Guardar cambios"
+                                        : "Crear pais"}
                             </button>
 
                             <button
                                 type="button"
                                 className="admin-button admin-button-secondary"
-                                onClick={resetForm}
+                                onClick={handleReset}
                             >
-                                Limpiar
+                                {editingId ? "Cancelar" : "Limpiar"}
                             </button>
                         </div>
                     </form>
@@ -165,53 +207,85 @@ function CountriesSection({
                 </article>
 
                 <article className="admin-panel">
-                    <div className="admin-panel-header">
-                        <h3>Listado</h3>
-                        <p>Datos obtenidos.</p>
+                    <div className="admin-panel-header admin-panel-header-inline">
+                        <div>
+                            <h3>Listado de paises</h3>
+                            <p>
+                                {loading
+                                    ? "Cargando registros..."
+                                    : `${filteredCountries.length} resultado${filteredCountries.length === 1 ? "" : "s"}${searchTerm.trim() ? ` de ${countries.length}` : ""}.`}
+                            </p>
+                        </div>
+
+                        <label className="admin-search-field">
+                            <span>Buscar pais</span>
+                            <input
+                                type="search"
+                                value={searchTerm}
+                                onChange={handleSearchChange}
+                                placeholder="Buscar por nombre, capital o continente"
+                            />
+                        </label>
                     </div>
 
                     {loading ? (
                         <p className="admin-empty">Cargando paises...</p>
-                    ) : countries.length === 0 ? (
-                        <p className="admin-empty">No hay paises cargados para mostrar.</p>
+                    ) : filteredCountries.length === 0 ? (
+                        <p className="admin-empty">
+                            No se encontraron paises para esa busqueda.
+                        </p>
                     ) : (
-                        <div className="admin-list">
-                            {countries.map((country) => (
-                                <article className="admin-list-card" key={country.id}>
-                                    <div className="admin-list-card-main">
-                                        <h4>{country.nombre || "Pais sin nombre"}</h4>
-                                        <dl className="admin-meta">
-                                            <div>
-                                                <dt>Capital</dt>
-                                                <dd>{country.capital || "-"}</dd>
-                                            </div>
-                                            <div>
-                                                <dt>Continente</dt>
-                                                <dd>{country.continente || "-"}</dd>
-                                            </div>
-                                        </dl>
-                                    </div>
+                        <>
+                            <div className="admin-list">
+                                {visibleCountries.map((country) => (
+                                    <article className="admin-list-card" key={country.id}>
+                                        <div className="admin-list-card-main">
+                                            <h4>{country.nombre || "Pais sin nombre"}</h4>
+                                            <dl className="admin-meta">
+                                                <div>
+                                                    <dt>Capital</dt>
+                                                    <dd>{country.capital || "-"}</dd>
+                                                </div>
+                                                <div>
+                                                    <dt>Continente</dt>
+                                                    <dd>{country.continente || "-"}</dd>
+                                                </div>
+                                            </dl>
+                                        </div>
 
-                                    <div className="admin-list-card-actions">
-                                        <button
-                                            type="button"
-                                            className="admin-button admin-button-secondary"
-                                            onClick={() => handleEdit(country)}
-                                        >
-                                            Editar
-                                        </button>
+                                        <div className="admin-list-card-actions">
+                                            <button
+                                                type="button"
+                                                className="admin-button admin-button-secondary"
+                                                onClick={() => handleEdit(country)}
+                                            >
+                                                Editar
+                                            </button>
 
-                                        <button
-                                            type="button"
-                                            className="admin-button admin-button-danger"
-                                            onClick={() => onDelete(country.id)}
-                                        >
-                                            Eliminar
-                                        </button>
-                                    </div>
-                                </article>
-                            ))}
-                        </div>
+                                            <button
+                                                type="button"
+                                                className="admin-button admin-button-danger"
+                                                onClick={() => onDelete(country.id)}
+                                            >
+                                                Eliminar
+                                            </button>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+
+                            {filteredCountries.length > INITIAL_VISIBLE_COUNTRIES && (
+                                <div className="admin-list-footer">
+                                    <button
+                                        type="button"
+                                        className="admin-button admin-button-secondary"
+                                        onClick={() => setShowAll((prev) => !prev)}
+                                    >
+                                        {showAll ? "Mostrar menos" : "Ver listado completo"}
+                                    </button>
+                                </div>
+                            )}
+                        </>
                     )}
                 </article>
             </div>
