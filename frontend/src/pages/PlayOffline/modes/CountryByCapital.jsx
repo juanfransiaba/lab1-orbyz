@@ -57,10 +57,7 @@ function CountryByCapital() {
             try {
                 const all = await getRandomCountries(100);
                 const valid = dedupeCountries(
-                    all.filter(
-                        (country) =>
-                            country.nombre && country.capital && country.imagen_pais
-                    )
+                    all.filter((country) => country.nombre && country.capital)
                 );
 
                 if (valid.length < 4) {
