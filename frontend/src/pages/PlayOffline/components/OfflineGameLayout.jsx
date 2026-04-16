@@ -23,7 +23,7 @@ function areOptionsEqual(first, second) {
 function OfflineGameLayout({
     title,
     prompt,
-    promptLabel = "Modo offline",
+    promptLabel = "",
     isResultScreen = false,
     resultVariant = "neutral",
     resultSubtitle = "",
@@ -127,9 +127,11 @@ function OfflineGameLayout({
                             <div
                                 className={`offline-game-layout-result-hero is-${resultVariant}`}
                             >
-                                <span className="offline-game-layout-kicker">
-                                    {promptLabel}
-                                </span>
+                                {promptLabel ? (
+                                    <span className="offline-game-layout-kicker">
+                                        {promptLabel}
+                                    </span>
+                                ) : null}
                                 <h2>{prompt}</h2>
                                 {resultSubtitle ? (
                                     <p className="offline-game-layout-result-subtitle">
@@ -159,9 +161,11 @@ function OfflineGameLayout({
                     ) : (
                         <div className="offline-game-layout-top">
                             <div className="offline-game-layout-prompt-block">
-                                <span className="offline-game-layout-kicker">
-                                    {promptLabel}
-                                </span>
+                                {promptLabel ? (
+                                    <span className="offline-game-layout-kicker">
+                                        {promptLabel}
+                                    </span>
+                                ) : null}
                                 <h2>{prompt}</h2>
                             </div>
 

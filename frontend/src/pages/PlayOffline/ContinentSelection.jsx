@@ -1,5 +1,9 @@
-﻿import { useNavigate } from "react-router-dom";
-import logo from "../../assets/images/logo.png";
+import { useNavigate } from "react-router-dom";
+import americaImage from "../../assets/images/imagen.jpg";
+import europaImage from "../../assets/images/imagen2.jpg";
+import asiaImage from "../../assets/images/imagen7.jpg";
+import africaImage from "../../assets/images/imagen6.jpg";
+import oceaniaImage from "../../assets/images/imagen4.jpg";
 import "./ContinentSelection.css";
 
 const CONTINENT_OPTIONS = [
@@ -9,6 +13,7 @@ const CONTINENT_OPTIONS = [
         description: "Recorre paises de norte a sur con partidas variadas y dinamicas.",
         route: "/offline/continent-selection/america",
         label: "Extenso",
+        image: americaImage,
     },
     {
         id: "europa",
@@ -16,6 +21,7 @@ const CONTINENT_OPTIONS = [
         description: "Un mapa mas compacto para rondas agiles y nombres muy reconocibles.",
         route: "/offline/continent-selection/europa",
         label: "Clasico",
+        image: europaImage,
     },
     {
         id: "asia",
@@ -23,6 +29,7 @@ const CONTINENT_OPTIONS = [
         description: "Mayor diversidad de paises y un reto geografico mas amplio.",
         route: "/offline/continent-selection/asia",
         label: "Desafiante",
+        image: asiaImage,
     },
     {
         id: "africa",
@@ -30,6 +37,7 @@ const CONTINENT_OPTIONS = [
         description: "Ideal para practicar ubicacion, capitales y reconocimiento visual.",
         route: "/offline/continent-selection/africa",
         label: "Equilibrado",
+        image: africaImage,
     },
     {
         id: "oceania",
@@ -37,6 +45,7 @@ const CONTINENT_OPTIONS = [
         description: "Una seleccion mas acotada para partidas rapidas y precisas.",
         route: "/offline/continent-selection/oceania",
         label: "Rapido",
+        image: oceaniaImage,
     },
 ];
 
@@ -48,7 +57,9 @@ function ContinentSelection() {
     return (
         <div className="continent-selection-page">
             <header className="continent-selection-header">
-                <div className="continent-selection-header-left">
+                <div className="continent-selection-header-glow" />
+
+                <div className="continent-selection-header-actions">
                     <button
                         type="button"
                         className="continent-selection-back-button"
@@ -58,16 +69,14 @@ function ContinentSelection() {
                     </button>
                 </div>
 
-                <div className="continent-selection-header-center">
-                    <img
-                        src={logo}
-                        alt="Logo ORBYZ"
-                        className="continent-selection-header-logo"
-                    />
-                    <h1>Por continente</h1>
+                <div className="continent-selection-title-wrap">
+                    <span className="continent-selection-title-kicker">
+                        Geography Game System
+                    </span>
+                    <h1 className="continent-selection-title">Por continente</h1>
                 </div>
 
-                <div className="continent-selection-header-right" />
+                <div className="continent-selection-header-spacer" />
             </header>
 
             <main className="continent-selection-main">
@@ -84,9 +93,12 @@ function ContinentSelection() {
                                 onClick={() => navigate(continent.route)}
                             >
                                 <div className="continent-selection-card-image-wrap">
-                                    <div className="continent-selection-card-image-placeholder">
-                                        <span>Espacio para imagen</span>
-                                    </div>
+                                    <img
+                                        src={continent.image}
+                                        alt={continent.title}
+                                        className="continent-selection-card-image"
+                                    />
+                                    <div className="continent-selection-card-image-overlay" />
                                 </div>
 
                                 <div className="continent-selection-card-content">
@@ -109,9 +121,12 @@ function ContinentSelection() {
                                 onClick={() => navigate(continent.route)}
                             >
                                 <div className="continent-selection-card-image-wrap">
-                                    <div className="continent-selection-card-image-placeholder">
-                                        <span>Espacio para imagen</span>
-                                    </div>
+                                    <img
+                                        src={continent.image}
+                                        alt={continent.title}
+                                        className="continent-selection-card-image"
+                                    />
+                                    <div className="continent-selection-card-image-overlay" />
                                 </div>
 
                                 <div className="continent-selection-card-content">
