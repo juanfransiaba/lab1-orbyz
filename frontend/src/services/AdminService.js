@@ -42,6 +42,7 @@ function normalizeAnswer(answer) {
 function normalizeQuestion(question) {
     const answersSource = question?.respuestas ?? question?.answers ?? [];
 
+
     return {
         id: question?.id ?? question?._id ?? "",
         pregunta: question?.pregunta ?? question?.texto ?? question?.question ?? "",

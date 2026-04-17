@@ -34,6 +34,7 @@ router.get('/random', obtenerPaisesRandom);
 // GET /api/paises/random?limit=4
 // Devuelve 4 países al azar — usado en CountryByCapital, CapitalByCountry, CountryByShape
 
+
 router.get('/continente/:continente', obtenerPaisesPorContinente);
 // GET /api/paises/continente/Europa
 // Devuelve todos los países de ese continente — usado en CountryByContinent.jsx

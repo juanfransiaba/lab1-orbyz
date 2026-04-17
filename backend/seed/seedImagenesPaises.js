@@ -11,6 +11,7 @@ const pool = new Pool({
     port: process.env.DB_PORT,
 });
 
+
 function loadCountryImages() {
     const filePath = path.join(__dirname, 'countryImages.js');
     const raw = fs.readFileSync(filePath, 'utf8').replace(/^\uFEFF/, '').trim();

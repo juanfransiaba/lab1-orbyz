@@ -232,6 +232,7 @@ function CountryByShape() {
                     ? "No pudimos preparar esta partida"
                     : round?.prompt || "Preparando desafio..."
             }
+
             imageSrc={!loading && !error ? round?.imageSrc : ""}
             imageAlt={round?.imageAlt}
             options={loading || error ? [] : round?.options || []}

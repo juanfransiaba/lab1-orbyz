@@ -9,6 +9,7 @@ const pool = new Pool({
     port: process.env.DB_PORT,
 });
 
+
 const SILUETAS = [
     { nombre: 'Afghanistan', codigo: 'af' },
     { nombre: 'Albania', codigo: 'al' },

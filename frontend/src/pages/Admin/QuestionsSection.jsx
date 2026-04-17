@@ -14,6 +14,7 @@ function createEmptyAnswer() {
     };
 }
 
+
 function QuestionsSection({
                               countries,
                               questions,

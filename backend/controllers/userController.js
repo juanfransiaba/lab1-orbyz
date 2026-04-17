@@ -72,6 +72,7 @@ const updateProfile = async (req, res) => {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
+
         const currentUser = existingUser.rows[0];
 
         const newUsername = username?.trim() || currentUser.username;

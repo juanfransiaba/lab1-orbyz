@@ -13,6 +13,7 @@ const {
     deleteProfile
 } = require('../controllers/userController');
 
+
 router.get('/profile', verifyToken, getProfile);
 router.put('/profile', verifyToken, updateProfile);
 router.delete('/profile', verifyToken, deleteProfile);

@@ -10,6 +10,7 @@ const EMPTY_COUNTRY_FORM = {
 
 const INITIAL_VISIBLE_COUNTRIES = 5;
 
+
 function CountriesSection({
                               countries,
                               loading,

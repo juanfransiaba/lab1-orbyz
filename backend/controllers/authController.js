@@ -10,6 +10,8 @@ const register = async (req, res) => {
             return res.status(400).json({ message: 'Faltan datos' });
         }
 
+
+
         const existingUser = await pool.query(
             'SELECT * FROM users WHERE email = $1 OR username = $2',
             [email, username]

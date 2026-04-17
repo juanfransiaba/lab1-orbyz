@@ -96,6 +96,7 @@ function CountryByCapital() {
         const others = bankRef.current.filter(
             (country) => country.id !== correctCountry.id
         );
+
         const distractors = shuffle(others).slice(0, 3);
         const finalOptions = shuffle([correctCountry, ...distractors]);
 

@@ -46,6 +46,7 @@ function OfflineGameLayout({
     hideOptions = false,
     feedbackTone,
 }) {
+
     const normalizedOptions = options.map(normalizeOption);
     const hasCheckedAnswer =
         selectedOption !== undefined &&
