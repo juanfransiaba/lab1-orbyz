@@ -102,7 +102,6 @@ async function seedPaises() {
             );
         }
 
-
         console.log(`🌍 ${paisesValidos.length} países insertados correctamente`);
 
         // Llama al seed de siluetas una vez insertados todos los países

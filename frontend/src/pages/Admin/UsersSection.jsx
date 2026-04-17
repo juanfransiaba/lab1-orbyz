@@ -11,7 +11,6 @@ function UsersSection({
     const [roleDrafts, setRoleDrafts] = useState({});
     const [savingUserId, setSavingUserId] = useState(null);
 
-
     const roleSummary = useMemo(() => {
         return users.reduce(
             (acc, user) => {

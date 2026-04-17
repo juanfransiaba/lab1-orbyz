@@ -30,7 +30,6 @@
     overflow: hidden;
 }
 
-
 .main-menu-header::before {
     content: "";
     position: absolute;

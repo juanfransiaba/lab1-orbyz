@@ -24,7 +24,6 @@ const CONTINENT_OPTIONS = [
         image: europaImage,
     },
     {
-
         id: "asia",
         title: "Asia",
         description: "Mayor diversidad de paises y un reto geografico mas amplio.",

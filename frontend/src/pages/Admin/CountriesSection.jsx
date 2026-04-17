@@ -10,7 +10,6 @@ const EMPTY_COUNTRY_FORM = {
 
 const INITIAL_VISIBLE_COUNTRIES = 5;
 
-
 function CountriesSection({
                               countries,
                               loading,
@@ -161,20 +160,22 @@ function CountriesSection({
                         <label className="admin-field">
                             <span>Imagen del pais</span>
                             <input
-                                type="url"
+                                type="text"
                                 name="imagen_pais"
                                 value={form.imagen_pais}
                                 onChange={handleChange}
+                                placeholder="URL externa o ruta local ya guardada"
                             />
                         </label>
 
                         <label className="admin-field">
                             <span>Imagen silueta</span>
                             <input
-                                type="url"
+                                type="text"
                                 name="imagen_silueta"
                                 value={form.imagen_silueta}
                                 onChange={handleChange}
+                                placeholder="URL o ruta local"
                             />
                         </label>
 

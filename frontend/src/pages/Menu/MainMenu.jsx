@@ -76,7 +76,6 @@ function MainMenu() {
         void fetchProfile();
     }, [navigate]);
 
-
     return (
         <div className="main-menu-page">
             <header className="main-menu-header">

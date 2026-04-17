@@ -1,32 +1,44 @@
-require('dotenv').config();
+require("dotenv").config();
 
-const express = require('express');
-const cors = require('cors');
+const path = require("path");
+const express = require("express");
+const cors = require("cors");
 
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const paisesRoutes = require('./routes/paisesRoutes');
-
+const authRoutes = require("./routes/authRoutes");
+const userRoutes = require("./routes/userRoutes");
+const paisesRoutes = require("./routes/paisesRoutes");
 
 const app = express();
 
+function isAllowedLocalOrigin(origin) {
+    if (!origin) {
+        return true;
+    }
+
+    return /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+}
 
 app.use(
     cors({
-        origin: 'http://localhost:5173',
+        origin(origin, callback) {
+            if (isAllowedLocalOrigin(origin)) {
+                return callback(null, true);
+            }
+
+            return callback(new Error("Origen no permitido por CORS"));
+        },
     })
 );
 
 app.use(express.json());
+app.use("/static", express.static(path.join(__dirname, "static")));
 
-// rutas principales
-app.use('/auth', authRoutes);
-app.use('/user', userRoutes);
-app.use('/api/paises', paisesRoutes);
+app.use("/auth", authRoutes);
+app.use("/user", userRoutes);
+app.use("/api/paises", paisesRoutes);
 
-
-app.get('/', (req, res) => {
-    res.send('Backend funcionando');
+app.get("/", (req, res) => {
+    res.send("Backend funcionando");
 });
 
 app.listen(process.env.PORT, () => {

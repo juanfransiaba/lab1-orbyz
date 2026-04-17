@@ -65,7 +65,6 @@ function Profile() {
                 return;
             }
 
-
             localStorage.removeItem("token");
             navigate("/login");
         } catch (error) {

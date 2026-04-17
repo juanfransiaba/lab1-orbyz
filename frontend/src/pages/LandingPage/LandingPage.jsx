@@ -21,7 +21,6 @@ function LandingPage() {
         return () => clearInterval(interval);
     }, []);
 
-
     return (
         <div className="landing-page">
             <header className="landing-header">

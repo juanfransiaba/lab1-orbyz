@@ -21,7 +21,6 @@
         rgba(15, 38, 76, 0.97) 48%,
         rgba(31, 78, 140, 0.95) 100%
     );
-
     box-shadow: 0 10px 30px rgba(11, 30, 60, 0.2);
     flex-shrink: 0;
     overflow: hidden;

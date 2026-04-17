@@ -18,14 +18,40 @@ function buildHeaders(customHeaders = {}) {
     };
 }
 
+function resolveAssetUrl(value) {
+    const normalizedValue = String(value || "").trim();
+
+    if (!normalizedValue) {
+        return "";
+    }
+
+    if (/^https?:\/\//i.test(normalizedValue)) {
+        return normalizedValue;
+    }
+
+    if (normalizedValue.startsWith("/static/")) {
+        return `${API_URL}${normalizedValue}`;
+    }
+
+    if (normalizedValue.startsWith("/images/")) {
+        return normalizedValue;
+    }
+
+    return normalizedValue;
+}
+
 function normalizeCountry(country) {
     return {
         id: country?.id ?? country?.id_pais ?? country?._id ?? "",
         nombre: country?.nombre ?? "",
         capital: country?.capital ?? "",
         continente: country?.continente ?? "",
-        imagen_pais: country?.imagen_pais ?? country?.imagenPais ?? "",
-        imagen_silueta: country?.imagen_silueta ?? country?.imagenSilueta ?? "",
+        imagen_pais: resolveAssetUrl(
+            country?.imagen_pais ?? country?.imagenPais ?? ""
+        ),
+        imagen_silueta: resolveAssetUrl(
+            country?.imagen_silueta ?? country?.imagenSilueta ?? ""
+        ),
     };
 }
 
@@ -41,7 +67,6 @@ function normalizeAnswer(answer) {
 
 function normalizeQuestion(question) {
     const answersSource = question?.respuestas ?? question?.answers ?? [];
-
 
     return {
         id: question?.id ?? question?._id ?? "",

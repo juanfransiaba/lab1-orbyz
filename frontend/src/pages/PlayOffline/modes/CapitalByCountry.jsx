@@ -110,7 +110,6 @@ function CapitalByCountry() {
 
         setLoading(true);
 
-
         const correctCountry = poolRef.current.shift();
         const options = pickOptions(correctCountry, bankRef.current);
 

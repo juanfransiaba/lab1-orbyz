@@ -11,7 +11,6 @@ const pool = new Pool({
     port: process.env.DB_PORT,
 });
 
-
 const IMAGES_DIR = path.resolve(__dirname, '../../frontend/public/images/paises');
 const IMAGE_PATH_PREFIX = '/images/paises';
 

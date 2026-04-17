@@ -26,7 +26,6 @@ const OFFLINE_MODES = [
         toneClass: "play-offline-card--country",
         tag: "Memoria",
     },
-
     {
         id: "country-by-shape",
         title: "Pais por silueta",

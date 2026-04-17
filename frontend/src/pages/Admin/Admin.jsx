@@ -24,7 +24,6 @@ function Admin() {
     const [countries, setCountries] = useState([]);
     const [users, setUsers] = useState([]);
 
-
     const [loading, setLoading] = useState({
         countries: false,
         users: false,
