@@ -45,6 +45,34 @@ function Register() {
             return;
         }
 
+        if (password.length < 8) {
+            setError("La contraseña debe tener al menos 8 caracteres.");
+            return;
+        }
+
+        if (!/[0-9]/.test(password)) {
+            setError("La contraseña debe contener al menos un número.");
+            return;
+        }
+
+        if (!/[^A-Za-z0-9]/.test(password)) {
+            setError("La contraseña debe contener al menos un carácter especial.");
+            return;
+        }
+
+        const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/;
+        const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!USERNAME_REGEX.test(name)) {
+            setError("El usuario debe tener entre 3 y 20 caracteres (solo letras, números y guión bajo).");
+            return;
+        }
+
+        if (!EMAIL_REGEX.test(email)) {
+            setError("El email no tiene un formato válido.");
+            return;
+        }
+
         try {
             setLoading(true);
 

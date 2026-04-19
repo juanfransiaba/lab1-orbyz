@@ -1,5 +1,7 @@
 const pool = require("../db");
 const bcrypt = require("bcrypt");
+const { validatePassword } = require('../utils/passwordValidator');
+const { validateUsername, validateEmail } = require('../utils/userValidator');
 
 const VALID_ROLES = ["user", "admin"];
 
@@ -77,9 +79,52 @@ const updateProfile = async (req, res) => {
         const newUsername = username?.trim() || currentUser.username;
         const newEmail = email?.trim() || currentUser.email;
 
+        // ── Validar formato solo si el usuario lo está cambiando ──
+        if (newUsername !== currentUser.username) {
+            const usernameError = validateUsername(newUsername);
+            if (usernameError) {
+                return res.status(400).json({ message: usernameError });
+            }
+        }
+
+        if (newEmail !== currentUser.email) {
+            const emailError = validateEmail(newEmail);
+            if (emailError) {
+                return res.status(400).json({ message: emailError });
+            }
+        }
+
+        // ── Chequear que el username no esté en uso por otro usuario ──
+        if (newUsername.toLowerCase() !== currentUser.username.toLowerCase()) {
+            const usernameTaken = await pool.query(
+                "SELECT user_id FROM users WHERE LOWER(username) = LOWER($1) AND user_id <> $2",
+                [newUsername, userId]
+            );
+
+            if (usernameTaken.rows.length > 0) {
+                return res.status(409).json({ message: "El nombre de usuario ya está en uso" });
+            }
+        }
+
+        // ── Chequear que el email no esté en uso por otro usuario ──
+        if (newEmail.toLowerCase() !== currentUser.email.toLowerCase()) {
+            const emailTaken = await pool.query(
+                "SELECT user_id FROM users WHERE LOWER(email) = LOWER($1) AND user_id <> $2",
+                [newEmail, userId]
+            );
+
+            if (emailTaken.rows.length > 0) {
+                return res.status(409).json({ message: "El email ya está en uso" });
+            }
+        }
+
         let passwordHash = currentUser.password_hash;
 
         if (password && password.trim() !== "") {
+            const passwordError = validatePassword(password);
+            if (passwordError) {
+                return res.status(400).json({ message: passwordError });
+            }
             passwordHash = await bcrypt.hash(password, 10);
         }
 

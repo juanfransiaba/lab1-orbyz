@@ -1,6 +1,8 @@
 const pool = require('../db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { validatePassword } = require('../utils/passwordValidator');
+const { validateUsername, validateEmail } = require('../utils/userValidator');
 
 const register = async (req, res) => {
     try {
@@ -9,6 +11,23 @@ const register = async (req, res) => {
         if (!username || !email || !password) {
             return res.status(400).json({ message: 'Faltan datos' });
         }
+
+        const usernameError = validateUsername(username);
+        if (usernameError) {
+            return res.status(400).json({ message: usernameError });
+        }
+
+        const emailError = validateEmail(email);
+        if (emailError) {
+            return res.status(400).json({ message: emailError });
+        }
+
+        const passwordError = validatePassword(password);
+        if (passwordError) {
+            return res.status(400).json({ message: passwordError });
+        }
+
+
 
         const existingUser = await pool.query(
             'SELECT * FROM users WHERE email = $1 OR username = $2',
@@ -65,7 +84,7 @@ const login = async (req, res) => {
         );
 
         if (result.rows.length === 0) {
-            return res.status(400).json({ message: 'Usuario no existe' });
+            return res.status(400).json({ message: 'Credenciales inválidas' });
         }
 
         const user = result.rows[0];
@@ -73,7 +92,7 @@ const login = async (req, res) => {
         const match = await bcrypt.compare(password, user.password_hash);
 
         if (!match) {
-            return res.status(400).json({ message: 'Password incorrecto' });
+            return res.status(400).json({ message: 'Credenciales inválidas' });
         }
 
         const token = jwt.sign(
