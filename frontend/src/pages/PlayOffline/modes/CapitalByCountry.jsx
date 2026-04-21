@@ -147,7 +147,7 @@ function CapitalByCountry() {
 
         if (isCorrect) {
             setCorrectCount((currentCorrect) => currentCorrect + 1);
-            setFeedback("Correcto. La capital coincidia.");
+            setFeedback("Correcto. Es la capital indicada");
             return;
         }
 

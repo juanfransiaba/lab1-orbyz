@@ -134,7 +134,7 @@ function CountryByCapital() {
 
         if (isCorrect) {
             setCorrectCount((currentCorrect) => currentCorrect + 1);
-            setFeedback("Correcto. Era el pais indicado.");
+            setFeedback("Correcto. Es el pais indicado.");
             return;
         }
 
