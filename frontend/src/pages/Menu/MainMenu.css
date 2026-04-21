@@ -110,7 +110,6 @@
 
 .main-menu-logo-box {
     width: 100px;
-    height: 100%;
     display: flex;
     align-items: center;
     justify-content: flex-start;
@@ -120,10 +119,12 @@
 .main-menu-logo {
     position: relative;
     z-index: 1;
-    width: 208px;
-    height: 76px;
+    width: 62px;
+    height: 62px;
     object-fit: contain;
     display: block;
+    transform: scale(1.82);
+    transform-origin: left center;
     filter: drop-shadow(0 10px 14px rgba(2, 6, 23, 0.18));
 }
 
@@ -342,8 +343,9 @@
     }
 
     .main-menu-logo {
-        width: 170px;
-        height: 72px;
+        width: 54px;
+        height: 54px;
+        transform: scale(1.58);
     }
 
     .main-menu-title-kicker {

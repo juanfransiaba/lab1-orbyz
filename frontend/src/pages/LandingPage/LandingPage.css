@@ -27,7 +27,7 @@
 .landing-brand {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 0;
 }
 
 .landing-brand-mark {
@@ -44,9 +44,12 @@
 }
 
 .landing-logo {
-    height: 60%;
-    max-height: 130px;
-    width: auto;
+    width: 58px;
+    height: 58px;
+    object-fit: contain;
+    display: block;
+    transform: scale(1.78);
+    transform-origin: left center;
 }
 
 .landing-brand-name {
@@ -255,6 +258,12 @@
 
     .landing-brand {
         justify-content: center;
+    }
+
+    .landing-logo {
+        width: 52px;
+        height: 52px;
+        transform: scale(1.55);
     }
 
     .landing-nav {
