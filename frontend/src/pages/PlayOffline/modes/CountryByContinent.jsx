@@ -171,7 +171,7 @@ function CountryByContinent() {
 
         if (isCorrect) {
             setCorrectCount((currentCorrect) => currentCorrect + 1);
-            setFeedback(`Correcto. ${option} pertenece a ${continentName}.`);
+            setFeedback(`Correcto. La capital de ${option} es ${round.prompt}.`);
             return;
         }
 
