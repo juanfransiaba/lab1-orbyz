@@ -199,11 +199,40 @@ const deleteProfile = async (req, res) => {
     }
 };
 
+const searchUsers = async (req, res) => {
+    try {
+        const { q } = req.query;
+        const currentUserId = req.user.user_id;
+
+        if (!q || q.trim().length < 2) {
+            return res.status(400).json({
+                message: "La búsqueda debe tener al menos 2 caracteres",
+            });
+        }
+
+        const { rows } = await pool.query(
+            `SELECT user_id, username, email
+             FROM users
+             WHERE LOWER(username) LIKE LOWER($1)
+               AND user_id <> $2
+             ORDER BY username ASC
+             LIMIT 20`,
+            [`%${q.trim()}%`, currentUserId]
+        );
+
+        res.json(rows);
+    } catch (error) {
+        console.error("Error en searchUsers:", error);
+        res.status(500).json({ message: "Error del servidor" });
+    }
+};
+
 module.exports = {
     getUsers,
     getUserById,
     updateProfile,
     updateUserRole,
     deleteProfile,
-    getProfile
+    getProfile,
+    searchUsers,
 };

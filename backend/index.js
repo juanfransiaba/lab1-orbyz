@@ -7,6 +7,7 @@ const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const paisesRoutes = require("./routes/paisesRoutes");
+const friendsRoutes = require("./routes/friendsRoutes");
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use("/static", express.static(path.join(__dirname, "static")));
 app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
 app.use("/api/paises", paisesRoutes);
+app.use("/friends", friendsRoutes);
 
 app.get("/", (req, res) => {
     res.send("Backend funcionando");

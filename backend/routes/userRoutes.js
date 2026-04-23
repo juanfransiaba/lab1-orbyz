@@ -10,12 +10,15 @@ const {
     getProfile,
     updateProfile,
     updateUserRole,
-    deleteProfile
+    deleteProfile,
+    searchUsers,
 } = require('../controllers/userController');
 
 router.get('/profile', verifyToken, getProfile);
 router.put('/profile', verifyToken, updateProfile);
 router.delete('/profile', verifyToken, deleteProfile);
+
+router.get('/search', verifyToken, searchUsers);
 
 router.get('/', verifyToken, isAdmin, getUsers);
 router.get('/:id', verifyToken, isAdmin, getUserById);
