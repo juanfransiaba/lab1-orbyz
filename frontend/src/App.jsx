@@ -5,6 +5,7 @@ import LandingPage from "./pages/LandingPage/LandingPage.jsx";
 import Register from "./pages/Register/Register.jsx";
 import MainMenu from "./pages/Menu/MainMenu.jsx";
 import Profile from "./pages/Profile/Profile.jsx";
+import Friends from "./pages/Profile/friends/Friends.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Admin from "./pages/Admin/Admin.jsx";
 import PlayOffline from "./pages/PlayOffline/PlayOffline.jsx";
@@ -36,6 +37,15 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <Profile />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/friends"
+                    element={
+                        <ProtectedRoute>
+                            <Friends />
                         </ProtectedRoute>
                     }
                 />

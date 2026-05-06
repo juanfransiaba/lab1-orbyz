@@ -367,7 +367,7 @@ function Profile() {
                                 Ver ranking
                             </Link>
 
-                            <Link to="/mainmenu" className="profile-side-button">
+                            <Link to="/friends" className="profile-side-button">
                                 Ver mis amigos
                             </Link>
 
