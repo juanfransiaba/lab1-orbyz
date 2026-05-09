@@ -405,6 +405,16 @@
     max-width: 100%;
     max-height: 100%;
     display: block;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.offline-game-layout-image.is-loading {
+    opacity: 0;
+    transform: scale(0.985);
+}
+
+.offline-game-layout-image.is-loaded {
+    opacity: 1;
 }
 
 .offline-game-layout-image.is-cover {
@@ -436,6 +446,46 @@
             rgba(219, 234, 254, 0.92) 0%,
             rgba(191, 219, 254, 0.74) 100%
     );
+}
+
+.offline-game-layout-image-loader {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: linear-gradient(
+            180deg,
+            rgba(248, 250, 252, 0.78) 0%,
+            rgba(239, 246, 255, 0.9) 100%
+    );
+    color: var(--color-secondary);
+    font-size: 0.96rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    backdrop-filter: blur(4px);
+}
+
+.offline-game-layout-image-spinner {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    border: 3px solid rgba(59, 130, 246, 0.18);
+    border-top-color: rgba(37, 99, 235, 0.92);
+    animation: offline-game-layout-spin 0.82s linear infinite;
+}
+
+@keyframes offline-game-layout-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .offline-game-layout-options {

@@ -9,6 +9,7 @@ const EMPTY_COUNTRY_FORM = {
 };
 
 const INITIAL_VISIBLE_COUNTRIES = 5;
+const CONTINENT_OPTIONS = ["Americas", "Europe", "Asia", "Africa", "Oceania"];
 
 function CountriesSection({
                               countries,
@@ -24,6 +25,16 @@ function CountriesSection({
     const [submitting, setSubmitting] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [showAll, setShowAll] = useState(false);
+
+    const continentOptions = useMemo(() => {
+        const currentContinent = String(form.continente || "").trim();
+
+        if (!currentContinent || CONTINENT_OPTIONS.includes(currentContinent)) {
+            return CONTINENT_OPTIONS;
+        }
+
+        return [...CONTINENT_OPTIONS, currentContinent];
+    }, [form.continente]);
 
     const filteredCountries = useMemo(() => {
         const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -148,13 +159,21 @@ function CountriesSection({
 
                         <label className="admin-field">
                             <span>Continente</span>
-                            <input
-                                type="text"
+                            <select
                                 name="continente"
                                 value={form.continente}
                                 onChange={handleChange}
                                 required
-                            />
+                            >
+                                <option value="" disabled>
+                                    Seleccionar continente
+                                </option>
+                                {continentOptions.map((continent) => (
+                                    <option key={continent} value={continent}>
+                                        {continent}
+                                    </option>
+                                ))}
+                            </select>
                         </label>
 
                         <label className="admin-field">

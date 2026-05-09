@@ -7,13 +7,23 @@ function shuffle(arr) {
     return [...arr].sort(() => Math.random() - 0.5);
 }
 
-function dedupeCountries(countries) {
+function normalizeKey(value) {
+    return String(value || "").trim().toLowerCase();
+}
+
+function getCountryIdentity(country) {
+    return normalizeKey(country?.id ?? country?.id_pais ?? country?.nombre);
+}
+
+function getPromptIdentity(country) {
+    return normalizeKey(country?.nombre);
+}
+
+function dedupeCountries(countries, getKey) {
     const seen = new Set();
 
     return countries.filter((country) => {
-        const key = String(
-            country?.id ?? country?.id_pais ?? country?.nombre ?? ""
-        ).toLowerCase();
+        const key = getKey(country);
 
         if (!key || seen.has(key)) {
             return false;
@@ -59,7 +69,8 @@ function CountryByShape() {
                 const valid = dedupeCountries(
                     countries.filter(
                         (country) => country.nombre && country.imagen_silueta
-                    )
+                    ),
+                    getPromptIdentity
                 );
 
                 if (valid.length < 4) {
@@ -98,7 +109,7 @@ function CountryByShape() {
 
         const correctCountry = poolRef.current.shift();
         const others = bankRef.current.filter(
-            (country) => country.id !== correctCountry.id
+            (country) => getCountryIdentity(country) !== getCountryIdentity(correctCountry)
         );
         const distractors = shuffle(others).slice(0, 3);
         const finalOptions = shuffle([correctCountry, ...distractors]);

@@ -10,6 +10,9 @@ import img5 from "../../assets/images/imagen5.jpg";
 import img6 from "../../assets/images/imagen6.jpg";
 import img7 from "../../assets/images/imagen7.jpg";
 
+const PASSWORD_REQUIREMENTS_TEXT =
+    "La contrasena debe tener al menos 8 caracteres, incluir un numero y un caracter especial.";
+
 function Register() {
     const images = [img1, img2, img3, img4, img5, img6, img7];
     const [current, setCurrent] = useState(0);
@@ -29,34 +32,28 @@ function Register() {
         }, 3000);
 
         return () => clearInterval(interval);
-    }, [images.length]);
+    }, [images.length, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
 
         if (!name || !email || !password || !confirmPassword) {
-            setError("Completá todos los campos.");
+            setError("Completa todos los campos.");
             return;
         }
 
         if (password !== confirmPassword) {
-            setError("Las contraseñas no coinciden.");
+            setError("Las contrasenas no coinciden.");
             return;
         }
 
-        if (password.length < 8) {
-            setError("La contraseña debe tener al menos 8 caracteres.");
-            return;
-        }
-
-        if (!/[0-9]/.test(password)) {
-            setError("La contraseña debe contener al menos un número.");
-            return;
-        }
-
-        if (!/[^A-Za-z0-9]/.test(password)) {
-            setError("La contraseña debe contener al menos un carácter especial.");
+        if (
+            password.length < 8 ||
+            !/[0-9]/.test(password) ||
+            !/[^A-Za-z0-9]/.test(password)
+        ) {
+            setError("La contrasena no cumple los requisitos indicados.");
             return;
         }
 
@@ -64,12 +61,14 @@ function Register() {
         const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
         if (!USERNAME_REGEX.test(name)) {
-            setError("El usuario debe tener entre 3 y 20 caracteres (solo letras, números y guión bajo).");
+            setError(
+                "El usuario debe tener entre 3 y 20 caracteres (solo letras, numeros y guion bajo)."
+            );
             return;
         }
 
         if (!EMAIL_REGEX.test(email)) {
-            setError("El email no tiene un formato válido.");
+            setError("El email no tiene un formato valido.");
             return;
         }
 
@@ -83,14 +82,24 @@ function Register() {
                 },
                 body: JSON.stringify({
                     username: name,
-                    email: email,
-                    password: password,
+                    email,
+                    password,
                 }),
             });
 
             const data = await response.json();
 
             if (!response.ok) {
+                if (
+                    data.message === "La contraseÃ±a es invÃ¡lida" ||
+                    data.message?.startsWith("La contraseÃ±a debe") ||
+                    data.message === "La contrasena es invalida" ||
+                    data.message?.startsWith("La contrasena debe")
+                ) {
+                    setError("La contrasena no cumple los requisitos indicados.");
+                    return;
+                }
+
                 setError(data.message || "No se pudo registrar el usuario.");
                 return;
             }
@@ -118,40 +127,43 @@ function Register() {
                             <input
                                 type="text"
                                 id="name"
-                                placeholder="Ingresá tu nombre"
+                                placeholder="Ingresa tu nombre"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                             />
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="email">Correo electrónico</label>
+                            <label htmlFor="email">Correo electronico</label>
                             <input
                                 type="email"
                                 id="email"
-                                placeholder="Ingresá tu correo"
+                                placeholder="Ingresa tu correo"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
                         </div>
 
-                        <div className="form-group">
-                            <label htmlFor="password">Contraseña</label>
+                        <div className="form-group register-password-group">
+                            <label htmlFor="password">Contrasena</label>
                             <input
                                 type="password"
                                 id="password"
-                                placeholder="Ingresá tu contraseña"
+                                placeholder="Ingresa tu contrasena"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
+                            <p className="register-field-hint register-password-hint">
+                                {PASSWORD_REQUIREMENTS_TEXT}
+                            </p>
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="confirm-password">Confirmar contraseña</label>
+                            <label htmlFor="confirm-password">Confirmar contrasena</label>
                             <input
                                 type="password"
                                 id="confirm-password"
-                                placeholder="Repetí tu contraseña"
+                                placeholder="Repeti tu contrasena"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                             />
@@ -166,7 +178,7 @@ function Register() {
 
                     <div className="register-links">
                         <p>
-                            ¿Ya tenés cuenta? <Link to="/login">Iniciar sesión</Link>
+                            Ya tenes cuenta? <Link to="/login">Iniciar sesion</Link>
                         </p>
                     </div>
                 </div>

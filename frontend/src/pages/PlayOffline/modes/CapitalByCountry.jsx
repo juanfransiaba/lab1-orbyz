@@ -17,13 +17,23 @@ function shuffle(arr) {
     return cloned;
 }
 
-function dedupeCountries(countries) {
+function normalizeKey(value) {
+    return String(value || "").trim().toLowerCase();
+}
+
+function getCountryIdentity(country) {
+    return normalizeKey(country?.id ?? country?.id_pais ?? country?.nombre);
+}
+
+function getPromptIdentity(country) {
+    return normalizeKey(country?.nombre);
+}
+
+function dedupeCountries(countries, getKey) {
     const seen = new Set();
 
     return countries.filter((country) => {
-        const key = String(
-            country?.id ?? country?.id_pais ?? country?.nombre ?? ""
-        ).toLowerCase();
+        const key = getKey(country);
 
         if (!key || seen.has(key)) {
             return false;
@@ -35,7 +45,9 @@ function dedupeCountries(countries) {
 }
 
 function pickOptions(correctCountry, bank) {
-    const others = bank.filter((country) => country.id !== correctCountry.id);
+    const others = bank.filter(
+        (country) => getCountryIdentity(country) !== getCountryIdentity(correctCountry)
+    );
     const distractors = shuffle(others).slice(0, 3);
 
     return shuffle([correctCountry, ...distractors]);
@@ -74,7 +86,8 @@ function CapitalByCountry() {
             try {
                 const all = await getRandomCountries(300);
                 const valid = dedupeCountries(
-                    all.filter((country) => country.nombre && country.capital)
+                    all.filter((country) => country.nombre && country.capital),
+                    getPromptIdentity
                 );
 
                 if (valid.length < 4) {

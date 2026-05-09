@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import "./OfflineGameLayout.css";
 
 function normalizeOption(option, index) {
@@ -46,6 +47,8 @@ function OfflineGameLayout({
     hideOptions = false,
     feedbackTone,
 }) {
+    const [imageStatus, setImageStatus] = useState("idle");
+    const [showImageLoader, setShowImageLoader] = useState(false);
     const normalizedOptions = options.map(normalizeOption);
     const hasCheckedAnswer =
         selectedOption !== undefined &&
@@ -53,6 +56,31 @@ function OfflineGameLayout({
         correctOption !== undefined &&
         correctOption !== null;
     const hasImage = Boolean(imageSrc);
+    const isImageLoading = hasImage && imageStatus === "loading";
+    const hasImageError = hasImage && imageStatus === "error";
+
+    useEffect(() => {
+        if (!imageSrc) {
+            setImageStatus("idle");
+            setShowImageLoader(false);
+            return;
+        }
+
+        setImageStatus("loading");
+    }, [imageSrc]);
+
+    useEffect(() => {
+        if (!isImageLoading) {
+            setShowImageLoader(false);
+            return;
+        }
+
+        const timeoutId = setTimeout(() => {
+            setShowImageLoader(true);
+        }, 300);
+
+        return () => clearTimeout(timeoutId);
+    }, [isImageLoading]);
 
     const resolvedFeedbackTone =
         feedbackTone ||
@@ -170,16 +198,30 @@ function OfflineGameLayout({
                             </div>
 
                             <div className="offline-game-layout-visual-block">
-                                {hasImage ? (
-                                    <img
-                                        src={imageSrc}
-                                        alt={imageAlt || "Referencia visual del desafio"}
-                                        className={`offline-game-layout-image ${
-                                            imageFit === "contain"
-                                                ? "is-contain"
-                                                : "is-cover"
-                                        }`}
-                                    />
+                                {hasImage && !hasImageError ? (
+                                    <>
+                                        <img
+                                            src={imageSrc}
+                                            alt={imageAlt || "Referencia visual del desafio"}
+                                            className={`offline-game-layout-image ${
+                                                imageFit === "contain"
+                                                    ? "is-contain"
+                                                    : "is-cover"
+                                            } ${isImageLoading ? "is-loading" : "is-loaded"}`}
+                                            onLoad={() => setImageStatus("loaded")}
+                                            onError={() => setImageStatus("error")}
+                                        />
+
+                                        {showImageLoader ? (
+                                            <div className="offline-game-layout-image-loader">
+                                                <span
+                                                    className="offline-game-layout-image-spinner"
+                                                    aria-hidden="true"
+                                                />
+                                                <span>Cargando imagen...</span>
+                                            </div>
+                                        ) : null}
+                                    </>
                                 ) : (
                                     <div className="offline-game-layout-image-placeholder">
                                         <span>Espacio para imagen o referencia</span>

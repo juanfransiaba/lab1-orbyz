@@ -12,7 +12,7 @@
     width: 100%;
     height: 88px;
     display: grid;
-    grid-template-columns: 140px 1fr 140px;
+    grid-template-columns: 140px 1fr 180px;
     align-items: center;
     padding: 0 28px;
     background: linear-gradient(
@@ -101,12 +101,17 @@
     min-width: 140px;
 }
 
-.profile-header-spacer {
-    width: 140px;
-    height: 100%;
+.profile-header-tools {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    min-width: 180px;
 }
 
 .profile-back-button,
+.profile-manage-button,
 .profile-friends-button,
 .profile-side-button,
 .profile-history-link {
@@ -114,7 +119,8 @@
 }
 
 .profile-back-button,
-.profile-friends-button {
+.profile-friends-button,
+.profile-manage-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -137,8 +143,16 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.profile-manage-button {
+    background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.22);
+}
+
 .profile-back-button:hover,
-.profile-friends-button:hover {
+.profile-friends-button:hover,
+.profile-manage-button:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 18px rgba(11, 30, 60, 0.16);
 }
@@ -497,7 +511,7 @@
 @media (max-width: 768px) {
     .profile-header {
         height: 88px;
-        grid-template-columns: 120px 1fr 120px;
+        grid-template-columns: 120px 1fr 150px;
         padding: 0 18px;
     }
 
@@ -515,8 +529,8 @@
         min-width: 120px;
     }
 
-    .profile-header-spacer {
-        width: 120px;
+    .profile-header-tools {
+        min-width: 150px;
     }
 
     .profile-main {

@@ -26,7 +26,7 @@ function Login() {
         }, 3000);
 
         return () => clearInterval(interval);
-    }, [images.length]);
+    }, [images.length, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

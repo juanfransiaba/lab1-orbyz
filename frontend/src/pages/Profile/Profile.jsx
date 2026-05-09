@@ -228,7 +228,13 @@ function Profile() {
                     <h1 className="profile-title">Perfil</h1>
                 </div>
 
-                <div className="profile-header-spacer" />
+                <div className="profile-header-tools">
+                    {user?.roles === "admin" && (
+                        <Link to="/admin" className="profile-manage-button">
+                            Gestionar
+                        </Link>
+                    )}
+                </div>
             </header>
 
             <main className="profile-main">

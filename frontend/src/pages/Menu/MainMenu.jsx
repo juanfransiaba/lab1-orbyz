@@ -91,11 +91,19 @@ function MainMenu() {
                 </div>
 
                 <div className="main-menu-header-actions">
-                    {user?.roles === "admin" && (
-                        <Link to="/admin" className="main-menu-manage-button">
-                            Gestionar
-                        </Link>
-                    )}
+                    <Link to="/profile" className="main-menu-profile-chip">
+                        <div className="main-menu-profile-avatar">
+                            <span>
+                                {user?.username ? user.username.charAt(0).toUpperCase() : "U"}
+                            </span>
+                        </div>
+
+                        <div className="main-menu-profile-copy">
+                            <span className="main-menu-profile-name">
+                                {user?.username || "Usuario"}
+                            </span>
+                        </div>
+                    </Link>
                 </div>
             </header>
 
