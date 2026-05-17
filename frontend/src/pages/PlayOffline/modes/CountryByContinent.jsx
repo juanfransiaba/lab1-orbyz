@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import OfflineGameLayout from "../components/OfflineGameLayout.jsx";
 import { getRandomCountriesByContinent } from "../../../services/AdminService.js";
+import { createMatch, updateMatch } from "../../../services/MatchService.js";
 
 const CONTINENT_MAP = {
     america: "Americas",
@@ -56,6 +57,8 @@ function CountryByContinent() {
 
     const poolRef = useRef([]);
     const bankRef = useRef([]);
+    const matchIdRef = useRef(null);
+    const matchPromiseRef = useRef(null);
 
     const [initialized, setInitialized] = useState(false);
     const [round, setRound] = useState(null);
@@ -84,6 +87,79 @@ function CountryByContinent() {
     const continentLabel = useMemo(
         () => CONTINENT_LABELS[continent?.toLowerCase?.() || ""],
         [continent]
+    );
+
+    const ensureMatchStarted = useCallback(async () => {
+        if (matchIdRef.current) {
+            return matchIdRef.current;
+        }
+
+        if (matchPromiseRef.current) {
+            return matchPromiseRef.current;
+        }
+
+        matchPromiseRef.current = createMatch({
+            mode: "country-by-continent",
+            continent: continentName,
+            total_rounds: bankRef.current.length || totalRounds,
+            lives_left: maxLives,
+            metadata: {
+                title: "Pais por continente",
+                continentLabel,
+            },
+        })
+            .then((match) => {
+                matchIdRef.current = match.id;
+                return match.id;
+            })
+            .catch(() => null)
+            .finally(() => {
+                matchPromiseRef.current = null;
+            });
+
+        return matchPromiseRef.current;
+    }, [continentLabel, continentName, totalRounds]);
+
+    const syncMatchProgress = useCallback(
+        async ({
+            nextCorrectCount = correctCount,
+            nextWrongCount = wrongCount,
+            nextLives = lives,
+            nextRoundNumber = roundNumber,
+            status = "ongoing",
+            metadata = {},
+        } = {}) => {
+            const matchId = await ensureMatchStarted();
+
+            if (!matchId) {
+                return;
+            }
+
+            try {
+                await updateMatch(matchId, {
+                    status,
+                    score: nextCorrectCount,
+                    correct_count: nextCorrectCount,
+                    wrong_count: nextWrongCount,
+                    round_reached: nextRoundNumber,
+                    total_rounds: totalRounds || bankRef.current.length,
+                    lives_left: nextLives,
+                    continent: continentName,
+                    metadata,
+                });
+            } catch {
+                // no-op
+            }
+        },
+        [
+            continentName,
+            correctCount,
+            ensureMatchStarted,
+            lives,
+            roundNumber,
+            totalRounds,
+            wrongCount,
+        ]
     );
 
     useEffect(() => {
@@ -130,6 +206,10 @@ function CountryByContinent() {
         setFeedback("");
 
         if (poolRef.current.length === 0) {
+            void syncMatchProgress({
+                status: "completed",
+                metadata: { resultState: "completed", continentLabel },
+            });
             setResultState("completed");
             setGameOver(true);
             setLoading(false);
@@ -144,6 +224,7 @@ function CountryByContinent() {
         const finalOptions = shuffle([correctCountry, ...distractors]);
 
         setRoundNumber((currentRound) => currentRound + 1);
+        void ensureMatchStarted();
 
         setRound({
             prompt: `${correctCountry.capital}`,
@@ -158,13 +239,13 @@ function CountryByContinent() {
         });
 
         setLoading(false);
-    }, []);
+    }, [ensureMatchStarted, syncMatchProgress]);
 
     useEffect(() => {
         if (initialized) {
             loadRound();
         }
-    }, [initialized, loadRound]);
+    }, [initialized]);
 
     if (!continentName) {
         return <Navigate to="/offline/continent-selection" replace />;
@@ -181,15 +262,22 @@ function CountryByContinent() {
         setCorrectOption(round.correctValue);
 
         if (isCorrect) {
-            setCorrectCount((currentCorrect) => currentCorrect + 1);
+            const nextCorrectCount = correctCount + 1;
+
+            setCorrectCount(nextCorrectCount);
             setFeedback(`Correcto. La capital de ${option} es ${round.prompt}.`);
+            void syncMatchProgress({
+                nextCorrectCount,
+                metadata: { continentLabel },
+            });
             return;
         }
 
-        setWrongCount((currentWrong) => currentWrong + 1);
-        setLives((currentLives) => {
-            const nextLives = Math.max(currentLives - 1, 0);
+        const nextWrongCount = wrongCount + 1;
+        const nextLives = Math.max(lives - 1, 0);
 
+        setWrongCount(nextWrongCount);
+        setLives(() => {
             if (nextLives === 0) {
                 setResultState("lost");
                 setGameOver(true);
@@ -197,11 +285,20 @@ function CountryByContinent() {
 
             return nextLives;
         });
+
+        void syncMatchProgress({
+            nextWrongCount,
+            nextLives,
+            status: nextLives === 0 ? "completed" : "ongoing",
+            metadata: nextLives === 0 ? { resultState: "lost", continentLabel } : { continentLabel },
+        });
         setFeedback(`Incorrecto. La respuesta correcta era ${round.correctValue}.`);
     }
 
     function handleReplay() {
         poolRef.current = shuffle([...bankRef.current]);
+        matchIdRef.current = null;
+        matchPromiseRef.current = null;
 
         setCorrectCount(0);
         setWrongCount(0);

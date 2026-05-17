@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import OfflineGameLayout from "../components/OfflineGameLayout.jsx";
 import { getCountries } from "../../../services/AdminService.js";
+import { createMatch, updateMatch } from "../../../services/MatchService.js";
 
 function shuffle(arr) {
     return [...arr].sort(() => Math.random() - 0.5);
@@ -39,6 +40,8 @@ function CountryByShape() {
 
     const poolRef = useRef([]);
     const bankRef = useRef([]);
+    const matchIdRef = useRef(null);
+    const matchPromiseRef = useRef(null);
 
     const [initialized, setInitialized] = useState(false);
     const [round, setRound] = useState(null);
@@ -58,6 +61,68 @@ function CountryByShape() {
     const [resultState, setResultState] = useState("lost");
 
     const maxLives = 3;
+
+    const ensureMatchStarted = useCallback(async () => {
+        if (matchIdRef.current) {
+            return matchIdRef.current;
+        }
+
+        if (matchPromiseRef.current) {
+            return matchPromiseRef.current;
+        }
+
+        matchPromiseRef.current = createMatch({
+            mode: "country-by-shape",
+            total_rounds: bankRef.current.length || totalRounds,
+            lives_left: maxLives,
+            metadata: {
+                title: "Pais por silueta",
+            },
+        })
+            .then((match) => {
+                matchIdRef.current = match.id;
+                return match.id;
+            })
+            .catch(() => null)
+            .finally(() => {
+                matchPromiseRef.current = null;
+            });
+
+        return matchPromiseRef.current;
+    }, [totalRounds]);
+
+    const syncMatchProgress = useCallback(
+        async ({
+            nextCorrectCount = correctCount,
+            nextWrongCount = wrongCount,
+            nextLives = lives,
+            nextRoundNumber = roundNumber,
+            status = "ongoing",
+            metadata = {},
+        } = {}) => {
+            const matchId = await ensureMatchStarted();
+
+            if (!matchId) {
+                return;
+            }
+
+            try {
+                await updateMatch(matchId, {
+                    status,
+                    score: nextCorrectCount,
+                    correct_count: nextCorrectCount,
+                    wrong_count: nextWrongCount,
+                    round_reached: nextRoundNumber,
+                    total_rounds: totalRounds || bankRef.current.length,
+                    lives_left: nextLives,
+                    metadata,
+                });
+            } catch {
+                // no-op
+            }
+        },
+        [correctCount, ensureMatchStarted, lives, roundNumber, totalRounds, wrongCount]
+    );
 
     useEffect(() => {
         const init = async () => {
@@ -101,6 +166,10 @@ function CountryByShape() {
         setFeedback("");
 
         if (poolRef.current.length === 0) {
+            void syncMatchProgress({
+                status: "completed",
+                metadata: { resultState: "completed" },
+            });
             setResultState("completed");
             setGameOver(true);
             setLoading(false);
@@ -115,6 +184,7 @@ function CountryByShape() {
         const finalOptions = shuffle([correctCountry, ...distractors]);
 
         setRoundNumber((currentRound) => currentRound + 1);
+        void ensureMatchStarted();
 
         setRound({
             prompt: "Que pais corresponde a esta silueta?",
@@ -135,7 +205,7 @@ function CountryByShape() {
         if (initialized) {
             loadRound();
         }
-    }, [initialized, loadRound]);
+    }, [initialized]);
 
     function handleSelectOption(option) {
         if (!round || selectedOption || gameOver) {
@@ -148,15 +218,21 @@ function CountryByShape() {
         setCorrectOption(round.correctValue);
 
         if (isCorrect) {
-            setCorrectCount((currentCorrect) => currentCorrect + 1);
+            const nextCorrectCount = correctCount + 1;
+
+            setCorrectCount(nextCorrectCount);
             setFeedback("Correcto. Reconociste la silueta.");
+            void syncMatchProgress({
+                nextCorrectCount,
+            });
             return;
         }
 
-        setWrongCount((currentWrong) => currentWrong + 1);
-        setLives((currentLives) => {
-            const nextLives = Math.max(currentLives - 1, 0);
+        const nextWrongCount = wrongCount + 1;
+        const nextLives = Math.max(lives - 1, 0);
 
+        setWrongCount(nextWrongCount);
+        setLives(() => {
             if (nextLives === 0) {
                 setResultState("lost");
                 setGameOver(true);
@@ -164,11 +240,20 @@ function CountryByShape() {
 
             return nextLives;
         });
+
+        void syncMatchProgress({
+            nextWrongCount,
+            nextLives,
+            status: nextLives === 0 ? "completed" : "ongoing",
+            metadata: nextLives === 0 ? { resultState: "lost" } : {},
+        });
         setFeedback(`Incorrecto. La respuesta correcta era ${round.correctValue}.`);
     }
 
     function handleReplay() {
         poolRef.current = shuffle([...bankRef.current]);
+        matchIdRef.current = null;
+        matchPromiseRef.current = null;
 
         setCorrectCount(0);
         setWrongCount(0);

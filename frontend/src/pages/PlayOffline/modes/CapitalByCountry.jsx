@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import OfflineGameLayout from "../components/OfflineGameLayout.jsx";
 import { getRandomCountries } from "../../../services/AdminService.js";
+import { createMatch, updateMatch } from "../../../services/MatchService.js";
 
 function shuffle(arr) {
     const cloned = [...arr];
@@ -58,6 +59,8 @@ function CapitalByCountry() {
 
     const poolRef = useRef([]);
     const bankRef = useRef([]);
+    const matchIdRef = useRef(null);
+    const matchPromiseRef = useRef(null);
 
     const [initialized, setInitialized] = useState(false);
     const [round, setRound] = useState(null);
@@ -77,6 +80,68 @@ function CapitalByCountry() {
     const [resultState, setResultState] = useState("lost");
 
     const maxLives = 3;
+
+    const ensureMatchStarted = useCallback(async () => {
+        if (matchIdRef.current) {
+            return matchIdRef.current;
+        }
+
+        if (matchPromiseRef.current) {
+            return matchPromiseRef.current;
+        }
+
+        matchPromiseRef.current = createMatch({
+            mode: "capital-by-country",
+            total_rounds: bankRef.current.length || totalRounds,
+            lives_left: maxLives,
+            metadata: {
+                title: "Capital por pais",
+            },
+        })
+            .then((match) => {
+                matchIdRef.current = match.id;
+                return match.id;
+            })
+            .catch(() => null)
+            .finally(() => {
+                matchPromiseRef.current = null;
+            });
+
+        return matchPromiseRef.current;
+    }, [totalRounds]);
+
+    const syncMatchProgress = useCallback(
+        async ({
+            nextCorrectCount = correctCount,
+            nextWrongCount = wrongCount,
+            nextLives = lives,
+            nextRoundNumber = roundNumber,
+            status = "ongoing",
+            metadata = {},
+        } = {}) => {
+            const matchId = await ensureMatchStarted();
+
+            if (!matchId) {
+                return;
+            }
+
+            try {
+                await updateMatch(matchId, {
+                    status,
+                    score: nextCorrectCount,
+                    correct_count: nextCorrectCount,
+                    wrong_count: nextWrongCount,
+                    round_reached: nextRoundNumber,
+                    total_rounds: totalRounds || bankRef.current.length,
+                    lives_left: nextLives,
+                    metadata,
+                });
+            } catch {
+                // no-op
+            }
+        },
+        [correctCount, ensureMatchStarted, lives, roundNumber, totalRounds, wrongCount]
+    );
 
     useEffect(() => {
         const init = async () => {
@@ -115,6 +180,10 @@ function CapitalByCountry() {
         setError("");
 
         if (poolRef.current.length === 0) {
+            void syncMatchProgress({
+                status: "completed",
+                metadata: { resultState: "completed" },
+            });
             setResultState("completed");
             setGameOver(true);
             setLoading(false);
@@ -127,6 +196,7 @@ function CapitalByCountry() {
         const options = pickOptions(correctCountry, bankRef.current);
 
         setRoundNumber((currentRound) => currentRound + 1);
+        void ensureMatchStarted();
         setRound({
             prompt: `${correctCountry.nombre}`,
             imageSrc: correctCountry.imagen_pais,
@@ -146,7 +216,7 @@ function CapitalByCountry() {
         if (initialized) {
             nextRound();
         }
-    }, [initialized, nextRound]);
+    }, [initialized]);
 
     function handleSelectOption(option) {
         if (!round || selectedOption || gameOver) {
@@ -159,15 +229,21 @@ function CapitalByCountry() {
         setCorrectOption(round.correctValue);
 
         if (isCorrect) {
-            setCorrectCount((currentCorrect) => currentCorrect + 1);
+            const nextCorrectCount = correctCount + 1;
+
+            setCorrectCount(nextCorrectCount);
             setFeedback("Correcto. Es la capital indicada");
+            void syncMatchProgress({
+                nextCorrectCount,
+            });
             return;
         }
 
-        setWrongCount((currentWrong) => currentWrong + 1);
-        setLives((currentLives) => {
-            const nextLives = Math.max(currentLives - 1, 0);
+        const nextWrongCount = wrongCount + 1;
+        const nextLives = Math.max(lives - 1, 0);
 
+        setWrongCount(nextWrongCount);
+        setLives(() => {
             if (nextLives === 0) {
                 setResultState("lost");
                 setGameOver(true);
@@ -175,11 +251,20 @@ function CapitalByCountry() {
 
             return nextLives;
         });
+
+        void syncMatchProgress({
+            nextWrongCount,
+            nextLives,
+            status: nextLives === 0 ? "completed" : "ongoing",
+            metadata: nextLives === 0 ? { resultState: "lost" } : {},
+        });
         setFeedback(`Incorrecto. La respuesta correcta era ${round.correctValue}.`);
     }
 
     function handleReplay() {
         poolRef.current = shuffle([...bankRef.current]);
+        matchIdRef.current = null;
+        matchPromiseRef.current = null;
 
         setCorrectCount(0);
         setWrongCount(0);

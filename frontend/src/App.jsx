@@ -6,6 +6,7 @@ import Register from "./pages/Register/Register.jsx";
 import MainMenu from "./pages/Menu/MainMenu.jsx";
 import Profile from "./pages/Profile/Profile.jsx";
 import Friends from "./pages/Profile/friends/Friends.jsx";
+import Ranking from "./pages/Ranking/Ranking.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Admin from "./pages/Admin/Admin.jsx";
 import PlayOffline from "./pages/PlayOffline/PlayOffline.jsx";
@@ -46,6 +47,24 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <Friends />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/ranking"
+                    element={
+                        <ProtectedRoute>
+                            <Ranking />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/history"
+                    element={
+                        <ProtectedRoute>
+                            <Ranking />
                         </ProtectedRoute>
                     }
                 />

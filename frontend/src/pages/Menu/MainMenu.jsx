@@ -35,9 +35,9 @@ function MainMenu() {
             image: perfilImg,
         },
         {
-            title: "Ranking",
-            eyebrow: "Competitivo",
-            description: "Seguí tu posición y compará tu rendimiento global.",
+            title: "Partidas",
+            eyebrow: "Actividad",
+            description: "Revisá partidas en curso, historial reciente y progreso guardado.",
             to: "/ranking",
             image: rankingImg,
         },

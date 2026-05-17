@@ -369,10 +369,6 @@ function Profile() {
                         <h3>Accesos rápidos</h3>
 
                         <div className="profile-side-actions">
-                            <Link to="/ranking" className="profile-side-button">
-                                Ver ranking
-                            </Link>
-
                             <Link to="/friends" className="profile-side-button">
                                 Ver mis amigos
                             </Link>
