@@ -1,0 +1,63 @@
+const { Server } = require("socket.io");
+const jwt = require("jsonwebtoken");
+const registerGameHandlers = require("./gameHandlers");
+const registerLobbyHandlers = require("./lobbyHandlers");
+const handleConnection = require("./connectionHandlers");
+
+function isAllowedLocalOrigin(origin) {
+    if (!origin) {
+        return true;
+    }
+    return /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+}
+
+function initSocket(server) {
+    const io = new Server(server, {
+        cors: {
+            origin(origin, callback) {
+                if (isAllowedLocalOrigin(origin)) {
+                    return callback(null, true);
+                }
+                return callback(new Error("Origen no permitido por CORS"));
+            },
+        },
+    });
+
+    // Autenticación por JWT
+    io.use((socket, next) => {
+        const token = socket.handshake.auth?.token;
+
+        if (!token) {
+            return next(new Error("Token faltante"));
+        }
+
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            socket.user = decoded; // { user_id, email, roles }
+            next();
+        } catch (error) {
+            next(new Error("Token inválido"));
+        }
+    });
+
+    io.on("connection", (socket) => {
+        console.log(
+            `Socket conectado: usuario ${socket.user.user_id} (socket ${socket.id})`
+        );
+
+        registerLobbyHandlers(io, socket);
+        registerGameHandlers(io, socket);
+        handleConnection(io, socket);
+
+        socket.on("disconnect", (reason) => {
+            console.log(
+                `Socket desconectado: usuario ${socket.user.user_id} (${reason})`
+            );
+        });
+    });
+
+    console.log("Socket.IO inicializado");
+    return io;
+}
+
+module.exports = initSocket;

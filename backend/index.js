@@ -1,6 +1,8 @@
 require("dotenv").config();
+const matchesRoutes = require("./routes/matchesRoutes");
 
 const path = require("path");
+const http = require("http");
 const express = require("express");
 const cors = require("cors");
 
@@ -8,7 +10,7 @@ const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const paisesRoutes = require("./routes/paisesRoutes");
 const friendsRoutes = require("./routes/friendsRoutes");
-const matchesRoutes = require("./routes/matchesRoutes");
+const initSocket = require("./socket");
 
 const app = express();
 
@@ -45,6 +47,10 @@ app.get("/", (req, res) => {
     res.send("Backend funcionando");
 });
 
-app.listen(process.env.PORT, () => {
+// ── Server HTTP + Socket.IO ──
+const server = http.createServer(app);
+initSocket(server);
+
+server.listen(process.env.PORT, () => {
     console.log(`Server corriendo en puerto ${process.env.PORT}`);
 });
