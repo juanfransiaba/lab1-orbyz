@@ -180,6 +180,8 @@ const getMyMatches = async (req, res) => {
 
             whereClause += " AND status = $2";
             baseParams.push(status);
+        } else {
+            whereClause += " AND status <> 'abandoned'";
         }
 
         const countResult = await pool.query(

@@ -7,7 +7,6 @@ const STATUS_FILTERS = [
     { id: "", label: "Todas" },
     { id: "ongoing", label: "En curso" },
     { id: "completed", label: "Finalizadas" },
-    { id: "abandoned", label: "Abandonadas" },
 ];
 
 const STATUS_META = {
@@ -62,6 +61,7 @@ function Ranking() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [processingMatchId, setProcessingMatchId] = useState(null);
+    const [discardCandidate, setDiscardCandidate] = useState(null);
 
     useEffect(() => {
         setStatus(isHistoryView ? "completed" : "");
@@ -93,14 +93,6 @@ function Ranking() {
     }, [page, status]);
 
     async function handleAbandonMatch(matchId) {
-        const confirmed = window.confirm(
-            "Esta partida dejara de figurar como en curso. Queres descartarla?"
-        );
-
-        if (!confirmed) {
-            return;
-        }
-
         setProcessingMatchId(matchId);
         setError("");
 
@@ -117,14 +109,17 @@ function Ranking() {
                 response.data.length === 0 && response.pagination.total > 0 && page > 1;
 
             if (shouldGoToPreviousPage) {
+                setDiscardCandidate(null);
                 setPage((currentPage) => Math.max(currentPage - 1, 1));
                 return;
             }
 
             setMatches(response.data);
             setPagination(response.pagination);
+            setDiscardCandidate(null);
         } catch (err) {
             setError(err.message || "No se pudo descartar la partida.");
+            setDiscardCandidate(null);
         } finally {
             setProcessingMatchId(null);
         }
@@ -167,7 +162,7 @@ function Ranking() {
                 <div className="ranking-header-glow" />
 
                 <div className="ranking-header-actions">
-                    <Link to="/profile" className="ranking-back-button">
+                    <Link to="/mainmenu" className="ranking-back-button">
                         Volver
                     </Link>
                 </div>
@@ -189,12 +184,6 @@ function Ranking() {
                     </div>
 
                     <div className="ranking-hero-stats">
-                        <article className="ranking-stat-card">
-                            <span className="ranking-stat-label">Resultados</span>
-                            <strong>{pagination.total}</strong>
-                            <span className="ranking-stat-note">coincidencias para este filtro</span>
-                        </article>
-
                         <article className="ranking-stat-card">
                             <span className="ranking-stat-label">En curso</span>
                             <strong>{summary.ongoing}</strong>
@@ -254,11 +243,25 @@ function Ranking() {
                                 const statusMeta =
                                     STATUS_META[match.status] || STATUS_META.ongoing;
                                 const isProcessing = processingMatchId === match.id;
+                                const roundLabel = match.totalRounds
+                                    ? `${match.roundReached} de ${match.totalRounds}`
+                                    : match.roundReached;
+                                const progressPercent = match.totalRounds
+                                    ? Math.min(
+                                          Math.max(
+                                              (Number(match.roundReached) /
+                                                  Number(match.totalRounds)) *
+                                                  100,
+                                              0
+                                          ),
+                                          100
+                                      )
+                                    : 0;
 
                                 return (
                                     <article className="ranking-match-card" key={match.id}>
                                         <div className="ranking-match-head">
-                                            <div>
+                                            <div className="ranking-match-title-block">
                                                 <span className="ranking-match-mode">
                                                     {getModeLabel(match.mode)}
                                                 </span>
@@ -269,67 +272,83 @@ function Ranking() {
                                                 </h3>
                                             </div>
 
-                                            <span
-                                                className={`ranking-status-badge ${statusMeta.className}`}
-                                            >
-                                                {statusMeta.label}
-                                            </span>
+                                            <div className="ranking-match-status-actions">
+                                                <span
+                                                    className={`ranking-status-badge ${statusMeta.className}`}
+                                                >
+                                                    {statusMeta.label}
+                                                </span>
+
+                                                {match.status === "ongoing" && (
+                                                    <div className="ranking-match-actions">
+                                                        <button
+                                                            type="button"
+                                                            className="ranking-inline-danger-button"
+                                                            onClick={() => setDiscardCandidate(match)}
+                                                            disabled={isProcessing}
+                                                        >
+                                                            {isProcessing
+                                                                ? "Descartando..."
+                                                                : "Descartar partida"}
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
 
-                                        {match.status === "ongoing" && (
-                                            <div className="ranking-match-actions">
-                                                <button
-                                                    type="button"
-                                                    className="ranking-inline-danger-button"
-                                                    onClick={() => handleAbandonMatch(match.id)}
-                                                    disabled={isProcessing}
-                                                >
-                                                    {isProcessing
-                                                        ? "Descartando..."
-                                                        : "Descartar partida"}
-                                                </button>
-                                            </div>
-                                        )}
+                                        <div className="ranking-match-body">
+                                            <div className="ranking-match-overview">
+                                                <div className="ranking-match-score">
+                                                    <span>Score</span>
+                                                    <strong>{match.score}</strong>
+                                                </div>
 
-                                        <dl className="ranking-match-meta">
-                                            <div>
-                                                <dt>Score</dt>
-                                                <dd>{match.score}</dd>
+                                                <div className="ranking-match-progress">
+                                                    <span>Progreso</span>
+                                                    <strong>Ronda {roundLabel}</strong>
+                                                    <div
+                                                        className="ranking-progress-track"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <span
+                                                            style={{
+                                                                width: `${progressPercent}%`,
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <dt>Aciertos</dt>
-                                                <dd>{match.correctCount}</dd>
-                                            </div>
-                                            <div>
-                                                <dt>Errores</dt>
-                                                <dd>{match.wrongCount}</dd>
-                                            </div>
-                                            <div>
-                                                <dt>Ronda</dt>
-                                                <dd>
-                                                    {match.roundReached}
-                                                    {match.totalRounds
-                                                        ? ` / ${match.totalRounds}`
-                                                        : ""}
-                                                </dd>
-                                            </div>
-                                            <div>
-                                                <dt>Vidas</dt>
-                                                <dd>{match.livesLeft}</dd>
-                                            </div>
-                                            <div>
-                                                <dt>Inicio</dt>
-                                                <dd>{formatDate(match.startedAt)}</dd>
-                                            </div>
-                                            <div>
-                                                <dt>Ultima actividad</dt>
-                                                <dd>{formatDate(match.updatedAt)}</dd>
-                                            </div>
-                                            <div>
-                                                <dt>Fin</dt>
-                                                <dd>{formatDate(match.finishedAt)}</dd>
-                                            </div>
-                                        </dl>
+
+                                            <dl className="ranking-match-stats">
+                                                <div className="is-correct">
+                                                    <dt>Aciertos</dt>
+                                                    <dd>{match.correctCount}</dd>
+                                                </div>
+                                                <div className="is-wrong">
+                                                    <dt>Errores</dt>
+                                                    <dd>{match.wrongCount}</dd>
+                                                </div>
+                                                <div className="is-lives">
+                                                    <dt>Vidas</dt>
+                                                    <dd>{match.livesLeft}</dd>
+                                                </div>
+                                            </dl>
+
+                                            <dl className="ranking-match-dates">
+                                                <div>
+                                                    <dt>Inicio</dt>
+                                                    <dd>{formatDate(match.startedAt)}</dd>
+                                                </div>
+                                                <div>
+                                                    <dt>Actividad</dt>
+                                                    <dd>{formatDate(match.updatedAt)}</dd>
+                                                </div>
+                                                <div>
+                                                    <dt>Fin</dt>
+                                                    <dd>{formatDate(match.finishedAt)}</dd>
+                                                </div>
+                                            </dl>
+                                        </div>
                                     </article>
                                 );
                             })}
@@ -369,6 +388,46 @@ function Ranking() {
                     </button>
                 </section>
             </main>
+
+            {discardCandidate && (
+                <div
+                    className="ranking-confirm-overlay"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="ranking-discard-title"
+                >
+                    <div className="ranking-confirm-modal">
+                        <span className="ranking-confirm-kicker">
+                            {getModeLabel(discardCandidate.mode)}
+                        </span>
+                        <h2 id="ranking-discard-title">Descartar partida</h2>
+                        <p>
+                            Esta partida va a dejar de aparecer en tus partidas guardadas.
+                        </p>
+
+                        <div className="ranking-confirm-actions">
+                            <button
+                                type="button"
+                                className="ranking-confirm-secondary"
+                                onClick={() => setDiscardCandidate(null)}
+                                disabled={processingMatchId === discardCandidate.id}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                className="ranking-confirm-danger"
+                                onClick={() => handleAbandonMatch(discardCandidate.id)}
+                                disabled={processingMatchId === discardCandidate.id}
+                            >
+                                {processingMatchId === discardCandidate.id
+                                    ? "Descartando..."
+                                    : "Descartar"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

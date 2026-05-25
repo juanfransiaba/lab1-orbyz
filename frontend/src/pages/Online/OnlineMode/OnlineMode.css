@@ -1,0 +1,347 @@
+.online-mode-page {
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at 10% 12%, rgba(20, 184, 166, 0.16), transparent 24%),
+        radial-gradient(circle at 86% 18%, rgba(37, 99, 235, 0.12), transparent 28%),
+        linear-gradient(180deg, #eef6ff 0%, #f8fbff 52%, #eef7f5 100%);
+    color: var(--color-text);
+}
+
+.online-mode-header {
+    position: relative;
+    width: 100%;
+    height: 88px;
+    display: grid;
+    grid-template-columns: 140px 1fr 140px;
+    align-items: center;
+    padding: 0 22px;
+    overflow: hidden;
+    background: linear-gradient(
+        135deg,
+        rgba(8, 21, 44, 0.98) 0%,
+        rgba(14, 45, 72, 0.98) 48%,
+        rgba(24, 94, 108, 0.94) 100%
+    );
+    box-shadow: 0 10px 30px rgba(11, 30, 60, 0.2);
+}
+
+.online-mode-header::before {
+    content: "";
+    position: absolute;
+    inset: 1px 1px auto 1px;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.35) 18%,
+        rgba(255, 255, 255, 0.12) 50%,
+        rgba(255, 255, 255, 0.35) 82%,
+        rgba(255, 255, 255, 0) 100%
+    );
+}
+
+.online-mode-header::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(148, 163, 184, 0.24) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+}
+
+.online-mode-header-glow {
+    position: absolute;
+    inset: -42% auto auto 50%;
+    width: 360px;
+    height: 190px;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, rgba(45, 212, 191, 0.2) 0%, rgba(45, 212, 191, 0) 72%);
+    pointer-events: none;
+}
+
+.online-mode-header-actions,
+.online-mode-header-spacer {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    min-width: 140px;
+}
+
+.online-mode-back-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.94);
+    font-size: 0.94rem;
+    font-weight: 700;
+    cursor: default;
+    transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.online-mode-back-button:hover {
+    background: rgba(255, 255, 255, 0.18);
+    transform: translateY(-1px);
+}
+
+.online-mode-title-wrap {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    text-align: center;
+}
+
+.online-mode-title-kicker {
+    color: rgba(226, 232, 240, 0.72);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+}
+
+.online-mode-title {
+    margin: 0;
+    color: var(--color-text-light);
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-shadow: 0 6px 20px rgba(15, 23, 42, 0.28);
+}
+
+.online-mode-main {
+    width: min(1180px, calc(100% - 36px));
+    min-height: calc(100vh - 88px);
+    margin: 0 auto;
+    padding: 26px 0 30px;
+    display: flex;
+    align-items: stretch;
+}
+
+.online-mode-options {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.online-mode-card {
+    position: relative;
+    overflow: hidden;
+    min-height: min(620px, calc(100vh - 144px));
+    display: flex;
+    align-items: flex-end;
+    padding: 0;
+    border: 1px solid rgba(12, 32, 62, 0.24);
+    border-radius: 18px;
+    background: #102845;
+    box-shadow: 0 20px 42px rgba(15, 32, 61, 0.14);
+    text-align: left;
+    cursor: pointer;
+    transition:
+        transform 0.22s ease,
+        box-shadow 0.22s ease,
+        border-color 0.22s ease;
+}
+
+.online-mode-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(20, 184, 166, 0.58);
+    box-shadow: 0 26px 54px rgba(15, 32, 61, 0.18);
+}
+
+.online-mode-card-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    transform: scale(1.02);
+    filter: contrast(1.04) saturate(1.04);
+    transition: transform 0.35s ease, filter 0.35s ease;
+}
+
+.online-mode-card:hover .online-mode-card-image {
+    transform: scale(1.06);
+    filter: contrast(1.08) saturate(1.08);
+}
+
+.online-mode-card-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(180deg, rgba(8, 21, 44, 0.04) 0%, rgba(8, 21, 44, 0.78) 100%),
+        linear-gradient(135deg, rgba(20, 184, 166, 0.26) 0%, rgba(20, 184, 166, 0) 48%);
+}
+
+.online-mode-card--join .online-mode-card-overlay {
+    background:
+        linear-gradient(180deg, rgba(8, 21, 44, 0.06) 0%, rgba(8, 21, 44, 0.8) 100%),
+        linear-gradient(135deg, rgba(59, 130, 246, 0.28) 0%, rgba(59, 130, 246, 0) 48%);
+}
+
+.online-mode-card-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    padding: 34px;
+    color: #ffffff;
+}
+
+.online-mode-card-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: rgba(20, 184, 166, 0.2);
+    border: 1px solid rgba(153, 246, 228, 0.2);
+    color: #ccfbf1;
+    font-size: 0.74rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.online-mode-card--join .online-mode-card-eyebrow {
+    background: rgba(96, 165, 250, 0.22);
+    border-color: rgba(191, 219, 254, 0.22);
+    color: #dbeafe;
+}
+
+.online-mode-card h2 {
+    margin: 20px 0 0;
+    max-width: 12ch;
+    color: #ffffff;
+    font-size: clamp(2.1rem, 4.6vw, 4.4rem);
+    font-weight: 900;
+    line-height: 0.98;
+}
+
+.online-mode-card p {
+    margin: 16px 0 0;
+    max-width: 34ch;
+    color: rgba(226, 232, 240, 0.86);
+    font-size: 1rem;
+    font-weight: 650;
+    line-height: 1.48;
+}
+
+.online-mode-card-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin: 28px 0 0;
+}
+
+.online-mode-card-meta div {
+    min-height: 96px;
+    padding: 17px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(10px);
+}
+
+.online-mode-card-meta dt {
+    color: rgba(226, 232, 240, 0.72);
+    font-size: 0.74rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.online-mode-card-meta dd {
+    margin: 10px 0 0;
+    color: #ffffff;
+    font-size: 1.12rem;
+    font-weight: 900;
+}
+
+@media (max-width: 920px) {
+    .online-mode-page {
+        min-height: 100vh;
+    }
+
+    .online-mode-main {
+        min-height: 0;
+    }
+
+    .online-mode-options {
+        grid-template-columns: 1fr;
+    }
+
+    .online-mode-card {
+        min-height: 420px;
+    }
+}
+
+@media (max-width: 768px) {
+    .online-mode-header {
+        grid-template-columns: 120px 1fr 120px;
+        padding: 0 18px;
+    }
+
+    .online-mode-title-kicker {
+        font-size: 0.6rem;
+        letter-spacing: 0.2em;
+    }
+
+    .online-mode-title {
+        font-size: 1.72rem;
+        letter-spacing: 0.1em;
+    }
+
+    .online-mode-main {
+        width: min(100%, calc(100% - 24px));
+        padding: 18px 0 24px;
+    }
+}
+
+@media (max-width: 560px) {
+    .online-mode-header {
+        height: auto;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 16px;
+    }
+
+    .online-mode-header-actions,
+    .online-mode-header-spacer {
+        min-width: 0;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .online-mode-header-spacer {
+        display: none;
+    }
+
+    .online-mode-back-button {
+        width: 100%;
+    }
+
+    .online-mode-card {
+        min-height: 390px;
+    }
+
+    .online-mode-card-content {
+        padding: 22px;
+    }
+
+    .online-mode-card-meta {
+        grid-template-columns: 1fr;
+    }
+}

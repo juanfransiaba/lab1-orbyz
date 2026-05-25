@@ -10,6 +10,7 @@ import Ranking from "./pages/Ranking/Ranking.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Admin from "./pages/Admin/Admin.jsx";
 import PlayOffline from "./pages/PlayOffline/PlayOffline.jsx";
+import OnlineMode from "./pages/Online/OnlineMode/OnlineMode.jsx";
 import ContinentSelection from "./pages/PlayOffline/ContinentSelection.jsx";
 import CountryByCapital from "./pages/PlayOffline/modes/CountryByCapital.jsx";
 import CapitalByCountry from "./pages/PlayOffline/modes/CapitalByCountry.jsx";
@@ -83,6 +84,15 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <PlayOffline />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/online"
+                    element={
+                        <ProtectedRoute>
+                            <OnlineMode />
                         </ProtectedRoute>
                     }
                 />
