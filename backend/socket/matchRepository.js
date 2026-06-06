@@ -24,12 +24,19 @@ async function saveMatchResults(room, gameOver) {
         const opponent = players.find((p) => p.userId !== player.userId);
 
         // Esto es lo que linkea las 2 filas de la misma partida
+        const raw = room.players.get(player.userId) || {};
+
         const metadata = {
             is_online: true,
             room_code: room.code,
             opponent_user_id: opponent.userId,
             opponent_username: opponent.username,
             result: resultFor(player, gameOver),
+            powerups: {
+                extra_lives_awarded: raw.extraLivesAwarded ?? 0,
+                fifty_fifty_used: raw.powerupsUsed?.fiftyFifty ?? 0,
+                freeze_used: raw.powerupsUsed?.freeze ?? 0,
+            },
         };
 
         try {
@@ -90,6 +97,11 @@ async function saveAbandonedMatch(room, abandonerUserId) {
             opponent_user_id: opponent.userId,
             opponent_username: opponent.username,
             result: abandoned ? "loss" : "win",
+            powerups: {
+                extra_lives_awarded: player.extraLivesAwarded ?? 0,
+                fifty_fifty_used: player.powerupsUsed?.fiftyFifty ?? 0,
+                freeze_used: player.powerupsUsed?.freeze ?? 0,
+            },
         };
 
         try {

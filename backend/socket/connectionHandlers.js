@@ -31,6 +31,9 @@ function playerProgress(player) {
         lives: player.lives ?? 0,
         currentIndex: player.currentIndex ?? 0,
         finished: player.finished ?? false,
+        correctStreak: player.correctStreak ?? 0,
+        powerups: player.powerups ?? { fiftyFifty: 0, freeze: 0 },
+        frozenUntil: player.frozenUntil ?? 0,
     };
 }
 
@@ -41,6 +44,11 @@ function endMatchByAbandon(io, room, abandonerUserId) {
     }
 
     room.status = "finished";
+
+    if (room.matchTimer) {
+        clearTimeout(room.matchTimer);
+        room.matchTimer = null;
+    }
 
     io.to(room.code).emit("game:abandoned", {
         abandonerUserId,
@@ -87,6 +95,8 @@ function handleConnection(io, socket) {
                 totalQuestions: room.questions.length,
                 question: currentQuestion,
                 players: Array.from(room.players.values()).map(playerProgress),
+                matchEndsAt: room.matchEndsAt,
+                messages: room.messages || [],
             });
 
             // Avisarle al rival que volvió

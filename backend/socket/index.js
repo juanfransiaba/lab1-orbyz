@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const registerGameHandlers = require("./gameHandlers");
 const registerLobbyHandlers = require("./lobbyHandlers");
 const handleConnection = require("./connectionHandlers");
+const registerChatHandlers = require("./chatHandlers");
 
 function isAllowedLocalOrigin(origin) {
     if (!origin) {
@@ -47,6 +48,7 @@ function initSocket(server) {
 
         registerLobbyHandlers(io, socket);
         registerGameHandlers(io, socket);
+        registerChatHandlers(io, socket);
         handleConnection(io, socket);
 
         socket.on("disconnect", (reason) => {

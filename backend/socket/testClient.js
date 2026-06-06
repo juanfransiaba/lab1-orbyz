@@ -3,11 +3,11 @@ const { io } = require("socket.io-client");
 
 const tokenA = process.argv[2];
 const tokenB = process.argv[3];
-const scenario = process.argv[4] || "reconnect"; // "reconnect" o "abandon"
+const scenario = process.argv[4] || "reconnect"; // "reconnect" | "abandon" | "powerups"
 
 if (!tokenA || !tokenB) {
     console.error(
-        "Uso: node socket/testClient.js <TOKEN_A> <TOKEN_B> [reconnect|abandon]"
+        "Uso: node socket/testClient.js <TOKEN_A> <TOKEN_B> [reconnect|abandon|powerups]"
     );
     process.exit(1);
 }
@@ -36,6 +36,18 @@ function makePlayer(label, token) {
         console.log(`[${label}] rival reconectado (userId ${d.userId})`)
     );
 
+    // ── Eventos de power-ups ──
+    socket.on("powerup:awarded", (d) =>
+        console.log(
+            `[${label}] POWER-UP: userId ${d.userId} ganó ${d.type} (vidas ${d.lives})`
+        )
+    );
+    socket.on("player:frozen", (d) =>
+        console.log(
+            `[${label}] CONGELADO: userId ${d.userId} por ${d.durationMs / 1000}s (lo congeló ${d.by})`
+        )
+    );
+
     socket.on("game:reconnected", (state) => {
         console.log(`[${label}] RECONECTADO a la partida ${state.room.code}`);
         if (state.question) {
@@ -60,11 +72,22 @@ function makePlayer(label, token) {
 
         socket.emit("game:answer", { index, option: pickRandom(options) }, (res) => {
             if (res.error) {
+                // Si estoy congelado, reintento cuando pase el freeze
+                if (res.frozenUntil) {
+                    const wait = Math.max(0, res.frozenUntil - Date.now()) + 200;
+                    console.log(
+                        `[${label}] congelado, reintento la pregunta ${index} en ${Math.ceil(wait / 1000)}s`
+                    );
+                    setTimeout(() => answer(index, options), wait);
+                    return;
+                }
                 console.error(`[${label}] error al responder:`, res.error);
                 return;
             }
             console.log(
-                `[${label}] pregunta ${index}: ${res.correct ? "BIEN" : "MAL"} (vidas ${res.lives})`
+                `[${label}] pregunta ${index}: ${res.correct ? "BIEN" : "MAL"} ` +
+                `(vidas ${res.lives}, racha ${res.correctStreak})` +
+                `${res.extraLife ? " +VIDA EXTRA" : ""}`
             );
             if (res.nextQuestion) {
                 setTimeout(
@@ -77,8 +100,39 @@ function makePlayer(label, token) {
         });
     }
 
-    socket.on("game:started", ({ question, totalQuestions }) => {
-        console.log(`[${label}] partida iniciada (${totalQuestions} preguntas)`);
+    function usePowerup(type) {
+        socket.emit("game:usePowerup", { type }, (res) => {
+            if (res.error) {
+                return console.error(`[${label}] error power-up ${type}:`, res.error);
+            }
+            if (type === "fifty_fifty") {
+                console.log(
+                    `[${label}] usó 50/50 -> quita opciones [${res.removedIndices}] ` +
+                    `(quedan: 50/50 ${res.powerups.fiftyFifty}, freeze ${res.powerups.freeze})`
+                );
+            } else {
+                console.log(
+                    `[${label}] usó FREEZE -> rival congelado ` +
+                    `(quedan: 50/50 ${res.powerups.fiftyFifty}, freeze ${res.powerups.freeze})`
+                );
+            }
+        });
+    }
+
+    socket.on("game:started", ({ question, totalQuestions, matchEndsAt }) => {
+        console.log(
+            `[${label}] partida iniciada (${totalQuestions} preguntas, ` +
+            `termina ${new Date(matchEndsAt).toLocaleTimeString()})`
+        );
+
+        // Escenario power-ups: A usa 50/50 sobre su 1ra pregunta y congela a B
+        if (scenario === "powerups" && label === "A") {
+            usePowerup("fifty_fifty");
+            usePowerup("freeze");
+            setTimeout(() => answer(question.index, question.options), 300);
+            return;
+        }
+
         answer(question.index, question.options);
     });
 
@@ -107,22 +161,24 @@ playerA.on("connect", () => {
                             return console.error("[A] error al empezar:", res3.error);
                         console.log("[A] partida arrancada");
 
-                        // A los 2.5s, B se desconecta
-                        setTimeout(() => {
-                            console.log(
-                                `[B] >>> simulando desconexión (escenario: ${scenario}) <<<`
-                            );
-                            playerB.disconnect();
+                        // Solo los escenarios de conexión simulan desconexión
+                        if (scenario === "reconnect" || scenario === "abandon") {
+                            setTimeout(() => {
+                                console.log(
+                                    `[B] >>> simulando desconexión (escenario: ${scenario}) <<<`
+                                );
+                                playerB.disconnect();
 
-                            if (scenario === "abandon") {
-                                console.log("[B] >>> NO se reconecta <<<");
-                            } else {
-                                setTimeout(() => {
-                                    console.log("[B] >>> reconectando <<<");
-                                    playerB.connect();
-                                }, 3000);
-                            }
-                        }, 500);
+                                if (scenario === "abandon") {
+                                    console.log("[B] >>> NO se reconecta <<<");
+                                } else {
+                                    setTimeout(() => {
+                                        console.log("[B] >>> reconectando <<<");
+                                        playerB.connect();
+                                    }, 3000);
+                                }
+                            }, 500);
+                        }
                     });
                 }, 500);
             });
