@@ -10,6 +10,7 @@ const ONLINE_OPTIONS = [
         title: "Crear partida online",
         description: "Genera una sala privada para invitar a otro jugador.",
         image: createImage,
+        route: "/online/create",
         meta: [
             { label: "Sala", value: "Privada" },
             { label: "Rol", value: "Anfitrion" },
@@ -21,6 +22,7 @@ const ONLINE_OPTIONS = [
         title: "Unirse a partida online",
         description: "Ingresa con el codigo que te compartieron.",
         image: joinImage,
+        route: "/online/join",
         meta: [
             { label: "Acceso", value: "Codigo" },
             { label: "Rol", value: "Invitado" },
@@ -59,9 +61,11 @@ function OnlineMode() {
             <main className="online-mode-main">
                 <section className="online-mode-options" aria-label="Opciones online">
                     {ONLINE_OPTIONS.map((option) => (
-                        <article
+                        <button
                             key={option.id}
+                            type="button"
                             className={`online-mode-card online-mode-card--${option.id}`}
+                            onClick={() => navigate(option.route)}
                         >
                             <img
                                 src={option.image}
@@ -87,7 +91,7 @@ function OnlineMode() {
                                     ))}
                                 </dl>
                             </div>
-                        </article>
+                        </button>
                     ))}
                 </section>
             </main>

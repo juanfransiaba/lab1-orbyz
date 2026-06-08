@@ -11,6 +11,9 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Admin from "./pages/Admin/Admin.jsx";
 import PlayOffline from "./pages/PlayOffline/PlayOffline.jsx";
 import OnlineMode from "./pages/Online/OnlineMode/OnlineMode.jsx";
+import CreateOnlineMatch from "./pages/Online/CreateOnlineMatch/CreateOnlineMatch.jsx";
+import JoinOnlineMatch from "./pages/Online/JoinOnlineMatch/JoinOnlineMatch.jsx";
+import OnlineMatchCode from "./pages/Online/OnlineMatchCode/OnlineMatchCode.jsx";
 import ContinentSelection from "./pages/PlayOffline/ContinentSelection.jsx";
 import CountryByCapital from "./pages/PlayOffline/modes/CountryByCapital.jsx";
 import CapitalByCountry from "./pages/PlayOffline/modes/CapitalByCountry.jsx";
@@ -93,6 +96,33 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <OnlineMode />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/online/create"
+                    element={
+                        <ProtectedRoute>
+                            <CreateOnlineMatch />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/online/join"
+                    element={
+                        <ProtectedRoute>
+                            <JoinOnlineMatch />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/online/match"
+                    element={
+                        <ProtectedRoute>
+                            <OnlineMatchCode />
                         </ProtectedRoute>
                     }
                 />

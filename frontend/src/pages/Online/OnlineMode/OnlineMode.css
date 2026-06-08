@@ -84,7 +84,7 @@
     color: rgba(255, 255, 255, 0.94);
     font-size: 0.94rem;
     font-weight: 700;
-    cursor: default;
+    cursor: pointer;
     transition: background 0.18s ease, transform 0.18s ease;
 }
 
