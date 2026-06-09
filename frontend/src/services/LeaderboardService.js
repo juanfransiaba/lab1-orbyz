@@ -27,12 +27,23 @@ function normalizePlayer(player, index) {
         id: player?.user_id ?? player?.userId ?? player?.id ?? `player-${index}`,
         username: player?.username ?? player?.nombre ?? "Jugador",
         score: Number(player?.score) || 0,
+        isMe: Boolean(player?.is_me ?? player?.isMe),
         rank: index + 1,
     };
 }
 
 export async function getLeaderboard() {
-    const data = await requestJSON("/user/ranking");
+    const data = await requestJSON("/ranking/global");
+    return Array.isArray(data) ? data.map(normalizePlayer) : [];
+}
+
+export async function getGlobalLeaderboard() {
+    const data = await requestJSON("/ranking/global");
+    return Array.isArray(data) ? data.map(normalizePlayer) : [];
+}
+
+export async function getFriendsLeaderboard() {
+    const data = await requestJSON("/ranking/friends");
     return Array.isArray(data) ? data.map(normalizePlayer) : [];
 }
 

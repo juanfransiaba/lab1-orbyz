@@ -16,7 +16,6 @@ const MODE_OPTIONS = [
         imageAlt: "Vista urbana para el modo pais por capital",
         imageSrc: capitalImage,
         toneClass: "online-room-mode-card--capital",
-        tag: "Capitales",
     },
     {
         id: "capital-by-country",
@@ -25,7 +24,6 @@ const MODE_OPTIONS = [
         imageAlt: "Ciudad para el modo capital por pais",
         imageSrc: countryImage,
         toneClass: "online-room-mode-card--country",
-        tag: "Memoria",
     },
     {
         id: "country-by-shape",
@@ -34,7 +32,6 @@ const MODE_OPTIONS = [
         imageAlt: "Paisaje para el modo pais por silueta",
         imageSrc: shapeImage,
         toneClass: "online-room-mode-card--shape",
-        tag: "Visual",
     },
     {
         id: "country-by-continent",
@@ -43,7 +40,6 @@ const MODE_OPTIONS = [
         imageAlt: "Vista costera para el modo pais por continente",
         imageSrc: continentImage,
         toneClass: "online-room-mode-card--continent",
-        tag: "Regiones",
     },
 ];
 
@@ -131,10 +127,6 @@ function CreateOnlineMatch() {
                     className="online-room-panel online-room-create-panel"
                     onSubmit={handleCreateRoom}
                 >
-                    <div className="online-room-panel-head">
-                        <h2>Elegir modo de juego</h2>
-                    </div>
-
                     <div className="online-room-mode-grid">
                         {MODE_OPTIONS.map((option) => (
                             <button
@@ -152,9 +144,6 @@ function CreateOnlineMatch() {
                                         className="online-room-mode-card-image"
                                     />
                                     <div className="online-room-mode-card-image-overlay" />
-                                    <span className="online-room-mode-card-tag">
-                                        {option.tag}
-                                    </span>
                                 </div>
 
                                 <div className="online-room-mode-card-content">

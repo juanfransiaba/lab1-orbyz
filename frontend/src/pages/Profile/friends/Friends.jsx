@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import NotificationBell from "../../../components/NotificationBell.jsx";
 import {
     acceptFriendRequest,
     getFriends,
@@ -228,7 +229,9 @@ function Friends() {
                     <h1 className="friends-title">Amigos</h1>
                 </div>
 
-                <div className="friends-header-spacer" />
+                <div className="friends-header-tools">
+                    <NotificationBell />
+                </div>
             </header>
 
             <main className="friends-main">

@@ -1,7 +1,29 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { getCurrentProfile, getLeaderboard } from "../../services/LeaderboardService.js";
+import NotificationBell from "../../components/NotificationBell.jsx";
+import {
+    getCurrentProfile,
+    getFriendsLeaderboard,
+    getGlobalLeaderboard,
+} from "../../services/LeaderboardService.js";
 import "./Leaderboard.css";
+
+const RANKING_TABS = [
+    {
+        id: "global",
+        label: "Global",
+        eyebrow: "Top 100",
+        title: "Ranking global",
+        description: "Los jugadores con mas puntos de todo ORBYZ.",
+    },
+    {
+        id: "friends",
+        label: "Amigos",
+        eyebrow: "Tu red",
+        title: "Ranking de amigos",
+        description: "Vos y tus amigos aceptados ordenados por puntos.",
+    },
+];
 
 function getInitials(username) {
     return String(username || "J")
@@ -11,6 +33,7 @@ function getInitials(username) {
 }
 
 function Leaderboard() {
+    const [activeTab, setActiveTab] = useState("global");
     const [players, setPlayers] = useState([]);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -23,7 +46,9 @@ function Leaderboard() {
 
             try {
                 const [leaderboardData, profileData] = await Promise.all([
-                    getLeaderboard(),
+                    activeTab === "friends"
+                        ? getFriendsLeaderboard()
+                        : getGlobalLeaderboard(),
                     getCurrentProfile(),
                 ]);
 
@@ -37,14 +62,18 @@ function Leaderboard() {
         };
 
         void loadLeaderboard();
-    }, []);
+    }, [activeTab]);
+
+    const currentTab = RANKING_TABS.find((tab) => tab.id === activeTab) || RANKING_TABS[0];
 
     const currentPlayer = useMemo(() => {
         if (!profile) {
             return null;
         }
 
-        return players.find((player) => String(player.id) === String(profile.user_id));
+        return players.find(
+            (player) => player.isMe || String(player.id) === String(profile.user_id)
+        );
     }, [players, profile]);
 
     const podium = players.slice(0, 3);
@@ -66,18 +95,17 @@ function Leaderboard() {
                     <h1 className="leaderboard-title">Ranking</h1>
                 </div>
 
-                <div className="leaderboard-header-spacer" />
+                <div className="leaderboard-header-tools">
+                    <NotificationBell />
+                </div>
             </header>
 
             <main className="leaderboard-main">
                 <section className="leaderboard-hero">
                     <div className="leaderboard-hero-copy">
-                        <span className="leaderboard-eyebrow">Tabla global</span>
-                        <h2>Puntajes de jugadores</h2>
-                        <p>
-                            El ranking ordena a los usuarios por score total para ver quien
-                            esta arriba en ORBYZ.
-                        </p>
+                        <span className="leaderboard-eyebrow">{currentTab.eyebrow}</span>
+                        <h2>{currentTab.title}</h2>
+                        <p>{currentTab.description}</p>
                     </div>
 
                     <div className="leaderboard-player-summary">
@@ -85,6 +113,19 @@ function Leaderboard() {
                         <strong>{currentPlayer ? `#${currentPlayer.rank}` : "-"}</strong>
                         <p>{profile?.username || "Usuario"}</p>
                     </div>
+                </section>
+
+                <section className="leaderboard-tabs" aria-label="Tipo de ranking">
+                    {RANKING_TABS.map((tab) => (
+                        <button
+                            type="button"
+                            key={tab.id}
+                            className={activeTab === tab.id ? "is-active" : ""}
+                            onClick={() => setActiveTab(tab.id)}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
                 </section>
 
                 <section className="leaderboard-panel">
@@ -101,7 +142,12 @@ function Leaderboard() {
                             <div className="leaderboard-podium" aria-label="Podio">
                                 {podium.map((player) => (
                                     <article
-                                        className={`leaderboard-podium-card rank-${player.rank}`}
+                                        className={`leaderboard-podium-card rank-${player.rank} ${
+                                            player.isMe ||
+                                            String(player.id) === String(profile?.user_id)
+                                                ? "is-current-user"
+                                                : ""
+                                        }`}
                                         key={player.id}
                                     >
                                         <span className="leaderboard-rank">#{player.rank}</span>
@@ -118,7 +164,9 @@ function Leaderboard() {
                             <div className="leaderboard-table" aria-label="Ranking completo">
                                 {tablePlayers.map((player) => {
                                     const isCurrentUser =
-                                        profile && String(player.id) === String(profile.user_id);
+                                        player.isMe ||
+                                        (profile &&
+                                            String(player.id) === String(profile.user_id));
 
                                     return (
                                         <article

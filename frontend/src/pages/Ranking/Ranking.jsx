@@ -49,7 +49,7 @@ function getModeLabel(mode) {
 function Ranking() {
     const location = useLocation();
     const isHistoryView = location.pathname === "/history";
-    const [status, setStatus] = useState(isHistoryView ? "completed" : "");
+    const [status, setStatus] = useState("");
     const [page, setPage] = useState(1);
     const [matches, setMatches] = useState([]);
     const [pagination, setPagination] = useState({
@@ -64,7 +64,7 @@ function Ranking() {
     const [discardCandidate, setDiscardCandidate] = useState(null);
 
     useEffect(() => {
-        setStatus(isHistoryView ? "completed" : "");
+        setStatus("");
         setPage(1);
     }, [isHistoryView]);
 
@@ -153,7 +153,7 @@ function Ranking() {
 
     const pageTitle = isHistoryView ? "Historial" : "Partidas";
     const pageSubtitle = isHistoryView
-        ? "Consulta tus partidas finalizadas y revisa tu rendimiento reciente."
+        ? "Una vista simple de tus partidas en curso y finalizadas."
         : "Segui tus partidas en curso y tu actividad guardada en una sola vista.";
 
     return (
@@ -262,9 +262,17 @@ function Ranking() {
                                     <article className="ranking-match-card" key={match.id}>
                                         <div className="ranking-match-head">
                                             <div className="ranking-match-title-block">
-                                                <span className="ranking-match-mode">
-                                                    {getModeLabel(match.mode)}
-                                                </span>
+                                                <div className="ranking-match-topline">
+                                                    <span
+                                                        className={`ranking-status-badge ${statusMeta.className}`}
+                                                    >
+                                                        {statusMeta.label}
+                                                    </span>
+                                                    <span className="ranking-match-mode">
+                                                        {getModeLabel(match.mode)}
+                                                    </span>
+                                                </div>
+
                                                 <h3>
                                                     {match.continent
                                                         ? `${match.continent}`
@@ -272,82 +280,73 @@ function Ranking() {
                                                 </h3>
                                             </div>
 
-                                            <div className="ranking-match-status-actions">
-                                                <span
-                                                    className={`ranking-status-badge ${statusMeta.className}`}
-                                                >
-                                                    {statusMeta.label}
-                                                </span>
-
-                                                {match.status === "ongoing" && (
-                                                    <div className="ranking-match-actions">
-                                                        <button
-                                                            type="button"
-                                                            className="ranking-inline-danger-button"
-                                                            onClick={() => setDiscardCandidate(match)}
-                                                            disabled={isProcessing}
-                                                        >
-                                                            {isProcessing
-                                                                ? "Descartando..."
-                                                                : "Descartar partida"}
-                                                        </button>
-                                                    </div>
-                                                )}
+                                            <div className="ranking-match-score-pill">
+                                                <span>Score</span>
+                                                <strong>{match.score}</strong>
                                             </div>
                                         </div>
 
                                         <div className="ranking-match-body">
-                                            <div className="ranking-match-overview">
-                                                <div className="ranking-match-score">
-                                                    <span>Score</span>
-                                                    <strong>{match.score}</strong>
-                                                </div>
-
-                                                <div className="ranking-match-progress">
+                                            <div className="ranking-match-progress">
+                                                <div>
                                                     <span>Progreso</span>
                                                     <strong>Ronda {roundLabel}</strong>
-                                                    <div
-                                                        className="ranking-progress-track"
-                                                        aria-hidden="true"
-                                                    >
-                                                        <span
-                                                            style={{
-                                                                width: `${progressPercent}%`,
-                                                            }}
-                                                        />
-                                                    </div>
+                                                </div>
+                                                <div
+                                                    className="ranking-progress-track"
+                                                    aria-hidden="true"
+                                                >
+                                                    <span
+                                                        style={{
+                                                            width: `${progressPercent}%`,
+                                                        }}
+                                                    />
                                                 </div>
                                             </div>
 
-                                            <dl className="ranking-match-stats">
-                                                <div className="is-correct">
-                                                    <dt>Aciertos</dt>
-                                                    <dd>{match.correctCount}</dd>
+                                            <div className="ranking-match-quick-stats">
+                                                <div>
+                                                    <span>Aciertos</span>
+                                                    <strong>{match.correctCount}</strong>
                                                 </div>
-                                                <div className="is-wrong">
-                                                    <dt>Errores</dt>
-                                                    <dd>{match.wrongCount}</dd>
+                                                <div>
+                                                    <span>Errores</span>
+                                                    <strong>{match.wrongCount}</strong>
                                                 </div>
-                                                <div className="is-lives">
-                                                    <dt>Vidas</dt>
-                                                    <dd>{match.livesLeft}</dd>
+                                                <div>
+                                                    <span>Vidas</span>
+                                                    <strong>{match.livesLeft}</strong>
                                                 </div>
-                                            </dl>
+                                                <div>
+                                                    <span>
+                                                        {match.status === "completed"
+                                                            ? "Finalizada"
+                                                            : "Actividad"}
+                                                    </span>
+                                                    <strong>
+                                                        {formatDate(
+                                                            match.status === "completed"
+                                                                ? match.finishedAt
+                                                                : match.updatedAt
+                                                        )}
+                                                    </strong>
+                                                </div>
+                                            </div>
 
-                                            <dl className="ranking-match-dates">
-                                                <div>
-                                                    <dt>Inicio</dt>
-                                                    <dd>{formatDate(match.startedAt)}</dd>
+                                            {match.status === "ongoing" && (
+                                                <div className="ranking-match-actions">
+                                                    <button
+                                                        type="button"
+                                                        className="ranking-inline-danger-button"
+                                                        onClick={() => setDiscardCandidate(match)}
+                                                        disabled={isProcessing}
+                                                    >
+                                                        {isProcessing
+                                                            ? "Descartando..."
+                                                            : "Descartar"}
+                                                    </button>
                                                 </div>
-                                                <div>
-                                                    <dt>Actividad</dt>
-                                                    <dd>{formatDate(match.updatedAt)}</dd>
-                                                </div>
-                                                <div>
-                                                    <dt>Fin</dt>
-                                                    <dd>{formatDate(match.finishedAt)}</dd>
-                                                </div>
-                                            </dl>
+                                            )}
                                         </div>
                                     </article>
                                 );

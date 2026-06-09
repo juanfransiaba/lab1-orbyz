@@ -51,12 +51,17 @@
 }
 
 .leaderboard-header-actions,
-.leaderboard-header-spacer {
+.leaderboard-header-spacer,
+.leaderboard-header-tools {
     position: relative;
     z-index: 1;
     display: flex;
     align-items: center;
     min-width: 140px;
+}
+
+.leaderboard-header-tools {
+    justify-content: flex-end;
 }
 
 .leaderboard-title-wrap {
@@ -183,6 +188,39 @@
     box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
 }
 
+.leaderboard-tabs {
+    display: inline-flex;
+    width: fit-content;
+    gap: 8px;
+    padding: 6px;
+    border-radius: 16px;
+    border: 1px solid rgba(203, 213, 225, 0.86);
+    background: rgba(255, 255, 255, 0.78);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.leaderboard-tabs button {
+    min-height: 40px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: #526277;
+    font-weight: 900;
+    cursor: pointer;
+    transition:
+        background 0.18s ease,
+        color 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.leaderboard-tabs button:hover,
+.leaderboard-tabs button.is-active {
+    background: linear-gradient(135deg, #3b82f6 0%, #1f4e8c 100%);
+    color: #ffffff;
+    box-shadow: 0 10px 18px rgba(37, 99, 235, 0.16);
+}
+
 .leaderboard-podium {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -206,6 +244,13 @@
     background: linear-gradient(180deg, #102845 0%, #1f4e8c 100%);
     border-color: rgba(147, 197, 253, 0.36);
     color: #ffffff;
+}
+
+.leaderboard-podium-card.is-current-user {
+    outline: 3px solid rgba(59, 130, 246, 0.22);
+    box-shadow:
+        0 18px 32px rgba(37, 99, 235, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 .leaderboard-rank {
@@ -377,7 +422,8 @@
     }
 
     .leaderboard-header-actions,
-    .leaderboard-header-spacer {
+    .leaderboard-header-spacer,
+    .leaderboard-header-tools {
         min-width: 0;
         justify-content: center;
     }
@@ -388,6 +434,14 @@
 
     .leaderboard-back-button {
         width: 100%;
+    }
+
+    .leaderboard-tabs {
+        width: 100%;
+    }
+
+    .leaderboard-tabs button {
+        flex: 1;
     }
 
     .leaderboard-row {
