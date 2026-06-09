@@ -5,7 +5,7 @@ const path = require("path");
 const http = require("http");
 const express = require("express");
 const cors = require("cors");
-
+const rankingRoutes = require("./routes/rankingRoutes");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const paisesRoutes = require("./routes/paisesRoutes");
@@ -42,6 +42,7 @@ app.use("/user", userRoutes);
 app.use("/api/paises", paisesRoutes);
 app.use("/friends", friendsRoutes);
 app.use("/matches", matchesRoutes);
+app.use("/ranking", rankingRoutes);
 
 app.get("/", (req, res) => {
     res.send("Backend funcionando");

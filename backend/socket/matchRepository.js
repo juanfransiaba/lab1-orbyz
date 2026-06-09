@@ -6,6 +6,13 @@ function resultFor(player, gameOver) {
     return gameOver.winnerUserId === player.userId ? "win" : "loss";
 }
 
+// Puntos para el ranking: ganar online = 3, empatar = 1, perder = 0
+function pointsForResult(result) {
+    if (result === "win") return 3;
+    if (result === "draw") return 1;
+    return 0;
+}
+
 async function saveMatchResults(room, gameOver) {
     const players = gameOver.players;
 
@@ -22,10 +29,9 @@ async function saveMatchResults(room, gameOver) {
 
     for (const player of players) {
         const opponent = players.find((p) => p.userId !== player.userId);
-
-        // Esto es lo que linkea las 2 filas de la misma partida
         const raw = room.players.get(player.userId) || {};
 
+        // Esto es lo que linkea las 2 filas de la misma partida
         const metadata = {
             is_online: true,
             room_code: room.code,
@@ -42,13 +48,13 @@ async function saveMatchResults(room, gameOver) {
         try {
             await pool.query(
                 `INSERT INTO matches
-                    (user_id, mode, status, continent, score,
-                     correct_count, wrong_count, round_reached, total_rounds,
-                     lives_left, metadata, started_at, finished_at, updated_at)
+                 (user_id, mode, status, continent, score,
+                  correct_count, wrong_count, round_reached, total_rounds,
+                  lives_left, metadata, started_at, finished_at, updated_at)
                  VALUES
-                    ($1, $2, 'completed', $3, $4,
-                     $5, $6, $7, $8,
-                     $9, $10, $11, $12, $12)`,
+                     ($1, $2, 'completed', $3, $4,
+                      $5, $6, $7, $8,
+                      $9, $10, $11, $12, $12)`,
                 [
                     player.userId,                   // $1  user_id
                     room.mode,                       // $2  mode
@@ -64,6 +70,15 @@ async function saveMatchResults(room, gameOver) {
                     finishedAt,                      // $12 finished_at + updated_at
                 ]
             );
+
+            // Sumar puntos de ranking al usuario
+            const points = pointsForResult(metadata.result);
+            if (points > 0) {
+                await pool.query(
+                    "UPDATE users SET score = score + $1 WHERE user_id = $2",
+                    [points, player.userId]
+                );
+            }
         } catch (error) {
             console.error(
                 `Error guardando la partida del usuario ${player.userId}:`,
@@ -130,6 +145,15 @@ async function saveAbandonedMatch(room, abandonerUserId) {
                     finishedAt,                          // $13 finished_at + updated_at
                 ]
             );
+
+            // El que no abandonó gana -> +3; el que abandonó, 0
+            const points = pointsForResult(metadata.result);
+            if (points > 0) {
+                await pool.query(
+                    "UPDATE users SET score = score + $1 WHERE user_id = $2",
+                    [points, player.userId]
+                );
+            }
         } catch (error) {
             console.error(
                 `Error guardando partida (abandono) del usuario ${player.userId}:`,
