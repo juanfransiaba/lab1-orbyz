@@ -1,4 +1,4 @@
-const { findRoomByUser } = require("./roomManager");
+const { findRoomByUser, getRoom } = require("./roomManager");
 
 const MAX_MESSAGE_LENGTH = 500;
 const RATE_LIMIT_MAX = 5;          // máx. mensajes
@@ -12,7 +12,13 @@ function registerChatHandlers(io, socket) {
 
     socket.on("chat:message", (payload, callback) => {
         try {
-            const room = findRoomByUser(userId);
+            // Resolver la sala: puede ser jugador o espectador
+            let room = findRoomByUser(userId);
+            let role = "player";
+            if (!room && socket.spectating) {
+                room = getRoom(socket.spectating);
+                role = "spectator";
+            }
             if (!room) {
                 return callback?.({ error: "No estás en ninguna sala" });
             }
@@ -40,18 +46,19 @@ function registerChatHandlers(io, socket) {
             }
             socket.chatTimestamps.push(now);
 
-            // username viene de la sala (del JWT), NO del cliente -> anti-spoof
+            // username del jugador (de la sala) o del espectador; nunca del cliente -> anti-spoof
             const player = room.players.get(userId);
-            const username = player?.username || "Jugador";
+            const username =
+                player?.username || socket.spectatorUsername || "Jugador";
 
-            const message = { userId, username, text, at: now };
+            const message = { userId, username, text, at: now, role };
 
             // Historial en memoria (para reconexión); se cap a 50
             if (!room.messages) room.messages = [];
             room.messages.push(message);
             if (room.messages.length > 50) room.messages.shift();
 
-            // Broadcast a toda la sala -> los 2 lo reciben al mismo tiempo
+            // Broadcast a toda la sala -> jugadores y espectadores lo reciben
             io.to(room.code).emit("chat:message", message);
 
             callback?.({ ok: true });

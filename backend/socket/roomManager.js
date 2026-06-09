@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 
 const MAX_PLAYERS = 2;
+const MAX_SPECTATORS = 10;
 
 // Mapa en memoria: código -> sala
 const rooms = new Map();
@@ -108,8 +109,30 @@ function deleteRoom(code) {
     rooms.delete(code);
 }
 
+function addSpectator(code, { userId, username, socketId }) {
+    const room = rooms.get(code);
+    if (!room) return { error: "La sala no existe" };
+    if (room.players.has(userId)) return { error: "Estás jugando en esta sala" };
+    if (room.spectators.length >= MAX_SPECTATORS) {
+        return { error: "La sala llegó al máximo de espectadores" };
+    }
+    // evitar duplicar el mismo socket
+    if (!room.spectators.some((s) => s.socketId === socketId)) {
+        room.spectators.push({ userId, username, socketId });
+    }
+    return { room };
+}
+
+function removeSpectator(code, socketId) {
+    const room = rooms.get(code);
+    if (!room) return null;
+    room.spectators = room.spectators.filter((s) => s.socketId !== socketId);
+    return room;
+}
+
 module.exports = {
     MAX_PLAYERS,
+    MAX_SPECTATORS,
     createRoom,
     getRoom,
     addPlayer,
@@ -117,5 +140,7 @@ module.exports = {
     deleteRoom,
     findRoomByUser,
     serializeRoom,
+    addSpectator,      // <-- nuevo
+    removeSpectator,   // <-- nuevo
     rooms,
 };

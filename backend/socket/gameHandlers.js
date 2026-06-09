@@ -42,6 +42,7 @@ function playerProgress(player) {
         finished: player.finished,
         correctStreak: player.correctStreak ?? 0,
         powerups: player.powerups ?? { fiftyFifty: 0, freeze: 0 },
+        powerupsUsed: player.powerupsUsed ?? { fiftyFifty: 0, freeze: 0 },
         frozenUntil: player.frozenUntil ?? 0,
     };
 }

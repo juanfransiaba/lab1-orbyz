@@ -3,11 +3,11 @@ const {
     removePlayer,
     deleteRoom,
     serializeRoom,
+    removeSpectator,
 } = require("./roomManager");
 const { saveAbandonedMatch } = require("./matchRepository");
 
 // Tiempo para reconectarse antes de que cuente como abandono.
-// Para testear se puede bajar con la variable de entorno GRACE_PERIOD_MS.
 const GRACE_PERIOD_MS = Number(process.env.GRACE_PERIOD_MS) || 30000;
 
 // Helpers (espejo de los de gameHandlers; mantener iguales si cambian allá)
@@ -33,6 +33,7 @@ function playerProgress(player) {
         finished: player.finished ?? false,
         correctStreak: player.correctStreak ?? 0,
         powerups: player.powerups ?? { fiftyFifty: 0, freeze: 0 },
+        powerupsUsed: player.powerupsUsed ?? { fiftyFifty: 0, freeze: 0 },
         frozenUntil: player.frozenUntil ?? 0,
     };
 }
@@ -108,6 +109,17 @@ function handleConnection(io, socket) {
 
     // ── Desconexión ──
     socket.on("disconnect", () => {
+        // Si era espectador, lo sacamos de la sala que miraba
+        if (socket.spectating) {
+            const specRoom = removeSpectator(socket.spectating, socket.id);
+            if (specRoom) {
+                io.to(socket.spectating).emit("spectator:update", {
+                    spectatorCount: specRoom.spectators.length,
+                });
+            }
+            socket.spectating = null;
+        }
+
         const current = findRoomByUser(userId);
         if (!current) return;
 
