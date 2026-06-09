@@ -5,7 +5,7 @@ const registerLobbyHandlers = require("./lobbyHandlers");
 const handleConnection = require("./connectionHandlers");
 const registerChatHandlers = require("./chatHandlers");
 const registerSpectatorHandlers = require("./spectatorHandlers");
-
+const { setIO } = require("./ioRef");
 
 function isAllowedLocalOrigin(origin) {
     if (!origin) {
@@ -25,6 +25,9 @@ function initSocket(server) {
             },
         },
     });
+
+    // Guardar la instancia para poder mandar notificaciones desde cualquier lado
+    setIO(io);
 
     // Autenticación por JWT
     io.use((socket, next) => {
@@ -47,6 +50,9 @@ function initSocket(server) {
         console.log(
             `Socket conectado: usuario ${socket.user.user_id} (socket ${socket.id})`
         );
+
+        // Sala personal para mandarle notificaciones a este usuario donde sea que esté
+        socket.join(`user:${socket.user.user_id}`);
 
         registerLobbyHandlers(io, socket);
         registerGameHandlers(io, socket);

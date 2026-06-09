@@ -1,4 +1,6 @@
 const pool = require("../db");
+const { sendRankingPassedEmail } = require("../utils/mailer");
+const { createNotification } = require("../utils/notifications");
 
 // Resultado de un jugador (win / loss / draw) a partir del game over
 function resultFor(player, gameOver) {
@@ -13,13 +15,55 @@ function pointsForResult(result) {
     return 0;
 }
 
+// Avisa (mail + campanita) a los amigos que este usuario acaba de superar en el ranking
+async function notifyRankingPassed(passerUserId, passerUsername, oldScore, newScore) {
+    if (newScore <= oldScore) return;
+
+    try {
+        const { rows } = await pool.query(
+            `SELECT u.user_id, u.username, u.email, u.score
+             FROM users u
+             WHERE u.score >= $2 AND u.score < $3
+               AND u.user_id IN (
+                   SELECT CASE
+                              WHEN f.requester_id = $1 THEN f.addressee_id
+                              ELSE f.requester_id
+                          END
+                   FROM friendships f
+                   WHERE f.status = 'accepted'
+                     AND (f.requester_id = $1 OR f.addressee_id = $1)
+               )`,
+            [passerUserId, oldScore, newScore]
+        );
+
+        for (const friend of rows) {
+            // Notificación in-app (campanita)
+            createNotification(friend.user_id, "ranking_passed", {
+                passerUserId,
+                passerUsername,
+                newScore,
+            });
+
+            // Mail
+            if (friend.email) {
+                sendRankingPassedEmail({
+                    to: friend.email,
+                    toUsername: friend.username,
+                    passerUsername,
+                    newScore,
+                }).catch((e) => console.error("Error mandando mail de ranking:", e));
+            }
+        }
+    } catch (error) {
+        console.error("Error en notifyRankingPassed:", error);
+    }
+}
+
 async function saveMatchResults(room, gameOver) {
     const players = gameOver.players;
 
     if (players.length !== 2) {
-        console.warn(
-            `No se guarda la partida ${room.code}: no tiene 2 jugadores`
-        );
+        console.warn(`No se guarda la partida ${room.code}: no tiene 2 jugadores`);
         return;
     }
 
@@ -31,7 +75,6 @@ async function saveMatchResults(room, gameOver) {
         const opponent = players.find((p) => p.userId !== player.userId);
         const raw = room.players.get(player.userId) || {};
 
-        // Esto es lo que linkea las 2 filas de la misma partida
         const metadata = {
             is_online: true,
             room_code: room.code,
@@ -56,27 +99,34 @@ async function saveMatchResults(room, gameOver) {
                       $5, $6, $7, $8,
                       $9, $10, $11, $12, $12)`,
                 [
-                    player.userId,                   // $1  user_id
-                    room.mode,                       // $2  mode
-                    room.continent || null,          // $3  continent
-                    player.correctCount,             // $4  score
-                    player.correctCount,             // $5  correct_count
-                    player.wrongCount,               // $6  wrong_count
-                    player.currentIndex,             // $7  round_reached
-                    totalRounds,                     // $8  total_rounds
-                    player.lives,                    // $9  lives_left
-                    JSON.stringify(metadata),        // $10 metadata
-                    startedAt,                       // $11 started_at
-                    finishedAt,                      // $12 finished_at + updated_at
+                    player.userId,
+                    room.mode,
+                    room.continent || null,
+                    player.correctCount,
+                    player.correctCount,
+                    player.wrongCount,
+                    player.currentIndex,
+                    totalRounds,
+                    player.lives,
+                    JSON.stringify(metadata),
+                    startedAt,
+                    finishedAt,
                 ]
             );
 
-            // Sumar puntos de ranking al usuario
+            // Sumar puntos de ranking + avisar a quien haya superado
             const points = pointsForResult(metadata.result);
             if (points > 0) {
-                await pool.query(
-                    "UPDATE users SET score = score + $1 WHERE user_id = $2",
+                const upd = await pool.query(
+                    "UPDATE users SET score = score + $1 WHERE user_id = $2 RETURNING score",
                     [points, player.userId]
+                );
+                const newScore = upd.rows[0].score;
+                await notifyRankingPassed(
+                    player.userId,
+                    player.username,
+                    newScore - points,
+                    newScore
                 );
             }
         } catch (error) {
@@ -122,36 +172,43 @@ async function saveAbandonedMatch(room, abandonerUserId) {
         try {
             await pool.query(
                 `INSERT INTO matches
-                    (user_id, mode, status, continent, score,
-                     correct_count, wrong_count, round_reached, total_rounds,
-                     lives_left, metadata, started_at, finished_at, updated_at)
+                 (user_id, mode, status, continent, score,
+                  correct_count, wrong_count, round_reached, total_rounds,
+                  lives_left, metadata, started_at, finished_at, updated_at)
                  VALUES
-                    ($1, $2, $3, $4, $5,
-                     $6, $7, $8, $9,
-                     $10, $11, $12, $13, $13)`,
+                     ($1, $2, $3, $4, $5,
+                      $6, $7, $8, $9,
+                      $10, $11, $12, $13, $13)`,
                 [
-                    player.userId,                       // $1  user_id
-                    room.mode,                           // $2  mode
-                    abandoned ? "abandoned" : "completed", // $3  status
-                    room.continent || null,              // $4  continent
-                    player.correctCount ?? 0,            // $5  score
-                    player.correctCount ?? 0,            // $6  correct_count
-                    player.wrongCount ?? 0,              // $7  wrong_count
-                    player.currentIndex ?? 0,            // $8  round_reached
-                    totalRounds,                         // $9  total_rounds
-                    player.lives ?? 0,                   // $10 lives_left
-                    JSON.stringify(metadata),            // $11 metadata
-                    startedAt,                           // $12 started_at
-                    finishedAt,                          // $13 finished_at + updated_at
+                    player.userId,
+                    room.mode,
+                    abandoned ? "abandoned" : "completed",
+                    room.continent || null,
+                    player.correctCount ?? 0,
+                    player.correctCount ?? 0,
+                    player.wrongCount ?? 0,
+                    player.currentIndex ?? 0,
+                    totalRounds,
+                    player.lives ?? 0,
+                    JSON.stringify(metadata),
+                    startedAt,
+                    finishedAt,
                 ]
             );
 
             // El que no abandonó gana -> +3; el que abandonó, 0
             const points = pointsForResult(metadata.result);
             if (points > 0) {
-                await pool.query(
-                    "UPDATE users SET score = score + $1 WHERE user_id = $2",
+                const upd = await pool.query(
+                    "UPDATE users SET score = score + $1 WHERE user_id = $2 RETURNING score",
                     [points, player.userId]
+                );
+                const newScore = upd.rows[0].score;
+                await notifyRankingPassed(
+                    player.userId,
+                    player.username,
+                    newScore - points,
+                    newScore
                 );
             }
         } catch (error) {

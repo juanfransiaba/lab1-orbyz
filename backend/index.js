@@ -11,6 +11,7 @@ const userRoutes = require("./routes/userRoutes");
 const paisesRoutes = require("./routes/paisesRoutes");
 const friendsRoutes = require("./routes/friendsRoutes");
 const initSocket = require("./socket");
+const notificationsRoutes = require("./routes/notificationsRoutes");
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use("/api/paises", paisesRoutes);
 app.use("/friends", friendsRoutes);
 app.use("/matches", matchesRoutes);
 app.use("/ranking", rankingRoutes);
+app.use("/notifications", notificationsRoutes);
 
 app.get("/", (req, res) => {
     res.send("Backend funcionando");
