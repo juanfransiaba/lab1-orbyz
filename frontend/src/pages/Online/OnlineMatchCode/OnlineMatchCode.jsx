@@ -11,6 +11,24 @@ import "../OnlineRoom.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
+const LOBBY_BACKGROUND_IMAGES = [
+    { src: "/images/paises/oman.jpg", position: "center 48%" },
+    { src: "/images/paises/españa.jpg", position: "center 46%" },
+    { src: "/images/paises/chile.jpg", position: "center 42%" },
+    { src: "/images/paises/india.jpg", position: "center 48%" },
+    { src: "/images/paises/noruega.jpg", position: "center 50%" },
+    { src: "/images/paises/fiji.jpg", position: "center 54%" },
+    { src: "/images/paises/peru.jpg", position: "center 44%" },
+    { src: "/images/paises/rwanda.jpeg", position: "center 48%" },
+    { src: "/images/paises/bahamas.jpg", position: "center 52%" },
+    { src: "/images/paises/filipinas.jpg", position: "center 50%" },
+    { src: "/images/paises/greece.jpg", position: "center 50%" },
+    { src: "/images/paises/malta.jpg", position: "center 48%" },
+    { src: "/images/paises/samoa.jpg", position: "center 54%" },
+    { src: "/images/paises/santalucia.jpg", position: "center 54%" },
+    { src: "/images/paises/sanmarino.jpg", position: "center 46%" },
+];
+
 function normalizePlayer(player = {}) {
     return {
         userId: player.userId,
@@ -101,6 +119,7 @@ function OnlineMatchCode() {
     const [messages, setMessages] = useState([]);
     const [chatText, setChatText] = useState("");
     const [chatError, setChatError] = useState("");
+    const [lobbyChatOpen, setLobbyChatOpen] = useState(false);
     const [pendingAction, setPendingAction] = useState("");
     const [copyFeedback, setCopyFeedback] = useState("");
     const currentUser = useMemo(
@@ -640,57 +659,104 @@ function OnlineMatchCode() {
                 } ${phase === "lobby" ? "is-lobby" : ""}`}
             >
                 {phase === "lobby" && (
-                    <section className="online-lobby-layout">
-                        <div className="online-room-panel online-lobby-panel">
-                            <div className="online-room-panel-head">
-                                <div>
-                                    <span>Codigo de sala</span>
-                                    <div className="online-lobby-code-row">
-                                        <h2>{room.code}</h2>
+                    <>
+                        <div className="online-lobby-carousel" aria-hidden="true">
+                            {LOBBY_BACKGROUND_IMAGES.map((image, index) => (
+                                <span
+                                    key={image.src}
+                                    style={{
+                                        backgroundImage: `url(${image.src})`,
+                                        backgroundPosition: image.position,
+                                        animationDelay: `${index * 5}s`,
+                                    }}
+                                />
+                            ))}
+                        </div>
+
+                        <section className="online-lobby-layout">
+                            <aside className="online-lobby-side-info">
+                                <div className="online-lobby-code-box">
+                                    <span>Codigo</span>
+                                    <strong>{room.code}</strong>
+                                    <button
+                                        type="button"
+                                        className="online-lobby-copy"
+                                        onClick={handleCopyRoomCode}
+                                    >
+                                        {copyFeedback || "Copiar"}
+                                    </button>
+                                </div>
+
+                                <div className="online-lobby-room-meta">
+                                    <span>{roomPlayers.length} / 2</span>
+                                    <small>jugadores</small>
+                                </div>
+
+                                <div className="online-lobby-spectators">
+                                    <span className="online-lobby-eye" aria-hidden="true" />
+                                    <strong>{room?.spectatorCount ?? 0}</strong>
+                                </div>
+                            </aside>
+
+                            <div className="online-lobby-stage">
+                                <div className="online-lobby-players">
+                                    {renderPlayerCard(myProgress, "Tu jugador")}
+                                    {renderPlayerCard(rivalProgress, "Rival")}
+                                </div>
+
+                                <div className="online-lobby-action-area">
+                                    {isHost ? (
                                         <button
                                             type="button"
-                                            className="online-lobby-copy"
-                                            onClick={handleCopyRoomCode}
+                                            className="online-room-primary-button"
+                                            onClick={handleStartGame}
+                                            disabled={!canStart || pendingAction === "start"}
                                         >
-                                            {copyFeedback || "Copiar"}
+                                            {pendingAction === "start"
+                                                ? "Iniciando..."
+                                                : "Iniciar partida"}
                                         </button>
-                                    </div>
+                                    ) : (
+                                        <p className="online-room-feedback">
+                                            Esperando que el anfitrion inicie la partida.
+                                        </p>
+                                    )}
+                                    {feedback && (
+                                        <p className="online-room-feedback is-error">
+                                            {feedback}
+                                        </p>
+                                    )}
                                 </div>
-                                <p className="online-lobby-status-line">
-                                    {roomPlayers.length} / 2 jugadores
-                                    <span>{room?.spectatorCount ?? 0} espectadores</span>
-                                </p>
                             </div>
-                            <div className="online-lobby-divider" />
-                            <div className="online-lobby-section-head">
-                                <h3>Jugadores</h3>
-                            </div>
-                            <div className="online-lobby-players">
-                                {renderPlayerCard(myProgress, "Vos")}
-                                {renderPlayerCard(rivalProgress, "Rival")}
-                            </div>
-                            {isHost ? (
+
+                            <button
+                                type="button"
+                                className={`online-lobby-chat-toggle ${
+                                    lobbyChatOpen ? "is-open" : ""
+                                }`}
+                                onClick={() => setLobbyChatOpen((isOpen) => !isOpen)}
+                                aria-expanded={lobbyChatOpen}
+                            >
+                                <span>Chat en vivo</span>
+                                <strong>{messages.length}</strong>
+                            </button>
+
+                            <div
+                                className={`online-lobby-chat-drawer ${
+                                    lobbyChatOpen ? "is-open" : ""
+                                }`}
+                            >
                                 <button
                                     type="button"
-                                    className="online-room-primary-button"
-                                    onClick={handleStartGame}
-                                    disabled={!canStart || pendingAction === "start"}
+                                    className="online-lobby-chat-close"
+                                    onClick={() => setLobbyChatOpen(false)}
                                 >
-                                    {pendingAction === "start"
-                                        ? "Iniciando..."
-                                        : "Iniciar partida"}
+                                    Cerrar chat
                                 </button>
-                            ) : (
-                                <p className="online-room-feedback">
-                                    Esperando que el anfitrion inicie la partida.
-                                </p>
-                            )}
-                            {feedback && (
-                                <p className="online-room-feedback is-error">{feedback}</p>
-                            )}
-                        </div>
-                        {renderChat()}
-                    </section>
+                                {renderChat()}
+                            </div>
+                        </section>
+                    </>
                 )}
 
                 {phase === "playing" && (
