@@ -2,28 +2,48 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { disconnectSocket } from "../../../services/socket.js";
 import { connectOnlineSocket, emitWithAck } from "../../../services/OnlineSocketService.js";
+import capitalImage from "../../../assets/images/imagen.jpg";
+import countryImage from "../../../assets/images/imagen2.jpg";
+import shapeImage from "../../../assets/images/imagen6.jpg";
+import continentImage from "../../../assets/images/imagen7.jpg";
 import "../OnlineRoom.css";
 
 const MODE_OPTIONS = [
     {
         id: "country-by-capital",
         label: "Pais por capital",
-        description: "El server muestra una capital y se elige el pais.",
+        description: "Te mostramos una capital. Vos elegis el pais.",
+        imageAlt: "Vista urbana para el modo pais por capital",
+        imageSrc: capitalImage,
+        toneClass: "online-room-mode-card--capital",
+        tag: "Capitales",
     },
     {
         id: "capital-by-country",
         label: "Capital por pais",
-        description: "El server muestra un pais y se elige la capital.",
+        description: "Ves el pais y tenes que clavar la capital.",
+        imageAlt: "Ciudad para el modo capital por pais",
+        imageSrc: countryImage,
+        toneClass: "online-room-mode-card--country",
+        tag: "Memoria",
     },
     {
         id: "country-by-shape",
         label: "Pais por silueta",
-        description: "Se juega con la silueta de cada pais.",
+        description: "Reconoce la forma antes que el nombre.",
+        imageAlt: "Paisaje para el modo pais por silueta",
+        imageSrc: shapeImage,
+        toneClass: "online-room-mode-card--shape",
+        tag: "Visual",
     },
     {
         id: "country-by-continent",
         label: "Pais por continente",
-        description: "La partida usa solo paises del continente elegido.",
+        description: "Elegis una region y jugas con ese recorte.",
+        imageAlt: "Vista costera para el modo pais por continente",
+        imageSrc: continentImage,
+        toneClass: "online-room-mode-card--continent",
+        tag: "Regiones",
     },
 ];
 
@@ -106,10 +126,12 @@ function CreateOnlineMatch() {
                 <span className="online-room-status">{connectionStatus}</span>
             </header>
 
-            <main className="online-room-main is-narrow">
-                <form className="online-room-panel" onSubmit={handleCreateRoom}>
+            <main className="online-room-main is-create">
+                <form
+                    className="online-room-panel online-room-create-panel"
+                    onSubmit={handleCreateRoom}
+                >
                     <div className="online-room-panel-head">
-                        <span>Configuracion</span>
                         <h2>Elegir modo de juego</h2>
                     </div>
 
@@ -118,42 +140,67 @@ function CreateOnlineMatch() {
                             <button
                                 key={option.id}
                                 type="button"
-                                className={`online-room-mode-card ${
+                                className={`online-room-mode-card ${option.toneClass} ${
                                     mode === option.id ? "is-selected" : ""
                                 }`}
                                 onClick={() => setMode(option.id)}
                             >
-                                <strong>{option.label}</strong>
-                                <small>{option.description}</small>
+                                <div className="online-room-mode-card-image-wrap">
+                                    <img
+                                        src={option.imageSrc}
+                                        alt={option.imageAlt}
+                                        className="online-room-mode-card-image"
+                                    />
+                                    <div className="online-room-mode-card-image-overlay" />
+                                    <span className="online-room-mode-card-tag">
+                                        {option.tag}
+                                    </span>
+                                </div>
+
+                                <div className="online-room-mode-card-content">
+                                    <strong>{option.label}</strong>
+                                    <small>{option.description}</small>
+                                    <span>
+                                        {mode === option.id
+                                            ? "Seleccionado >"
+                                            : "Seleccionar >"}
+                                    </span>
+                                </div>
                             </button>
                         ))}
                     </div>
 
-                    {mode === "country-by-continent" && (
-                        <label className="online-room-field">
-                            <span>Continente</span>
-                            <select
-                                value={continent}
-                                onChange={(event) => setContinent(event.target.value)}
-                            >
-                                {CONTINENTS.map((option) => (
-                                    <option key={option} value={option}>
-                                        {option}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-                    )}
+                    <div className="online-room-create-footer">
+                        {mode === "country-by-continent" && (
+                            <label className="online-room-field">
+                                <span>Continente</span>
+                                <select
+                                    value={continent}
+                                    onChange={(event) =>
+                                        setContinent(event.target.value)
+                                    }
+                                >
+                                    {CONTINENTS.map((option) => (
+                                        <option key={option} value={option}>
+                                            {option}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                        )}
 
-                    {error && <p className="online-room-feedback is-error">{error}</p>}
+                        {error && (
+                            <p className="online-room-feedback is-error">{error}</p>
+                        )}
 
-                    <button
-                        type="submit"
-                        className="online-room-primary-button"
-                        disabled={loading}
-                    >
-                        {loading ? "Creando sala..." : "Crear sala online"}
-                    </button>
+                        <button
+                            type="submit"
+                            className="online-room-primary-button"
+                            disabled={loading}
+                        >
+                            {loading ? "Creando sala..." : "Crear sala online"}
+                        </button>
+                    </div>
                 </form>
             </main>
         </div>

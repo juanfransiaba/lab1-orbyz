@@ -5,6 +5,7 @@ import logo from "../../assets/images/logo.png";
 
 import jugarImg from "../../assets/images/imagen.jpg";
 import onlineImg from "../../assets/images/imagen7.jpg";
+import tournamentsImg from "../../../public/images/paises/myanmar.jpg";
 import perfilImg from "../../assets/images/imagen5.jpg";
 import rankingImg from "../../assets/images/imagen2.jpg";
 
@@ -16,28 +17,35 @@ function MainMenu() {
         {
             title: "Jugar",
             eyebrow: "Modo principal",
-            description: "Explorá los modos principales y empezá una nueva partida.",
+            description: "Explora los modos principales y empeza una nueva partida.",
             to: "/offline",
             image: jugarImg,
         },
         {
             title: "Modo online",
             eyebrow: "Multijugador",
-            description: "Competí con otras personas en desafíos geográficos en tiempo real.",
+            description: "Competi con otras personas en desafios geograficos en tiempo real.",
             to: "/online",
             image: onlineImg,
         },
         {
+            title: "Torneos",
+            eyebrow: "Competencia",
+            description: "Prepara llaves, fechas y desafios especiales para competir.",
+            to: "/tournaments",
+            image: tournamentsImg,
+        },
+        {
             title: "Perfil",
             eyebrow: "Tu cuenta",
-            description: "Personalizá tu cuenta, progreso y preferencias de juego.",
+            description: "Personaliza tu cuenta, historial y progreso de juego.",
             to: "/profile",
             image: perfilImg,
         },
         {
-            title: "Partidas",
-            eyebrow: "Actividad",
-            description: "Revisá partidas en curso, historial reciente y progreso guardado.",
+            title: "Ranking",
+            eyebrow: "Tabla global",
+            description: "Mira la tabla de puntajes y compara posiciones.",
             to: "/ranking",
             image: rankingImg,
         },
@@ -68,7 +76,7 @@ function MainMenu() {
                 }
 
                 setUser(data);
-            } catch (error) {
+            } catch {
                 navigate("/login");
             }
         };

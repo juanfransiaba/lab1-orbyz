@@ -102,6 +102,7 @@ function OnlineMatchCode() {
     const [chatText, setChatText] = useState("");
     const [chatError, setChatError] = useState("");
     const [pendingAction, setPendingAction] = useState("");
+    const [copyFeedback, setCopyFeedback] = useState("");
     const currentUser = useMemo(
         () => decodeToken(localStorage.getItem("token") || ""),
         []
@@ -342,6 +343,20 @@ function OnlineMatchCode() {
         navigate("/online");
     }
 
+    async function handleCopyRoomCode() {
+        if (!room?.code) {
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(room.code);
+            setCopyFeedback("Copiado");
+            window.setTimeout(() => setCopyFeedback(""), 1400);
+        } catch {
+            setCopyFeedback("No se pudo copiar");
+        }
+    }
+
     function updateOwnProgress(response) {
         if (!currentUserId) {
             return;
@@ -474,15 +489,31 @@ function OnlineMatchCode() {
         const frozen = player?.frozenUntil > now;
         const streak = player?.correctStreak ?? 0;
 
+        if (!player) {
+            return (
+                <article className="online-player-card is-waiting">
+                    <div className="online-player-waiting">
+                        <strong>Rival pendiente</strong>
+                        <p>Comparte el codigo para que se una.</p>
+                    </div>
+                </article>
+            );
+        }
+
         return (
             <article className={`online-player-card ${frozen ? "is-frozen" : ""}`}>
                 <div className="online-player-card-head">
-                    <span>{label}</span>
-                    <strong>{player?.username || "Esperando..."}</strong>
+                    <div className="online-player-avatar" aria-hidden="true">
+                        {(player.username || "J").charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                        <span>{label}</span>
+                        <strong>{player.username || "Jugador"}</strong>
+                    </div>
                 </div>
                 <div className="online-player-metrics">
-                    <span>{player?.lives ?? "-"} vidas</span>
-                    <span>{player?.correctCount ?? 0} aciertos</span>
+                    <span>{player.lives ?? "-"} vidas</span>
+                    <span>{player.correctCount ?? 0} aciertos</span>
                     <span>racha {streak}/10</span>
                 </div>
                 {frozen && (
@@ -498,12 +529,20 @@ function OnlineMatchCode() {
         return (
             <aside className="online-chat-panel">
                 <div className="online-chat-head">
-                    <span>Chat</span>
-                    <strong>{room?.code || "Sala"}</strong>
+                    <div className="online-chat-icon" aria-hidden="true" />
+                    <div>
+                        <strong>Chat</strong>
+                        <span>Sala {room?.code || "Sala"}</span>
+                    </div>
+                    <em>En vivo</em>
                 </div>
                 <div className="online-chat-messages">
                     {messages.length === 0 ? (
-                        <p className="online-chat-empty">Todavia no hay mensajes.</p>
+                        <div className="online-chat-empty">
+                            <div className="online-chat-empty-icon" aria-hidden="true" />
+                            <strong>Todavia no hay mensajes</strong>
+                            <p>Se el primero en escribir y romper el hielo con tu rival.</p>
+                        </div>
                     ) : (
                         messages.map((message, index) => {
                             const ownMessage =
@@ -595,17 +634,37 @@ function OnlineMatchCode() {
                 </span>
             </header>
 
-            <main className={`online-room-main ${phase === "playing" ? "is-game" : ""}`}>
+            <main
+                className={`online-room-main ${
+                    phase === "playing" ? "is-game" : ""
+                } ${phase === "lobby" ? "is-lobby" : ""}`}
+            >
                 {phase === "lobby" && (
                     <section className="online-lobby-layout">
-                        <div className="online-room-panel">
+                        <div className="online-room-panel online-lobby-panel">
                             <div className="online-room-panel-head">
-                                <span>Codigo de sala</span>
-                                <h2>{room.code}</h2>
+                                <div>
+                                    <span>Codigo de sala</span>
+                                    <div className="online-lobby-code-row">
+                                        <h2>{room.code}</h2>
+                                        <button
+                                            type="button"
+                                            className="online-lobby-copy"
+                                            onClick={handleCopyRoomCode}
+                                        >
+                                            {copyFeedback || "Copiar"}
+                                        </button>
+                                    </div>
+                                </div>
+                                <p className="online-lobby-status-line">
+                                    {roomPlayers.length} / 2 jugadores
+                                    <span>{room?.spectatorCount ?? 0} espectadores</span>
+                                </p>
                             </div>
-                            <p className="online-room-mini-status">
-                                {room?.spectatorCount ?? 0} espectadores mirando
-                            </p>
+                            <div className="online-lobby-divider" />
+                            <div className="online-lobby-section-head">
+                                <h3>Jugadores</h3>
+                            </div>
                             <div className="online-lobby-players">
                                 {renderPlayerCard(myProgress, "Vos")}
                                 {renderPlayerCard(rivalProgress, "Rival")}

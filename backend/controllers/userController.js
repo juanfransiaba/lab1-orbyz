@@ -38,6 +38,22 @@ const getUserById = async (req, res) => {
     }
 };
 
+const getLeaderboard = async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT user_id, username, COALESCE(score, 0) AS score
+             FROM users
+             ORDER BY COALESCE(score, 0) DESC, username ASC
+             LIMIT 50`
+        );
+
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Error al obtener ranking:", error);
+        res.status(500).json({ message: "Error del servidor" });
+    }
+};
+
 const getProfile = async (req, res) => {
     try {
         const result = await pool.query(
@@ -230,6 +246,7 @@ const searchUsers = async (req, res) => {
 module.exports = {
     getUsers,
     getUserById,
+    getLeaderboard,
     updateProfile,
     updateUserRole,
     deleteProfile,

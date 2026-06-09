@@ -12,6 +12,7 @@ const {
     updateUserRole,
     deleteProfile,
     searchUsers,
+    getLeaderboard,
 } = require('../controllers/userController');
 
 router.get('/profile', verifyToken, getProfile);
@@ -19,6 +20,7 @@ router.put('/profile', verifyToken, updateProfile);
 router.delete('/profile', verifyToken, deleteProfile);
 
 router.get('/search', verifyToken, searchUsers);
+router.get('/ranking', verifyToken, getLeaderboard);
 
 router.get('/', verifyToken, isAdmin, getUsers);
 router.get('/:id', verifyToken, isAdmin, getUserById);

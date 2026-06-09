@@ -7,6 +7,8 @@ import MainMenu from "./pages/Menu/MainMenu.jsx";
 import Profile from "./pages/Profile/Profile.jsx";
 import Friends from "./pages/Profile/friends/Friends.jsx";
 import Ranking from "./pages/Ranking/Ranking.jsx";
+import Leaderboard from "./pages/Leaderboard/Leaderboard.jsx";
+import Tournaments from "./pages/Tournaments/Tournaments.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Admin from "./pages/Admin/Admin.jsx";
 import PlayOffline from "./pages/PlayOffline/PlayOffline.jsx";
@@ -60,7 +62,16 @@ function App() {
                     path="/ranking"
                     element={
                         <ProtectedRoute>
-                            <Ranking />
+                            <Leaderboard />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/tournaments"
+                    element={
+                        <ProtectedRoute>
+                            <Tournaments />
                         </ProtectedRoute>
                     }
                 />
