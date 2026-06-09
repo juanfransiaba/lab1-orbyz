@@ -264,6 +264,17 @@ function OnlineMatchCode() {
             );
         }
 
+        function handleSpectatorUpdate(payload) {
+            setRoom((currentRoom) =>
+                currentRoom
+                    ? {
+                          ...currentRoom,
+                          spectatorCount: payload.spectatorCount ?? 0,
+                      }
+                    : currentRoom
+            );
+        }
+
         const unsubscribeChat = onChatMessage((message) => {
             setMessages((currentMessages) => [...currentMessages, message].slice(-50));
         });
@@ -278,6 +289,7 @@ function OnlineMatchCode() {
         socket.on("player:frozen", handlePlayerFrozen);
         socket.on("player:disconnected", handleDisconnected);
         socket.on("player:reconnected", handleReconnected);
+        socket.on("spectator:update", handleSpectatorUpdate);
 
         connectOnlineSocket().catch((error) => {
             if (active) {
@@ -298,6 +310,7 @@ function OnlineMatchCode() {
             socket.off("player:frozen", handlePlayerFrozen);
             socket.off("player:disconnected", handleDisconnected);
             socket.off("player:reconnected", handleReconnected);
+            socket.off("spectator:update", handleSpectatorUpdate);
 
             if (answerTimerRef.current) {
                 window.clearTimeout(answerTimerRef.current);
@@ -527,6 +540,7 @@ function OnlineMatchCode() {
         return (
             <div className="online-room-page">
                 <header className="online-room-header">
+                    <div className="online-room-header-glow" />
                     <button
                         type="button"
                         className="online-room-back-button"
@@ -562,6 +576,7 @@ function OnlineMatchCode() {
     return (
         <div className="online-room-page">
             <header className="online-room-header">
+                <div className="online-room-header-glow" />
                 <button
                     type="button"
                     className="online-room-back-button"
@@ -588,6 +603,9 @@ function OnlineMatchCode() {
                                 <span>Codigo de sala</span>
                                 <h2>{room.code}</h2>
                             </div>
+                            <p className="online-room-mini-status">
+                                {room?.spectatorCount ?? 0} espectadores mirando
+                            </p>
                             <div className="online-lobby-players">
                                 {renderPlayerCard(myProgress, "Vos")}
                                 {renderPlayerCard(rivalProgress, "Rival")}
@@ -623,6 +641,9 @@ function OnlineMatchCode() {
                                 {renderPlayerCard(myProgress, "Vos")}
                                 {renderPlayerCard(rivalProgress, "Rival")}
                             </div>
+                            <p className="online-room-mini-status is-compact">
+                                {room?.spectatorCount ?? 0} espectadores mirando
+                            </p>
 
                             <article className="online-question-card">
                                 <div className="online-question-head">

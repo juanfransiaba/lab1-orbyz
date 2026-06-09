@@ -88,6 +88,7 @@ function CreateOnlineMatch() {
     return (
         <div className="online-room-page">
             <header className="online-room-header">
+                <div className="online-room-header-glow" />
                 <button
                     type="button"
                     className="online-room-back-button"

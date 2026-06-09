@@ -14,6 +14,7 @@ import OnlineMode from "./pages/Online/OnlineMode/OnlineMode.jsx";
 import CreateOnlineMatch from "./pages/Online/CreateOnlineMatch/CreateOnlineMatch.jsx";
 import JoinOnlineMatch from "./pages/Online/JoinOnlineMatch/JoinOnlineMatch.jsx";
 import OnlineMatchCode from "./pages/Online/OnlineMatchCode/OnlineMatchCode.jsx";
+import OnlineSpectator from "./pages/Online/OnlineSpectator/OnlineSpectator.jsx";
 import ContinentSelection from "./pages/PlayOffline/ContinentSelection.jsx";
 import CountryByCapital from "./pages/PlayOffline/modes/CountryByCapital.jsx";
 import CapitalByCountry from "./pages/PlayOffline/modes/CapitalByCountry.jsx";
@@ -123,6 +124,15 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <OnlineMatchCode />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/online/spectate"
+                    element={
+                        <ProtectedRoute>
+                            <OnlineSpectator />
                         </ProtectedRoute>
                     }
                 />

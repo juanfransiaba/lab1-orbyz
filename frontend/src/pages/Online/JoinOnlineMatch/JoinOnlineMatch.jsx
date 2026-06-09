@@ -2,12 +2,23 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { disconnectSocket } from "../../../services/socket.js";
 import { connectOnlineSocket, emitWithAck } from "../../../services/OnlineSocketService.js";
+import { joinAsSpectator } from "../../../services/OnlineSpectatorService.js";
 import "../OnlineRoom.css";
+
+function canOfferSpectatorMode(message = "") {
+    const normalizedMessage = message.toLowerCase();
+    return (
+        normalizedMessage.includes("empez") ||
+        normalizedMessage.includes("llena")
+    );
+}
 
 function JoinOnlineMatch() {
     const navigate = useNavigate();
     const [roomCode, setRoomCode] = useState("");
     const [loading, setLoading] = useState(false);
+    const [spectatorLoading, setSpectatorLoading] = useState(false);
+    const [spectatorAvailable, setSpectatorAvailable] = useState(false);
     const [connectionStatus, setConnectionStatus] = useState("Conectando...");
     const [error, setError] = useState("");
     const normalizedCode = roomCode.toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -40,6 +51,7 @@ function JoinOnlineMatch() {
         event.preventDefault();
         setLoading(true);
         setError("");
+        setSpectatorAvailable(false);
 
         try {
             await connectOnlineSocket();
@@ -51,15 +63,38 @@ function JoinOnlineMatch() {
                 state: { room: response.room },
             });
         } catch (joinError) {
-            setError(joinError.message || "No se pudo entrar a la sala.");
+            const message = joinError.message || "No se pudo entrar a la sala.";
+            setError(message);
+            setSpectatorAvailable(canOfferSpectatorMode(message));
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function handleSpectateRoom() {
+        setSpectatorLoading(true);
+        setError("");
+
+        try {
+            await connectOnlineSocket();
+            const snapshot = await joinAsSpectator(normalizedCode);
+
+            navigate("/online/spectate", {
+                state: { snapshot, code: normalizedCode },
+            });
+        } catch (spectatorError) {
+            setError(
+                spectatorError.message || "No se pudo entrar como espectador."
+            );
+        } finally {
+            setSpectatorLoading(false);
         }
     }
 
     return (
         <div className="online-room-page">
             <header className="online-room-header">
+                <div className="online-room-header-glow" />
                 <button
                     type="button"
                     className="online-room-back-button"
@@ -90,17 +125,41 @@ function JoinOnlineMatch() {
                             type="text"
                             value={normalizedCode}
                             maxLength={5}
-                            onChange={(event) => setRoomCode(event.target.value)}
+                            onChange={(event) => {
+                                setRoomCode(event.target.value);
+                                setSpectatorAvailable(false);
+                                setError("");
+                            }}
                             placeholder="A7K9P"
                         />
                     </label>
 
                     {error && <p className="online-room-feedback is-error">{error}</p>}
 
+                    {spectatorAvailable && (
+                        <div className="online-room-spectator-offer">
+                            <span>Sala disponible para mirar</span>
+                            <button
+                                type="button"
+                                className="online-room-secondary-button"
+                                onClick={handleSpectateRoom}
+                                disabled={spectatorLoading || normalizedCode.length !== 5}
+                            >
+                                {spectatorLoading
+                                    ? "Entrando como espectador..."
+                                    : "Ver como espectador"}
+                            </button>
+                        </div>
+                    )}
+
                     <button
                         type="submit"
                         className="online-room-primary-button"
-                        disabled={loading || normalizedCode.length !== 5}
+                        disabled={
+                            loading ||
+                            spectatorLoading ||
+                            normalizedCode.length !== 5
+                        }
                     >
                         {loading ? "Entrando..." : "Unirse a sala"}
                     </button>
