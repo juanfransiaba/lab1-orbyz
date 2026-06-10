@@ -6,6 +6,7 @@ const {
     removeSpectator,
 } = require("./roomManager");
 const { saveAbandonedMatch } = require("./matchRepository");
+const { advanceTournamentMatch } = require("../services/tournamentsService");
 
 // Tiempo para reconectarse antes de que cuente como abandono.
 const GRACE_PERIOD_MS = Number(process.env.GRACE_PERIOD_MS) || 30000;
@@ -59,6 +60,24 @@ function endMatchByAbandon(io, room, abandonerUserId) {
     saveAbandonedMatch(room, abandonerUserId).catch((error) =>
         console.error("Error al guardar la partida abandonada:", error)
     );
+
+    // Si era de un torneo, gana el que NO abandonó y avanza la llave
+    if (room.tournament) {
+        const winner = Array.from(room.players.values())
+            .map((p) => p.userId)
+            .find((id) => Number(id) !== Number(abandonerUserId));
+        if (winner) {
+            advanceTournamentMatch(room.tournament.tournamentMatchId, winner)
+                .then(() => {
+                    io.to(room.code).emit("tournament:matchEnded", {
+                        tournamentId: room.tournament.tournamentId,
+                    });
+                })
+                .catch((e) =>
+                    console.error("Error avanzando torneo (abandono):", e)
+                );
+        }
+    }
 
     deleteRoom(room.code);
 

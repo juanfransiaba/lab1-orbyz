@@ -1,6 +1,7 @@
 const pool = require("../db");
 const {
     createRoom,
+    getRoom,
     addPlayer,
     removePlayer,
     findRoomByUser,
@@ -77,6 +78,14 @@ function registerLobbyHandlers(io, socket) {
             }
 
             const normalizedCode = String(code).trim().toUpperCase();
+
+            // Las salas de torneo solo se entran desde el bracket, no por código
+            const existingRoom = getRoom(normalizedCode);
+            if (existingRoom && existingRoom.tournament) {
+                return callback?.({
+                    error: "Esa sala es de un torneo, entrá desde el cuadro del torneo",
+                });
+            }
 
             // Si ya estaba en otra sala distinta, salir primero
             const current = findRoomByUser(userId);

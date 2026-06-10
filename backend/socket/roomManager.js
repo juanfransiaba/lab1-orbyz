@@ -20,7 +20,7 @@ function generateCode() {
     return code;
 }
 
-function createRoom({ mode, continent, hostUserId, hostUsername }) {
+function createRoom({ mode, continent, hostUserId, hostUsername, tournament }) {
     const code = generateCode();
 
     const room = {
@@ -28,9 +28,10 @@ function createRoom({ mode, continent, hostUserId, hostUsername }) {
         mode,
         continent: continent || null,
         hostUserId,
-        status: "waiting", // waiting | playing | finished
+        status: "waiting",
         players: new Map(),
-        spectators: [], // preparado para más adelante
+        spectators: [],
+        tournament: tournament || null,   // <-- nuevo: contexto del torneo (o null si es casual)
         createdAt: new Date(),
     };
 

@@ -1,6 +1,7 @@
 const { findRoomByUser } = require("./roomManager");
 const { generateQuestions } = require("./questionGenerator");
 const { saveMatchResults } = require("./matchRepository");
+const { advanceTournamentMatch } = require("../services/tournamentsService");
 
 const MAX_LIVES = 3;
 
@@ -80,6 +81,18 @@ function buildGameOver(room, explicitWinnerUserId) {
     return { players, winnerUserId, draw: winnerUserId === null };
 }
 
+// En un torneo no puede haber empate (la llave necesita un ganador).
+// Si hubo empate, desempata por menos errores y, si siguen iguales, al azar.
+function resolveTournamentWinner(gameOver) {
+    if (gameOver.winnerUserId) return gameOver.winnerUserId;
+
+    const [a, b] = gameOver.players;
+    if (!a || !b) return a?.userId ?? b?.userId ?? null;
+    if (a.wrongCount < b.wrongCount) return a.userId;
+    if (b.wrongCount < a.wrongCount) return b.userId;
+    return Math.random() < 0.5 ? a.userId : b.userId;
+}
+
 // Punto ÚNICO de cierre de partida: evita game:over dobles y limpia el timer
 function finishGame(io, room, gameOver) {
     if (room.status !== "playing") return; // ya terminó por otro lado
@@ -97,6 +110,57 @@ function finishGame(io, room, gameOver) {
     saveMatchResults(room, gameOver).catch((error) =>
         console.error("Error al guardar la partida:", error)
     );
+
+    // Si la sala era de un torneo, avanzar la llave sola
+    if (room.tournament) {
+        const winner = resolveTournamentWinner(gameOver);
+        if (winner) {
+            advanceTournamentMatch(room.tournament.tournamentMatchId, winner)
+                .then(() => {
+                    io.to(room.code).emit("tournament:matchEnded", {
+                        tournamentId: room.tournament.tournamentId,
+                    });
+                })
+                .catch((e) => console.error("Error avanzando torneo:", e));
+        }
+    }
+}
+
+// Arranca la partida en una sala (lo usan el game:start manual y los cruces de torneo)
+async function startGame(io, room) {
+    if (room.status !== "waiting") return; // ya arrancó
+
+    const questions = await generateQuestions(room.mode, room.continent);
+
+    room.status = "playing";
+    room.questions = questions;
+    room.startedAt = new Date();
+    room.matchEndsAt = Date.now() + MATCH_DURATION_MS;
+
+    for (const player of room.players.values()) {
+        player.lives = MAX_LIVES;
+        player.correctCount = 0;
+        player.wrongCount = 0;
+        player.currentIndex = 0;
+        player.finished = false;
+        player.correctStreak = 0;
+        player.powerups = { fiftyFifty: 1, freeze: 1 };
+        player.frozenUntil = 0;
+        player.powerupsUsed = { fiftyFifty: 0, freeze: 0 };
+        player.extraLivesAwarded = 0;
+    }
+
+    room.matchTimer = setTimeout(() => {
+        finishGame(io, room, buildGameOver(room));
+    }, MATCH_DURATION_MS);
+
+    io.to(room.code).emit("game:started", {
+        totalQuestions: questions.length,
+        question: publicQuestion(questions[0]),
+        matchEndsAt: room.matchEndsAt,
+    });
+
+    console.log(`Partida iniciada en sala ${room.code}`);
 }
 
 function registerGameHandlers(io, socket) {
@@ -120,41 +184,8 @@ function registerGameHandlers(io, socket) {
                 return callback?.({ error: "Faltan jugadores" });
             }
 
-            const questions = await generateQuestions(room.mode, room.continent);
-
-            room.status = "playing";
-            room.questions = questions;
-            room.startedAt = new Date();
-            room.matchEndsAt = Date.now() + MATCH_DURATION_MS;
-
-            for (const player of room.players.values()) {
-                player.lives = MAX_LIVES;
-                player.correctCount = 0;
-                player.wrongCount = 0;
-                player.currentIndex = 0;
-                player.finished = false;
-                // power-ups
-                player.correctStreak = 0;
-                player.powerups = { fiftyFifty: 1, freeze: 1 };
-                player.frozenUntil = 0;
-                player.powerupsUsed = { fiftyFifty: 0, freeze: 0 };
-                player.extraLivesAwarded = 0;
-            }
-
-            // Timer de partida: al cumplirse, gana el de más correctas (o empate)
-            room.matchTimer = setTimeout(() => {
-                finishGame(io, room, buildGameOver(room));
-            }, MATCH_DURATION_MS);
-
+            await startGame(io, room);
             callback?.({ ok: true });
-
-            io.to(room.code).emit("game:started", {
-                totalQuestions: questions.length,
-                question: publicQuestion(questions[0]),
-                matchEndsAt: room.matchEndsAt,
-            });
-
-            console.log(`Partida iniciada en sala ${room.code}`);
         } catch (error) {
             console.error("Error en game:start:", error);
             callback?.({ error: error.message || "Error del servidor" });
@@ -306,7 +337,6 @@ function registerGameHandlers(io, socket) {
                     return callback?.({ error: "No hay pregunta activa" });
                 }
 
-                // Índices de las opciones incorrectas
                 const wrongIndices = question.options
                     .map((opt, i) => (opt !== question.correctValue ? i : -1))
                     .filter((i) => i !== -1);
@@ -318,7 +348,6 @@ function registerGameHandlers(io, socket) {
 
                 io.to(room.code).emit("game:progress", playerProgress(player));
 
-                // Solo a quien lo usó; nunca le decimos cuál es la correcta
                 return callback?.({
                     ok: true,
                     type: "fifty_fifty",
@@ -343,7 +372,6 @@ function registerGameHandlers(io, socket) {
                 player.powerupsUsed.freeze += 1;
                 rival.frozenUntil = Date.now() + FREEZE_DURATION_MS;
 
-                // Avisar a la sala quién quedó congelado y hasta cuándo
                 io.to(room.code).emit("player:frozen", {
                     userId: rival.userId,
                     by: userId,
@@ -370,3 +398,4 @@ function registerGameHandlers(io, socket) {
 }
 
 module.exports = registerGameHandlers;
+module.exports.startGame = startGame;

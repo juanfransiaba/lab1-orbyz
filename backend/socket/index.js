@@ -5,6 +5,7 @@ const registerLobbyHandlers = require("./lobbyHandlers");
 const handleConnection = require("./connectionHandlers");
 const registerChatHandlers = require("./chatHandlers");
 const registerSpectatorHandlers = require("./spectatorHandlers");
+const registerTournamentMatchHandlers = require("./tournamentMatchHandlers");
 const { setIO } = require("./ioRef");
 
 function isAllowedLocalOrigin(origin) {
@@ -58,6 +59,7 @@ function initSocket(server) {
         registerGameHandlers(io, socket);
         registerChatHandlers(io, socket);
         registerSpectatorHandlers(io, socket);
+        registerTournamentMatchHandlers(io, socket);
         handleConnection(io, socket);
 
         socket.on("disconnect", (reason) => {

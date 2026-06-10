@@ -633,37 +633,24 @@ async function setMatchResult(tournamentId, matchId, winnerUserId, userId) {
         const nextOrder = Math.ceil(match.match_order / 2);
         const slotColumn = match.match_order % 2 === 1 ? "player1_id" : "player2_id";
 
-        const nextMatchResult = await client.query(
-            `SELECT *
-             FROM tournament_matches
-             WHERE tournament_id = $1
-               AND round_number = $2
-               AND match_order = $3
-             FOR UPDATE`,
-            [tournamentId, nextRound, nextOrder]
+        // Upsert atómico: si el cruce siguiente no existe lo crea, y si existe le
+        // pone el jugador en su lugar. Evita el bug si los dos cruces hermanos
+        // terminan al mismo tiempo.
+        await client.query(
+            `INSERT INTO tournament_matches (
+                tournament_id,
+                round_number,
+                match_order,
+                ${slotColumn},
+                status
+            )
+             VALUES ($1, $2, $3, $4, 'pending')
+                 ON CONFLICT (tournament_id, round_number, match_order)
+             DO UPDATE SET ${slotColumn} = EXCLUDED.${slotColumn},
+                                     updated_at = CURRENT_TIMESTAMP`,
+            [tournamentId, nextRound, nextOrder, cleanWinnerUserId]
         );
 
-        if (nextMatchResult.rows.length === 0) {
-            await client.query(
-                `INSERT INTO tournament_matches (
-                    tournament_id,
-                    round_number,
-                    match_order,
-                    ${slotColumn},
-                    status
-                 )
-                 VALUES ($1, $2, $3, $4, 'pending')`,
-                [tournamentId, nextRound, nextOrder, cleanWinnerUserId]
-            );
-        } else {
-            await client.query(
-                `UPDATE tournament_matches
-                 SET ${slotColumn} = $1,
-                     updated_at = CURRENT_TIMESTAMP
-                 WHERE tournament_match_id = $2`,
-                [cleanWinnerUserId, nextMatchResult.rows[0].tournament_match_id]
-            );
-        }
 
         await client.query(
             `UPDATE tournament_matches
@@ -687,6 +674,160 @@ async function setMatchResult(tournamentId, matchId, winnerUserId, userId) {
     });
 }
 
+// Trae el cruce + valida que el torneo esté activo, el cruce jugable, y que seas uno de los 2 jugadores
+async function getMatchForPlay(tournamentMatchId, userId) {
+    const { rows } = await pool.query(
+        `SELECT tm.tournament_match_id, tm.tournament_id, tm.player1_id, tm.player2_id,
+                tm.online_room_code, tm.status AS match_status,
+                t.mode, t.continent, t.status AS tournament_status,
+                p1.username AS player1_username, p2.username AS player2_username
+         FROM tournament_matches tm
+         JOIN tournaments t ON t.tournament_id = tm.tournament_id
+         LEFT JOIN users p1 ON p1.user_id = tm.player1_id
+         LEFT JOIN users p2 ON p2.user_id = tm.player2_id
+         WHERE tm.tournament_match_id = $1`,
+        [tournamentMatchId]
+    );
+
+    if (rows.length === 0) fail(404, "Cruce no encontrado");
+
+    const match = rows[0];
+
+    if (match.tournament_status !== "active") {
+        fail(400, "El torneo no está activo");
+    }
+    if (match.match_status !== "ready" && match.match_status !== "playing") {
+        fail(400, "Este cruce todavía no está listo para jugarse");
+    }
+    if (
+        Number(userId) !== Number(match.player1_id) &&
+        Number(userId) !== Number(match.player2_id)
+    ) {
+        fail(403, "No sos jugador de este cruce");
+    }
+
+    return match;
+}
+
+// Guarda el código de la sala online en el cruce
+async function attachRoomCode(tournamentMatchId, roomCode) {
+    await pool.query(
+        `UPDATE tournament_matches
+         SET online_room_code = $1, updated_at = CURRENT_TIMESTAMP
+         WHERE tournament_match_id = $2`,
+        [roomCode, tournamentMatchId]
+    );
+}
+
+// Marca el cruce como "jugándose" (cuando arranca la partida)
+async function markMatchPlaying(tournamentMatchId) {
+    await pool.query(
+        `UPDATE tournament_matches
+         SET status = 'playing', updated_at = CURRENT_TIMESTAMP
+         WHERE tournament_match_id = $1`,
+        [tournamentMatchId]
+    );
+}
+
+// Avanza la llave automáticamente cuando termina una partida real (sin chequeo de creador).
+// Devuelve null si no hay nada que hacer (cruce ya resuelto, ganador inválido, etc.).
+async function advanceTournamentMatch(tournamentMatchId, winnerUserId) {
+    return withTransaction(async (client) => {
+        const matchResult = await client.query(
+            `SELECT tm.*, t.max_players, t.status AS tournament_status
+             FROM tournament_matches tm
+             JOIN tournaments t ON t.tournament_id = tm.tournament_id
+             WHERE tm.tournament_match_id = $1
+             FOR UPDATE OF tm`,
+            [tournamentMatchId]
+        );
+
+        if (matchResult.rows.length === 0) return null;
+
+        const match = matchResult.rows[0];
+
+        if (match.status === "finished") return null;
+        if (match.tournament_status !== "active") return null;
+
+        const cleanWinnerUserId = Number(winnerUserId);
+
+        if (
+            cleanWinnerUserId !== Number(match.player1_id) &&
+            cleanWinnerUserId !== Number(match.player2_id)
+        ) {
+            return null;
+        }
+
+        const tournamentId = match.tournament_id;
+        const loserUserId =
+            cleanWinnerUserId === Number(match.player1_id)
+                ? match.player2_id
+                : match.player1_id;
+
+        await client.query(
+            `UPDATE tournament_matches
+             SET winner_user_id = $1, status = 'finished', updated_at = CURRENT_TIMESTAMP
+             WHERE tournament_match_id = $2`,
+            [cleanWinnerUserId, tournamentMatchId]
+        );
+
+        if (loserUserId) {
+            await client.query(
+                `UPDATE tournament_participants
+                 SET eliminated = TRUE
+                 WHERE tournament_id = $1 AND user_id = $2`,
+                [tournamentId, loserUserId]
+            );
+        }
+
+        const totalRounds = Math.log2(match.max_players);
+
+        // Final -> hay campeón
+        if (match.round_number >= totalRounds) {
+            await client.query(
+                `UPDATE tournaments
+                 SET status = 'finished', winner_user_id = $1,
+                     finished_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                 WHERE tournament_id = $2`,
+                [cleanWinnerUserId, tournamentId]
+            );
+            return { tournamentId, finished: true };
+        }
+
+        // Avanzar al cruce siguiente (mismo upsert atómico que en setMatchResult)
+        const nextRound = match.round_number + 1;
+        const nextOrder = Math.ceil(match.match_order / 2);
+        const slotColumn = match.match_order % 2 === 1 ? "player1_id" : "player2_id";
+
+        await client.query(
+            `INSERT INTO tournament_matches (
+                tournament_id, round_number, match_order, ${slotColumn}, status
+             )
+             VALUES ($1, $2, $3, $4, 'pending')
+             ON CONFLICT (tournament_id, round_number, match_order)
+             DO UPDATE SET ${slotColumn} = EXCLUDED.${slotColumn},
+                           updated_at = CURRENT_TIMESTAMP`,
+            [tournamentId, nextRound, nextOrder, cleanWinnerUserId]
+        );
+
+        await client.query(
+            `UPDATE tournament_matches
+             SET status = 'ready', updated_at = CURRENT_TIMESTAMP
+             WHERE tournament_id = $1 AND round_number = $2 AND match_order = $3
+               AND player1_id IS NOT NULL AND player2_id IS NOT NULL
+               AND status <> 'finished'`,
+            [tournamentId, nextRound, nextOrder]
+        );
+
+        await client.query(
+            "UPDATE tournaments SET updated_at = CURRENT_TIMESTAMP WHERE tournament_id = $1",
+            [tournamentId]
+        );
+
+        return { tournamentId, finished: false };
+    });
+}
+
 module.exports = {
     ServiceError,
     listTournaments,
@@ -699,4 +840,8 @@ module.exports = {
     deleteTournament,
     startTournament,
     setMatchResult,
+    getMatchForPlay,
+    attachRoomCode,
+    markMatchPlaying,
+    advanceTournamentMatch,
 };
