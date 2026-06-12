@@ -67,7 +67,7 @@ function Profile() {
 
             localStorage.removeItem("token");
             navigate("/login");
-        } catch (error) {
+        } catch {
             setError("No se pudo eliminar la cuenta");
         } finally {
             setDeleting(false);
@@ -101,7 +101,7 @@ function Profile() {
                 setUser(data);
                 setUsername(data.username || "");
                 setEmail(data.email || "");
-            } catch (error) {
+            } catch {
                 navigate("/login");
             } finally {
                 setLoading(false);
@@ -197,7 +197,7 @@ function Profile() {
                 password: false,
             });
             setMessage("Perfil actualizado correctamente");
-        } catch (error) {
+        } catch {
             setError("Ocurrió un error al actualizar el perfil");
         } finally {
             setSaving(false);
@@ -255,6 +255,22 @@ function Profile() {
                                 </p>
                             </div>
                         </div>
+
+                        <nav
+                            className="profile-navigation-actions"
+                            aria-label="Accesos del perfil"
+                        >
+                            <Link to="/friends" className="profile-navigation-button">
+                                Ver mis amigos
+                            </Link>
+
+                            <Link
+                                to="/history"
+                                className="profile-navigation-button is-primary"
+                            >
+                                Ver historial completo
+                            </Link>
+                        </nav>
 
                         <form className="profile-fields" onSubmit={handleUpdateProfile}>
                             <div className="profile-field">
@@ -363,34 +379,27 @@ function Profile() {
                                 </div>
                             )}
                         </form>
-                    </div>
 
-                    <aside className="profile-card profile-side-card">
-                        <h3>Accesos rápidos</h3>
-
-                        <div className="profile-side-actions">
-                            <Link to="/friends" className="profile-side-button">
-                                Ver mis amigos
-                            </Link>
-
-                            <Link to="/history" className="profile-side-button">
-                                Ver historial completo
-                            </Link>
+                        <div className="profile-account-actions">
+                            <button
+                                type="button"
+                                className="profile-logout-button"
+                                onClick={handleLogout}
+                            >
+                                Cerrar sesión
+                            </button>
 
                             <button
                                 type="button"
-                                className="profile-side-button profile-delete-button"
+                                className="profile-delete-button"
                                 onClick={handleDeleteAccount}
                                 disabled={deleting}
                             >
                                 {deleting ? "Eliminando..." : "Eliminar cuenta"}
                             </button>
                         </div>
+                    </div>
 
-                        <button className="profile-logout-button" onClick={handleLogout}>
-                            Cerrar sesión
-                        </button>
-                    </aside>
                 </section>
 
                 <section className="profile-card profile-history-card">

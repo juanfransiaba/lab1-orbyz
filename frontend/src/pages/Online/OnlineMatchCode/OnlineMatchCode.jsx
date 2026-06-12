@@ -102,7 +102,9 @@ function OnlineMatchCode() {
     const navigate = useNavigate();
     const location = useLocation();
     const initialRoom = location.state?.room || null;
+    const tournamentReturnId = location.state?.tournamentId || null;
     const answerTimerRef = useRef(null);
+    const tournamentRedirectRef = useRef(null);
     const [room, setRoom] = useState(() => initialRoom);
     const [phase, setPhase] = useState(() =>
         initialRoom?.status === "playing" ? "playing" : "lobby"
@@ -295,6 +297,34 @@ function OnlineMatchCode() {
             );
         }
 
+        function handleTournamentMatchEnded(payload = {}) {
+            const endedTournamentId = payload.tournamentId || tournamentReturnId;
+
+            if (!tournamentReturnId || !endedTournamentId) {
+                return;
+            }
+
+            if (Number(endedTournamentId) !== Number(tournamentReturnId)) {
+                return;
+            }
+
+            if (tournamentRedirectRef.current) {
+                return;
+            }
+
+            setFeedback("La partida del torneo termino. Volviendo a la llave...");
+
+            tournamentRedirectRef.current = window.setTimeout(() => {
+                emitWithAck("room:leave").catch(() => {});
+                navigate("/tournaments", {
+                    state: {
+                        tournamentId: endedTournamentId,
+                        feedback: "La llave del torneo se actualizo con el resultado.",
+                    },
+                });
+            }, 900);
+        }
+
         const unsubscribeChat = onChatMessage((message) => {
             setMessages((currentMessages) => [...currentMessages, message].slice(-50));
         });
@@ -310,6 +340,7 @@ function OnlineMatchCode() {
         socket.on("player:disconnected", handleDisconnected);
         socket.on("player:reconnected", handleReconnected);
         socket.on("spectator:update", handleSpectatorUpdate);
+        socket.on("tournament:matchEnded", handleTournamentMatchEnded);
 
         connectOnlineSocket().catch((error) => {
             if (active) {
@@ -331,12 +362,17 @@ function OnlineMatchCode() {
             socket.off("player:disconnected", handleDisconnected);
             socket.off("player:reconnected", handleReconnected);
             socket.off("spectator:update", handleSpectatorUpdate);
+            socket.off("tournament:matchEnded", handleTournamentMatchEnded);
 
             if (answerTimerRef.current) {
                 window.clearTimeout(answerTimerRef.current);
             }
+
+            if (tournamentRedirectRef.current) {
+                window.clearTimeout(tournamentRedirectRef.current);
+            }
         };
-    }, [currentUserId]);
+    }, [currentUserId, navigate, tournamentReturnId]);
 
     async function handleStartGame() {
         setPendingAction("start");
@@ -359,7 +395,13 @@ function OnlineMatchCode() {
         }
 
         disconnectSocket();
-        navigate("/online");
+        navigate(tournamentReturnId ? "/tournaments" : "/online", {
+            state: tournamentReturnId
+                ? {
+                      tournamentId: tournamentReturnId,
+                  }
+                : undefined,
+        });
     }
 
     async function handleCopyRoomCode() {
@@ -919,7 +961,9 @@ function OnlineMatchCode() {
                                 className="online-room-primary-button"
                                 onClick={handleLeave}
                             >
-                                Volver al modo online
+                                {tournamentReturnId
+                                    ? "Volver al torneo"
+                                    : "Volver al modo online"}
                             </button>
                         </div>
                         {renderChat()}

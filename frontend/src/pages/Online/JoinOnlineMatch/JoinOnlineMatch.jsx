@@ -5,6 +5,19 @@ import { connectOnlineSocket, emitWithAck } from "../../../services/OnlineSocket
 import { joinAsSpectator } from "../../../services/OnlineSpectatorService.js";
 import "../OnlineRoom.css";
 
+const JOIN_BACKGROUND_IMAGES = [
+    { src: "/images/paises/oman.jpg", position: "center 48%" },
+    { src: "/images/paises/japan.jpg", position: "center 46%" },
+    { src: "/images/paises/greece.jpg", position: "center 50%" },
+    { src: "/images/paises/morocco.jpg", position: "center 52%" },
+    { src: "/images/paises/australia.jpg", position: "center 48%" },
+    { src: "/images/paises/italy.jpg", position: "center 46%" },
+    { src: "/images/paises/canada.jpg", position: "center 44%" },
+    { src: "/images/paises/turquia.jpg", position: "center 50%" },
+    { src: "/images/paises/peru.jpg", position: "center 45%" },
+    { src: "/images/paises/brasil.jpg", position: "center 52%" },
+];
+
 function canOfferSpectatorMode(message = "") {
     const normalizedMessage = message.toLowerCase();
     return (
@@ -112,8 +125,24 @@ function JoinOnlineMatch() {
                 <span className="online-room-status">{connectionStatus}</span>
             </header>
 
-            <main className="online-room-main is-narrow">
-                <form className="online-room-panel" onSubmit={handleJoinRoom}>
+            <main className="online-room-main is-narrow is-join">
+                <div className="online-join-carousel" aria-hidden="true">
+                    {JOIN_BACKGROUND_IMAGES.map((image, index) => (
+                        <span
+                            key={image.src}
+                            style={{
+                                backgroundImage: `url(${image.src})`,
+                                backgroundPosition: image.position,
+                                animationDelay: `${index * 5}s`,
+                            }}
+                        />
+                    ))}
+                </div>
+
+                <form
+                    className="online-room-panel online-join-panel"
+                    onSubmit={handleJoinRoom}
+                >
                     <div className="online-room-panel-head">
                         <span>Codigo de sala</span>
                         <h2>Entrar con invitacion</h2>

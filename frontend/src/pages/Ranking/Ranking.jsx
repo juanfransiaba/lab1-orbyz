@@ -162,7 +162,10 @@ function Ranking() {
                 <div className="ranking-header-glow" />
 
                 <div className="ranking-header-actions">
-                    <Link to="/mainmenu" className="ranking-back-button">
+                    <Link
+                        to={isHistoryView ? "/profile" : "/mainmenu"}
+                        className="ranking-back-button"
+                    >
                         Volver
                     </Link>
                 </div>
