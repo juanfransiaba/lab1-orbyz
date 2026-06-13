@@ -1073,7 +1073,8 @@
 
 .ranking-confirm-danger {
     border-color: rgba(15, 40, 69, 0.2);
-    background: var(--history-navy);
+    background: #102845;
+    color: #ffffff;
 }
 
 @media (max-width: 980px) {

@@ -201,6 +201,15 @@ function OfflineGameLayout({
                                 {hasImage && !hasImageError ? (
                                     <>
                                         <img
+                                            ref={(node) => {
+                                                if (
+                                                    node &&
+                                                    node.complete &&
+                                                    node.naturalWidth > 0
+                                                ) {
+                                                    setImageStatus("loaded");
+                                                }
+                                            }}
                                             src={imageSrc}
                                             alt={imageAlt || "Referencia visual del desafio"}
                                             className={`offline-game-layout-image ${

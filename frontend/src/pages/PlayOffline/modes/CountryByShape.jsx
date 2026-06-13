@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import OfflineGameLayout from "../components/OfflineGameLayout.jsx";
 import { getCountries } from "../../../services/AdminService.js";
-import { createMatch, updateMatch } from "../../../services/MatchService.js";
+import { createMatch, updateMatch, findOngoingMatch } from "../../../services/MatchService.js";
 
 function shuffle(arr) {
     return [...arr].sort(() => Math.random() - 0.5);
@@ -42,6 +42,10 @@ function CountryByShape() {
     const bankRef = useRef([]);
     const matchIdRef = useRef(null);
     const matchPromiseRef = useRef(null);
+    const usedKeysRef = useRef(new Set());
+    const currentRoundRef = useRef(null);
+    const pendingResumeRef = useRef(null);
+    const initStartedRef = useRef(false);
 
     const [initialized, setInitialized] = useState(false);
     const [round, setRound] = useState(null);
@@ -93,13 +97,13 @@ function CountryByShape() {
 
     const syncMatchProgress = useCallback(
         async ({
-            nextCorrectCount = correctCount,
-            nextWrongCount = wrongCount,
-            nextLives = lives,
-            nextRoundNumber = roundNumber,
-            status = "ongoing",
-            metadata = {},
-        } = {}) => {
+                   nextCorrectCount = correctCount,
+                   nextWrongCount = wrongCount,
+                   nextLives = lives,
+                   nextRoundNumber = roundNumber,
+                   status = "ongoing",
+                   metadata = {},
+               } = {}) => {
             const matchId = await ensureMatchStarted();
 
             if (!matchId) {
@@ -115,7 +119,11 @@ function CountryByShape() {
                     round_reached: nextRoundNumber,
                     total_rounds: totalRounds || bankRef.current.length,
                     lives_left: nextLives,
-                    metadata,
+                    metadata: {
+                        ...metadata,
+                        usedKeys: Array.from(usedKeysRef.current),
+                        currentRound: currentRoundRef.current,
+                    },
                 });
             } catch {
                 // no-op
@@ -124,11 +132,34 @@ function CountryByShape() {
         [correctCount, ensureMatchStarted, lives, roundNumber, totalRounds, wrongCount]
     );
 
+    const persistCurrentQuestion = useCallback(async () => {
+        const matchId = await ensureMatchStarted();
+
+        if (!matchId) {
+            return;
+        }
+
+        try {
+            await updateMatch(matchId, {
+                metadata: {
+                    usedKeys: Array.from(usedKeysRef.current),
+                    currentRound: currentRoundRef.current,
+                },
+            });
+        } catch {
+            // no-op
+        }
+    }, [ensureMatchStarted]);
+
     useEffect(() => {
+        if (initStartedRef.current) {
+            return;
+        }
+        initStartedRef.current = true;
+
         const init = async () => {
             setLoading(true);
             setError("");
-
             try {
                 const countries = await getCountries();
                 const valid = dedupeCountries(
@@ -145,9 +176,35 @@ function CountryByShape() {
                 }
 
                 bankRef.current = valid;
-                poolRef.current = shuffle(valid);
 
-                setTotalRounds(valid.length);
+                const ongoing = await findOngoingMatch("country-by-shape");
+                if (ongoing) {
+                    matchIdRef.current = ongoing.id;
+                    const used = Array.isArray(ongoing.metadata?.usedKeys)
+                        ? ongoing.metadata.usedKeys
+                        : [];
+                    usedKeysRef.current = new Set(used);
+                    const savedRound = ongoing.metadata?.currentRound || null;
+                    if (savedRound?.key) {
+                        usedKeysRef.current.add(savedRound.key);
+                        pendingResumeRef.current = savedRound;
+                    }
+                    poolRef.current = shuffle(
+                        valid.filter(
+                            (c) => !usedKeysRef.current.has(getPromptIdentity(c))
+                        )
+                    );
+                    setCorrectCount(ongoing.correctCount ?? 0);
+                    setWrongCount(ongoing.wrongCount ?? 0);
+                    setLives(ongoing.livesLeft ?? maxLives);
+                    setRoundNumber(ongoing.roundReached ?? 0);
+                    setTotalRounds(ongoing.totalRounds || valid.length);
+                } else {
+                    usedKeysRef.current = new Set();
+                    poolRef.current = shuffle(valid);
+                    setTotalRounds(valid.length);
+                }
+
                 setInitialized(true);
             } catch (err) {
                 setError(err.message || "No se pudo cargar el juego.");
@@ -165,6 +222,25 @@ function CountryByShape() {
         setCorrectOption(null);
         setFeedback("");
 
+        // Retomar la pregunta exacta que habia quedado pendiente
+        if (pendingResumeRef.current) {
+            const saved = pendingResumeRef.current;
+            pendingResumeRef.current = null;
+            currentRoundRef.current = saved;
+            if (saved.key) {
+                usedKeysRef.current.add(saved.key);
+                poolRef.current = poolRef.current.filter(
+                    (c) => getPromptIdentity(c) !== saved.key
+                );
+            }
+            setRoundNumber((currentRound) => currentRound + 1);
+            void ensureMatchStarted();
+            setRound(saved);
+            void persistCurrentQuestion();
+            setLoading(false);
+            return;
+        }
+
         if (poolRef.current.length === 0) {
             void syncMatchProgress({
                 status: "completed",
@@ -177,16 +253,15 @@ function CountryByShape() {
         }
 
         const correctCountry = poolRef.current.shift();
+        usedKeysRef.current.add(getPromptIdentity(correctCountry));
         const others = bankRef.current.filter(
             (country) => getCountryIdentity(country) !== getCountryIdentity(correctCountry)
         );
         const distractors = shuffle(others).slice(0, 3);
         const finalOptions = shuffle([correctCountry, ...distractors]);
 
-        setRoundNumber((currentRound) => currentRound + 1);
-        void ensureMatchStarted();
-
-        setRound({
+        const newRound = {
+            key: getPromptIdentity(correctCountry),
             prompt: "Que pais corresponde a esta silueta?",
             imageSrc: correctCountry.imagen_silueta,
             imageAlt: `Silueta de ${correctCountry.nombre}`,
@@ -196,7 +271,13 @@ function CountryByShape() {
                 label: country.nombre,
             })),
             correctValue: correctCountry.nombre,
-        });
+        };
+
+        currentRoundRef.current = newRound;
+        setRoundNumber((currentRound) => currentRound + 1);
+        void ensureMatchStarted();
+        setRound(newRound);
+        void persistCurrentQuestion();
 
         setLoading(false);
     }, []);
@@ -216,6 +297,7 @@ function CountryByShape() {
 
         setSelectedOption(option);
         setCorrectOption(round.correctValue);
+        currentRoundRef.current = null;
 
         if (isCorrect) {
             const nextCorrectCount = correctCount + 1;
@@ -254,6 +336,9 @@ function CountryByShape() {
         poolRef.current = shuffle([...bankRef.current]);
         matchIdRef.current = null;
         matchPromiseRef.current = null;
+        usedKeysRef.current = new Set();
+        currentRoundRef.current = null;
+        pendingResumeRef.current = null;
 
         setCorrectCount(0);
         setWrongCount(0);
@@ -325,8 +410,8 @@ function CountryByShape() {
                 loading
                     ? "Cargando nueva ronda..."
                     : error
-                    ? "No pudimos preparar esta partida"
-                    : round?.prompt || "Preparando desafio..."
+                        ? "No pudimos preparar esta partida"
+                        : round?.prompt || "Preparando desafio..."
             }
             imageSrc={!loading && !error ? round?.imageSrc : ""}
             imageAlt={round?.imageAlt}
@@ -338,8 +423,8 @@ function CountryByShape() {
                 loading
                     ? "Estamos preparando las opciones..."
                     : error
-                    ? error
-                    : feedback
+                        ? error
+                        : feedback
             }
             feedbackTone={error ? "error" : undefined}
             onBack={() => navigate("/offline")}

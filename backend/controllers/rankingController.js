@@ -2,20 +2,6 @@ const pool = require("../db");
 
 // GET /ranking/global — todos los usuarios ordenados por puntos (top 100)
 // No exponemos el email acá (serían datos de gente que no es tu amigo)
-const getGlobalRanking = async (req, res) => {
-    try {
-        const { rows } = await pool.query(
-            `SELECT user_id, username, score
-             FROM users
-             ORDER BY score DESC, username ASC
-             LIMIT 100`
-        );
-        res.json(rows);
-    } catch (error) {
-        console.error("Error en getGlobalRanking:", error);
-        res.status(500).json({ message: "Error del servidor" });
-    }
-};
 
 // GET /ranking/friends — vos + tus amigos aceptados, ordenados por puntos
 const getFriendsRanking = async (req, res) => {
@@ -47,4 +33,4 @@ const getFriendsRanking = async (req, res) => {
     }
 };
 
-module.exports = { getGlobalRanking, getFriendsRanking };
+module.exports = { getFriendsRanking };

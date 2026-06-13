@@ -96,3 +96,23 @@ export async function abandonMatch(matchId) {
         },
     });
 }
+
+// Busca tu partida en curso (ongoing) de un modo (y continente si aplica)
+export async function findOngoingMatch(mode, continent = "") {
+    const { data } = await getMyMatches({ status: "ongoing", limit: 30 });
+    const norm = (v) => String(v || "").trim().toLowerCase();
+
+    return (
+        data
+            .filter(
+                (m) =>
+                    m.mode === mode &&
+                    (!continent || norm(m.continent) === norm(continent))
+            )
+            .sort(
+                (a, b) =>
+                    new Date(b.updatedAt || b.startedAt || 0) -
+                    new Date(a.updatedAt || a.startedAt || 0)
+            )[0] || null
+    );
+}
