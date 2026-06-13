@@ -227,7 +227,7 @@ const searchUsers = async (req, res) => {
         }
 
         const { rows } = await pool.query(
-            `SELECT user_id, username, email
+            `SELECT user_id, username
              FROM users
              WHERE LOWER(username) LIKE LOWER($1)
                AND user_id <> $2

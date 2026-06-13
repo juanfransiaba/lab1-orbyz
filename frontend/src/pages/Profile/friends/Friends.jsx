@@ -307,7 +307,6 @@ function Friends() {
 
                                             <div className="friends-user-copy">
                                                 <h3>{user.username}</h3>
-                                                <p>{user.email || "Sin correo visible"}</p>
                                             </div>
                                         </div>
 
@@ -389,7 +388,6 @@ function Friends() {
 
                                                 <div className="friends-user-copy">
                                                     <h3>{request.username}</h3>
-                                                    <p>{request.email || "Sin correo visible"}</p>
                                                 </div>
                                             </div>
 
@@ -453,7 +451,6 @@ function Friends() {
 
                                                 <div className="friends-user-copy">
                                                     <h3>{friend.username}</h3>
-                                                    <p>{friend.email || "Sin correo visible"}</p>
                                                 </div>
                                             </div>
 

@@ -97,7 +97,7 @@ const getReceivedRequests = async (req, res) => {
 
         const { rows } = await pool.query(
             `SELECT f.friendship_id, f.status, f.created_at,
-                    u.user_id, u.username, u.email
+                    u.user_id, u.username
              FROM friendships f
              JOIN users u ON u.user_id = f.requester_id
              WHERE f.addressee_id = $1 AND f.status = 'pending'
@@ -121,7 +121,7 @@ const getSentRequests = async (req, res) => {
 
         const { rows } = await pool.query(
             `SELECT f.friendship_id, f.status, f.created_at,
-                    u.user_id, u.username, u.email
+                    u.user_id, u.username
              FROM friendships f
              JOIN users u ON u.user_id = f.addressee_id
              WHERE f.requester_id = $1 AND f.status = 'pending'
@@ -213,7 +213,7 @@ const getFriends = async (req, res) => {
 
         const { rows } = await pool.query(
             `SELECT f.friendship_id, f.created_at,
-                    u.user_id, u.username, u.email, u.score
+                    u.user_id, u.username, u.score
              FROM friendships f
              JOIN users u
                ON u.user_id = CASE
