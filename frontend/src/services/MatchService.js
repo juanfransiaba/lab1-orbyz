@@ -47,6 +47,56 @@ function normalizeMatch(match) {
     };
 }
 
+function normalizeContextValue(value) {
+    return String(value || "").trim().toLowerCase();
+}
+
+function getResumeStorageKey(mode, continent = "") {
+    return `orbyz:resume-match:${normalizeContextValue(mode)}:${normalizeContextValue(
+        continent
+    )}`;
+}
+
+function matchesContext(match, mode, continent = "") {
+    const sameMode = match?.mode === mode;
+    const sameContinent =
+        !continent ||
+        normalizeContextValue(match?.continent) === normalizeContextValue(continent);
+
+    return sameMode && sameContinent;
+}
+
+function getRememberedResumeMatchId(mode, continent = "") {
+    try {
+        return sessionStorage.getItem(getResumeStorageKey(mode, continent));
+    } catch {
+        return "";
+    }
+}
+
+function clearRememberedResumeMatch(mode, continent = "") {
+    try {
+        sessionStorage.removeItem(getResumeStorageKey(mode, continent));
+    } catch {
+        // no-op
+    }
+}
+
+export function rememberResumeMatch(match) {
+    if (!match?.id || !match?.mode) {
+        return;
+    }
+
+    try {
+        sessionStorage.setItem(
+            getResumeStorageKey(match.mode, match.continent),
+            String(match.id)
+        );
+    } catch {
+        // no-op
+    }
+}
+
 export async function createMatch(payload) {
     const data = await requestJSON("/matches", {
         method: "POST",
@@ -61,6 +111,12 @@ export async function updateMatch(matchId, payload) {
         method: "PUT",
         body: JSON.stringify(payload),
     });
+
+    return normalizeMatch(data);
+}
+
+export async function getMatchById(matchId) {
+    const data = await requestJSON(`/matches/${matchId}`);
 
     return normalizeMatch(data);
 }
@@ -99,15 +155,35 @@ export async function abandonMatch(matchId) {
 
 // Busca tu partida en curso (ongoing) de un modo (y continente si aplica)
 export async function findOngoingMatch(mode, continent = "") {
+    const rememberedMatchId = getRememberedResumeMatchId(mode, continent);
+
+    if (rememberedMatchId) {
+        try {
+            const rememberedMatch = await getMatchById(rememberedMatchId);
+
+            if (
+                rememberedMatch.status === "ongoing" &&
+                matchesContext(rememberedMatch, mode, continent)
+            ) {
+                return rememberedMatch;
+            }
+
+            clearRememberedResumeMatch(mode, continent);
+        } catch {
+            clearRememberedResumeMatch(mode, continent);
+        }
+    }
+
     const { data } = await getMyMatches({ status: "ongoing", limit: 30 });
-    const norm = (v) => String(v || "").trim().toLowerCase();
 
     return (
         data
             .filter(
                 (m) =>
                     m.mode === mode &&
-                    (!continent || norm(m.continent) === norm(continent))
+                    (!continent ||
+                        normalizeContextValue(m.continent) ===
+                            normalizeContextValue(continent))
             )
             .sort(
                 (a, b) =>

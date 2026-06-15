@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import { disconnectSocket, getSocket } from "../../../services/socket.js";
 import {
     connectOnlineSocket,
@@ -10,6 +11,7 @@ import { onChatMessage, sendChatMessage } from "../../../services/OnlineChatServ
 import "../OnlineRoom.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
+const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
 const LOBBY_BACKGROUND_IMAGES = [
     { src: "/images/paises/oman.jpg", position: "center 48%" },
@@ -147,6 +149,54 @@ function resolveQuestionImage(src) {
     return src;
 }
 
+function OnlineMapQuestion({ iso }) {
+    return (
+        <div className="online-map-frame">
+            <ComposableMap
+                projection="geoEqualEarth"
+                projectionConfig={{ scale: 150, center: [0, 8] }}
+                width={900}
+                height={420}
+                className="online-map"
+            >
+                <Geographies geography={GEO_URL}>
+                    {({ geographies }) =>
+                        geographies.map((geo) => {
+                            const isTarget = Number(geo.id) === Number(iso);
+                            const countryFill = isTarget ? "#22c55e" : "#f8fbff";
+                            const hoverFill = isTarget ? "#22c55e" : "#e7f0fb";
+
+                            return (
+                                <Geography
+                                    key={geo.rsmKey}
+                                    geography={geo}
+                                    className={isTarget ? "is-target" : ""}
+                                    style={{
+                                        default: {
+                                            fill: countryFill,
+                                            stroke: "#8fa8c8",
+                                            strokeWidth: 0.42,
+                                            outline: "none",
+                                        },
+                                        hover: {
+                                            fill: hoverFill,
+                                            outline: "none",
+                                        },
+                                        pressed: {
+                                            fill: isTarget ? "#16a34a" : "#dbeafe",
+                                            outline: "none",
+                                        },
+                                    }}
+                                />
+                            );
+                        })
+                    }
+                </Geographies>
+            </ComposableMap>
+        </div>
+    );
+}
+
 function OnlineMatchCode() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -173,6 +223,7 @@ function OnlineMatchCode() {
     const [lobbyChatOpen, setLobbyChatOpen] = useState(false);
     const [pendingAction, setPendingAction] = useState("");
     const [copyFeedback, setCopyFeedback] = useState("");
+    const [mapAnswer, setMapAnswer] = useState("");
     const currentUser = useMemo(
         () => decodeToken(localStorage.getItem("token") || ""),
         []
@@ -194,6 +245,8 @@ function OnlineMatchCode() {
     const currentRemovedIndices = question
         ? removedByQuestion[question.index] || []
         : [];
+    const isMapQuestion =
+        Boolean(question?.iso) || room?.mode === "country-by-map";
     const questionImage = resolveQuestionImage(question?.imageSrc);
     const gameFeedback = answerResult
         ? answerResult.correct
@@ -229,6 +282,7 @@ function OnlineMatchCode() {
             setMatchEndsAt(payload.matchEndsAt || 0);
             setAnswerResult(null);
             setRemovedByQuestion({});
+            setMapAnswer("");
             setRoom((currentRoom) =>
                 currentRoom ? { ...currentRoom, status: "playing" } : currentRoom
             );
@@ -286,6 +340,7 @@ function OnlineMatchCode() {
             setMatchEndsAt(payload.matchEndsAt || 0);
             setMessages(payload.messages || []);
             setPhase(payload.room?.status === "playing" ? "playing" : "lobby");
+            setMapAnswer("");
             setFeedback("Reconectaste con la partida online.");
         }
 
@@ -526,6 +581,7 @@ function OnlineMatchCode() {
                 setAnswerResult(null);
                 setQuestion(response.nextQuestion);
                 setRemovedByQuestion({});
+                setMapAnswer("");
             }, 950);
         } catch (error) {
             if (error.frozenUntil) {
@@ -543,6 +599,18 @@ function OnlineMatchCode() {
         } finally {
             setPendingAction("");
         }
+    }
+
+    async function handleMapAnswer(event) {
+        event.preventDefault();
+        const cleanAnswer = mapAnswer.trim();
+
+        if (!cleanAnswer) {
+            setFeedback("Escribi el nombre del pais en ingles.");
+            return;
+        }
+
+        await handleAnswer(cleanAnswer);
     }
 
     async function handleUsePowerup(type) {
@@ -627,7 +695,7 @@ function OnlineMatchCode() {
                     </div>
                 </div>
                 <div className="online-player-metrics">
-                    <span>{player.lives ?? "-"} vidas</span>
+                    {!isMapQuestion && <span>{player.lives ?? "-"} vidas</span>}
                     <span>{player.correctCount ?? 0} aciertos</span>
                     <span>racha {streak}/10</span>
                 </div>
@@ -659,7 +727,11 @@ function OnlineMatchCode() {
                     </div>
                     {isWinner && <em>Ganador</em>}
                 </div>
-                <div className="online-result-metrics">
+                <div
+                    className={`online-result-metrics ${
+                        isMapQuestion ? "is-time-mode" : ""
+                    }`}
+                >
                     <div>
                         <strong>{player.correctCount ?? 0}</strong>
                         <span>Aciertos</span>
@@ -668,10 +740,12 @@ function OnlineMatchCode() {
                         <strong>{player.wrongCount ?? 0}</strong>
                         <span>Errores</span>
                     </div>
-                    <div>
-                        <strong>{player.lives ?? 0}</strong>
-                        <span>Vidas</span>
-                    </div>
+                    {!isMapQuestion && (
+                        <div>
+                            <strong>{player.lives ?? 0}</strong>
+                            <span>Vidas</span>
+                        </div>
+                    )}
                 </div>
             </article>
         );
@@ -687,19 +761,21 @@ function OnlineMatchCode() {
                 </div>
 
                 <section className="online-powerups" aria-label="Habilidades especiales">
-                    <button
-                        type="button"
-                        onClick={() => handleUsePowerup("fifty_fifty")}
-                        disabled={
-                            !question ||
-                            isFrozen ||
-                            (myProgress?.powerups?.fiftyFifty ?? 0) <= 0 ||
-                            pendingAction === "fifty_fifty"
-                        }
-                    >
-                        <span>50/50</span>
-                        <strong>{myProgress?.powerups?.fiftyFifty ?? 0}</strong>
-                    </button>
+                    {!isMapQuestion && (
+                        <button
+                            type="button"
+                            onClick={() => handleUsePowerup("fifty_fifty")}
+                            disabled={
+                                !question ||
+                                isFrozen ||
+                                (myProgress?.powerups?.fiftyFifty ?? 0) <= 0 ||
+                                pendingAction === "fifty_fifty"
+                            }
+                        >
+                            <span>50/50</span>
+                            <strong>{myProgress?.powerups?.fiftyFifty ?? 0}</strong>
+                        </button>
+                    )}
                     <button
                         type="button"
                         onClick={() => handleUsePowerup("freeze")}
@@ -948,7 +1024,7 @@ function OnlineMatchCode() {
                             <article
                                 className={`online-question-card ${
                                     questionImage ? "has-image" : ""
-                                }`}
+                                } ${isMapQuestion ? "has-map" : ""}`}
                             >
                                 {isFrozen && (
                                     <div className="online-freeze-alert">
@@ -973,60 +1049,116 @@ function OnlineMatchCode() {
 
                                 {question ? (
                                     <>
-                                        <h2>{question.prompt}</h2>
-                                        {questionImage && (
-                                            <div
-                                                className="online-question-image-frame"
-                                                style={{
-                                                    "--question-image": `url("${questionImage}")`,
-                                                }}
-                                            >
-                                                <img
-                                                    src={questionImage}
-                                                    alt={question.imageAlt || "Pregunta"}
-                                                    className="online-question-image"
-                                                />
-                                            </div>
-                                        )}
-                                        <div className="online-answer-grid">
-                                            {question.options.map((option, index) => {
-                                                const removed =
-                                                    currentRemovedIndices.includes(index);
-                                                const isCorrect =
-                                                    answerResult?.correctValue === option;
-                                                const isSelected =
-                                                    answerResult?.selected === option;
-
-                                                return (
-                                                    <button
-                                                        key={`${question.index}-${option}`}
-                                                        type="button"
-                                                        className={`online-answer-button ${
-                                                            removed ? "is-removed" : ""
-                                                        } ${
-                                                            answerResult && isCorrect
-                                                                ? "is-correct"
-                                                                : ""
-                                                        } ${
-                                                            answerResult &&
-                                                            isSelected &&
-                                                            !answerResult.correct
-                                                                ? "is-wrong"
-                                                                : ""
-                                                        }`}
-                                                        onClick={() => handleAnswer(option)}
+                                        {isMapQuestion ? (
+                                            <>
+                                                <h2>¿Que pais esta marcado en el mapa?</h2>
+                                                <OnlineMapQuestion iso={question.iso} />
+                                                <form
+                                                    className="online-map-answer-form"
+                                                    onSubmit={handleMapAnswer}
+                                                >
+                                                    <input
+                                                        value={mapAnswer}
+                                                        onChange={(event) =>
+                                                            setMapAnswer(
+                                                                event.target.value
+                                                            )
+                                                        }
                                                         disabled={
-                                                            removed ||
+                                                            isFrozen ||
+                                                            Boolean(answerResult) ||
+                                                            pendingAction === "answer"
+                                                        }
+                                                        placeholder="Escribi el pais en ingles"
+                                                        autoComplete="off"
+                                                    />
+                                                    <button
+                                                        type="submit"
+                                                        disabled={
                                                             isFrozen ||
                                                             Boolean(answerResult) ||
                                                             pendingAction === "answer"
                                                         }
                                                     >
-                                                        {option}
+                                                        Responder
                                                     </button>
-                                                );
-                                            })}
-                                        </div>
+                                                </form>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <h2>{question.prompt}</h2>
+                                                {questionImage && (
+                                                    <div
+                                                        className="online-question-image-frame"
+                                                        style={{
+                                                            "--question-image": `url("${questionImage}")`,
+                                                        }}
+                                                    >
+                                                        <img
+                                                            src={questionImage}
+                                                            alt={
+                                                                question.imageAlt ||
+                                                                "Pregunta"
+                                                            }
+                                                            className="online-question-image"
+                                                        />
+                                                    </div>
+                                                )}
+                                                <div className="online-answer-grid">
+                                                    {question.options.map(
+                                                        (option, index) => {
+                                                            const removed =
+                                                                currentRemovedIndices.includes(
+                                                                    index
+                                                                );
+                                                            const isCorrect =
+                                                                answerResult?.correctValue ===
+                                                                option;
+                                                            const isSelected =
+                                                                answerResult?.selected ===
+                                                                option;
+
+                                                            return (
+                                                                <button
+                                                                    key={`${question.index}-${option}`}
+                                                                    type="button"
+                                                                    className={`online-answer-button ${
+                                                                        removed
+                                                                            ? "is-removed"
+                                                                            : ""
+                                                                    } ${
+                                                                        answerResult &&
+                                                                        isCorrect
+                                                                            ? "is-correct"
+                                                                            : ""
+                                                                    } ${
+                                                                        answerResult &&
+                                                                        isSelected &&
+                                                                        !answerResult.correct
+                                                                            ? "is-wrong"
+                                                                            : ""
+                                                                    }`}
+                                                                    onClick={() =>
+                                                                        handleAnswer(option)
+                                                                    }
+                                                                    disabled={
+                                                                        removed ||
+                                                                        isFrozen ||
+                                                                        Boolean(
+                                                                            answerResult
+                                                                        ) ||
+                                                                        pendingAction ===
+                                                                            "answer"
+                                                                    }
+                                                                >
+                                                                    {option}
+                                                                </button>
+                                                            );
+                                                        }
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
                                     </>
                                 ) : (
                                     <div className="online-question-empty">

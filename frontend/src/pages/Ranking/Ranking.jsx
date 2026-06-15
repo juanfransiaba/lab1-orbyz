@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { abandonMatch, getMyMatches } from "../../services/MatchService.js";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+    abandonMatch,
+    getMyMatches,
+    rememberResumeMatch,
+} from "../../services/MatchService.js";
 import "./Ranking.css";
 
 const STATUS_FILTERS = [
@@ -20,6 +24,23 @@ const MODE_LABELS = {
     "capital-by-country": "Capital por pais",
     "country-by-shape": "Pais por silueta",
     "country-by-continent": "Pais por continente",
+    "country-by-map": "Pais en el mapa",
+};
+
+const MODE_ROUTES = {
+    "country-by-capital": "/offline/country-by-capital",
+    "capital-by-country": "/offline/capital-by-country",
+    "country-by-shape": "/offline/country-by-shape",
+};
+
+const CONTINENT_ROUTE_SEGMENTS = {
+    america: "america",
+    americas: "america",
+    europa: "europa",
+    europe: "europa",
+    asia: "asia",
+    africa: "africa",
+    oceania: "oceania",
 };
 
 function formatDate(value) {
@@ -46,8 +67,26 @@ function getModeLabel(mode) {
     return MODE_LABELS[mode] || mode || "Modo desconocido";
 }
 
+function normalizeRouteValue(value) {
+    return String(value || "").trim().toLowerCase();
+}
+
+function getContinueRoute(match) {
+    if (match.mode === "country-by-continent") {
+        const continentKey = normalizeRouteValue(
+            match.continent || match.metadata?.continentLabel
+        );
+        const routeSegment = CONTINENT_ROUTE_SEGMENTS[continentKey];
+
+        return routeSegment ? `/offline/continent-selection/${routeSegment}` : "";
+    }
+
+    return MODE_ROUTES[match.mode] || "";
+}
+
 function Ranking() {
     const location = useLocation();
+    const navigate = useNavigate();
     const isHistoryView = location.pathname === "/history";
     const [status, setStatus] = useState("");
     const [page, setPage] = useState(1);
@@ -123,6 +162,23 @@ function Ranking() {
         } finally {
             setProcessingMatchId(null);
         }
+    }
+
+    function handleContinueMatch(match) {
+        const route = getContinueRoute(match);
+
+        if (!route) {
+            setError("No se pudo encontrar la pantalla para retomar esta partida.");
+            return;
+        }
+
+        rememberResumeMatch(match);
+        navigate(route, {
+            state: {
+                fromHistory: true,
+                resumeMatchId: match.id,
+            },
+        });
     }
 
     const summary = useMemo(() => {
@@ -246,6 +302,7 @@ function Ranking() {
                                 const statusMeta =
                                     STATUS_META[match.status] || STATUS_META.ongoing;
                                 const isProcessing = processingMatchId === match.id;
+                                const continueRoute = getContinueRoute(match);
                                 const roundLabel = match.totalRounds
                                     ? `${match.roundReached} de ${match.totalRounds}`
                                     : match.roundReached;
@@ -338,6 +395,18 @@ function Ranking() {
 
                                             {match.status === "ongoing" && (
                                                 <div className="ranking-match-actions">
+                                                    {continueRoute ? (
+                                                        <button
+                                                            type="button"
+                                                            className="ranking-inline-primary-button"
+                                                            onClick={() =>
+                                                                handleContinueMatch(match)
+                                                            }
+                                                            disabled={isProcessing}
+                                                        >
+                                                            Continuar
+                                                        </button>
+                                                    ) : null}
                                                     <button
                                                         type="button"
                                                         className="ranking-inline-danger-button"

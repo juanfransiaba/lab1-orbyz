@@ -20,6 +20,7 @@ const MODE_LABELS = {
     "capital-by-country": "Capital por pais",
     "country-by-shape": "Pais por silueta",
     "country-by-continent": "Pais por continente",
+    "country-by-map": "Pais en el mapa",
 };
 
 function normalizePlayer(player = {}) {

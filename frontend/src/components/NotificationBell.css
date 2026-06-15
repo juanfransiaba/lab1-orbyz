@@ -2,6 +2,7 @@
     position: relative;
     display: inline-flex;
     justify-content: flex-end;
+    z-index: 120;
 }
 
 .notification-bell-button {
@@ -91,7 +92,7 @@
     position: absolute;
     top: calc(100% + 12px);
     right: 0;
-    z-index: 30;
+    z-index: 1200;
     width: min(360px, calc(100vw - 28px));
     overflow: hidden;
     border-radius: 20px;

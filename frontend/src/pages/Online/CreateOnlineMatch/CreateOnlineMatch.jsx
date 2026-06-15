@@ -6,6 +6,7 @@ import capitalImage from "../../../assets/images/imagen.jpg";
 import countryImage from "../../../assets/images/imagen2.jpg";
 import shapeImage from "../../../assets/images/imagen6.jpg";
 import continentImage from "../../../assets/images/imagen7.jpg";
+import mapImage from "../../../assets/images/imagen5.jpg";
 import "../OnlineRoom.css";
 
 const MODE_OPTIONS = [
@@ -40,6 +41,14 @@ const MODE_OPTIONS = [
         imageAlt: "Vista costera para el modo pais por continente",
         imageSrc: continentImage,
         toneClass: "online-room-mode-card--continent",
+    },
+    {
+        id: "country-by-map",
+        label: "Pais en el mapa",
+        description: "Mira el mapa y escribi el pais marcado.",
+        imageAlt: "Mapa para el modo pais en el mapa",
+        imageSrc: mapImage,
+        toneClass: "online-room-mode-card--map",
     },
 ];
 
