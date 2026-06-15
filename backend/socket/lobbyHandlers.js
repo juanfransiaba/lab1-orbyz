@@ -13,6 +13,8 @@ const VALID_MODES = [
     "capital-by-country",
     "country-by-shape",
     "country-by-continent",
+    "country-by-map",
+
 ];
 
 async function getUsername(userId) {

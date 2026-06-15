@@ -11,7 +11,7 @@ function shuffle(arr) {
 
 async function fetchCountries(mode, continent) {
     let query =
-        "SELECT id_pais, nombre, capital, continente, imagen_pais, imagen_silueta FROM paises";
+        "SELECT id_pais, nombre, capital, continente, imagen_pais, imagen_silueta, iso_code FROM paises";
     const values = [];
 
     if (mode === "country-by-continent") {
@@ -23,9 +23,11 @@ async function fetchCountries(mode, continent) {
     return rows;
 }
 
-// Filtra los países que tienen los datos necesarios para el modo
 function filterValidCountries(countries, mode) {
     return countries.filter((c) => {
+        if (mode === "country-by-map") {
+            return c.nombre && c.iso_code;
+        }
         if (mode === "country-by-shape") {
             return c.nombre && c.imagen_silueta;
         }
@@ -79,8 +81,16 @@ async function generateQuestions(mode, continent) {
     }
 
     const sequence = shuffle(valid);
-    return sequence.map((country, index) =>
-        buildQuestion(country, valid, mode, index)
+
+    if (mode === "country-by-map") {
+        return sequence.slice(0, 100).map((country, index) => ({
+            index,
+            iso: country.iso_code,        // para prender el país en el mapa
+            correctValue: country.nombre, // la respuesta (queda en el server)
+        }));
+    }
+
+    return sequence.map((country, index) => buildQuestion(country, valid, mode, index)
     );
 }
 

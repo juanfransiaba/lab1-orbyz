@@ -65,16 +65,24 @@ async function seedPaises() {
         console.log('📡 Obteniendo países de la API...');
 
         const res = await fetch(
-            'https://restcountries.com/v3.1/all?fields=name,cca2,capital,flags,region'
+            'https://raw.githubusercontent.com/mledoze/countries/master/countries.json'
         );
-        const paises = await res.json();
+        const data = await res.json();
+
+        if (!res.ok || !Array.isArray(data)) {
+            console.error('Respuesta inesperada:', data);
+            throw new Error(`No se pudo bajar el dataset (status ${res.status})`);
+        }
+
+        const paises = data;
 
         const paisesValidos = paises.filter(
             (p) =>
                 p.capital?.length &&
-                p.flags?.png &&
                 p.name?.common &&
                 p.region &&
+                p.cca2 &&
+                p.ccn3 &&
                 !PAISES_EXCLUIDOS.has(p.name.common)
         );
 
@@ -87,7 +95,8 @@ async function seedPaises() {
                 capital VARCHAR(100),
                 continente VARCHAR(100),
                 imagen_pais TEXT,
-                imagen_silueta TEXT
+                imagen_silueta TEXT,
+                iso_code VARCHAR(3)
             )
         `);
 
@@ -95,10 +104,11 @@ async function seedPaises() {
         console.log('🗑️  Tabla limpiada');
 
         for (const pais of paisesValidos) {
+            const flag = `https://flagcdn.com/w320/${pais.cca2.toLowerCase()}.png`;
             await pool.query(
-                `INSERT INTO paises (nombre, capital, continente, imagen_pais, imagen_silueta)
-                 VALUES ($1, $2, $3, $4, $5)`,
-                [pais.name.common, pais.capital[0], pais.region, pais.flags.png, null]
+                `INSERT INTO paises (nombre, capital, continente, imagen_pais, imagen_silueta, iso_code)
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [pais.name.common, pais.capital[0], pais.region, flag, null, pais.ccn3]
             );
         }
 
@@ -107,7 +117,7 @@ async function seedPaises() {
         // Llama al seed de siluetas una vez insertados todos los países
         execSync('node seed/seedSiluetas.js', { stdio: 'inherit' });
         console.log('\n➡️  Ejecutando seed de imágenes...');
-        execSync('node seed/seedImagenesPaises.js', { stdio: 'inherit' });
+        execSync('node seed/countryImages.js', { stdio: 'inherit' });
 
     } catch (error) {
         console.error('❌ Error durante el seed:', error);

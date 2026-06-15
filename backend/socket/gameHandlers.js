@@ -19,6 +19,15 @@ function shuffle(arr) {
     return copy;
 }
 
+// Normaliza una respuesta escrita: minúsculas, sin espacios extra, sin tildes
+function normalizeAnswer(value) {
+    return String(value || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+}
+
 // Versión de la pregunta SIN la respuesta correcta (lo que ve el cliente)
 function publicQuestion(question) {
     if (!question) return null;
@@ -28,6 +37,7 @@ function publicQuestion(question) {
         imageSrc: question.imageSrc,
         imageAlt: question.imageAlt,
         options: question.options,
+        iso: question.iso,
     };
 }
 
@@ -224,7 +234,10 @@ function registerGameHandlers(io, socket) {
             }
 
             const question = room.questions[player.currentIndex];
-            const isCorrect = option === question.correctValue;
+            const isCorrect =
+                room.mode === "country-by-map"
+                    ? normalizeAnswer(option) === normalizeAnswer(question.correctValue)
+                    : option === question.correctValue;
 
             let extraLife = false;
 
@@ -324,6 +337,9 @@ function registerGameHandlers(io, socket) {
 
             // ── 50/50: el server elimina 2 opciones incorrectas ──
             if (type === "fifty_fifty") {
+                if (room.mode === "country-by-map") {
+                    return callback?.({ error: "El 50/50 no está disponible en este modo" });
+                }
                 if (!player.powerups || player.powerups.fiftyFifty <= 0) {
                     return callback?.({ error: "No te queda 50/50" });
                 }
