@@ -89,42 +89,76 @@ function endMatchByAbandon(io, room, abandonerUserId) {
 function handleConnection(io, socket) {
     const userId = socket.user.user_id;
 
-    // ── Reconexión: ¿el usuario estaba en una partida en curso? ──
+    // ── Reconexión ──
     const room = findRoomByUser(userId);
 
-    if (room && room.status === "playing") {
-        const player = room.players.get(userId);
+    if (room) {
+        // Re-enganchar el socket a su sala SIEMPRE (lobby o partida),
+        // por si se reconectó y dejó de recibir los avisos de la sala.
+        socket.join(room.code);
 
-        if (player && player.connected === false) {
-            // Cancelar el timer de abandono
-            if (player.disconnectTimer) {
-                clearTimeout(player.disconnectTimer);
-                player.disconnectTimer = null;
+        if (room.status !== "playing") {
+            // En el lobby: re-sincronizar el estado actual
+            // (por si se perdió algún room:update mientras estaba desconectado)
+            socket.emit("room:update", serializeRoom(room));
+        } else {
+            const player = room.players.get(userId);
+
+            if (player && player.connected === false) {
+                if (player.disconnectTimer) {
+                    clearTimeout(player.disconnectTimer);
+                    player.disconnectTimer = null;
+                }
+
+                player.connected = true;
+
+                const currentQuestion = player.finished
+                    ? null
+                    : publicQuestion(room.questions[player.currentIndex]);
+
+                socket.emit("game:reconnected", {
+                    room: serializeRoom(room),
+                    totalQuestions: room.questions.length,
+                    question: currentQuestion,
+                    players: Array.from(room.players.values()).map(playerProgress),
+                    matchEndsAt: room.matchEndsAt,
+                    messages: room.messages || [],
+                });
+
+                io.to(room.code).emit("player:reconnected", { userId });
+
+                console.log(`Usuario ${userId} se reconectó a la sala ${room.code}`);
             }
-
-            player.connected = true;
-            socket.join(room.code);
-
-            const currentQuestion = player.finished
-                ? null
-                : publicQuestion(room.questions[player.currentIndex]);
-
-            // Mandarle el estado actual de la partida
-            socket.emit("game:reconnected", {
-                room: serializeRoom(room),
-                totalQuestions: room.questions.length,
-                question: currentQuestion,
-                players: Array.from(room.players.values()).map(playerProgress),
-                matchEndsAt: room.matchEndsAt,
-                messages: room.messages || [],
-            });
-
-            // Avisarle al rival que volvió
-            io.to(room.code).emit("player:reconnected", { userId });
-
-            console.log(`Usuario ${userId} se reconectó a la sala ${room.code}`);
         }
     }
+
+    // Sincronización a pedido: cuando el cliente abre la pantalla de la sala,
+    // pide el estado actual (para no perderse el game:started por timing)
+    socket.on("room:sync", () => {
+        const current = findRoomByUser(userId);
+        if (!current) return;
+
+        socket.join(current.code);
+
+        if (current.status === "playing") {
+            const player = current.players.get(userId);
+            const currentQuestion =
+                player && !player.finished
+                    ? publicQuestion(current.questions[player.currentIndex])
+                    : null;
+
+            socket.emit("game:reconnected", {
+                room: serializeRoom(current),
+                totalQuestions: current.questions.length,
+                question: currentQuestion,
+                players: Array.from(current.players.values()).map(playerProgress),
+                matchEndsAt: current.matchEndsAt,
+                messages: current.messages || [],
+            });
+        } else {
+            socket.emit("room:update", serializeRoom(current));
+        }
+    });
 
     // ── Desconexión ──
     socket.on("disconnect", () => {

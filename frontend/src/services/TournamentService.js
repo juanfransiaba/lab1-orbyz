@@ -1,5 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
+import { getSocket } from "./socket";
+
 function getToken() {
     return localStorage.getItem("token");
 }
@@ -180,4 +182,38 @@ export async function setTournamentMatchWinner(tournamentId, matchId, winnerUser
     );
 
     return normalizeSnapshot(data);
+}
+
+export function watchTournament(tournamentId) {
+    getSocket().emit("tournament:watch", { tournamentId });
+}
+
+export function unwatchTournament(tournamentId) {
+    getSocket().emit("tournament:unwatch", { tournamentId });
+}
+
+export function onTournamentUpdated(handler) {
+    const s = getSocket();
+    s.on("tournament:updated", handler);
+    return () => s.off("tournament:updated", handler);
+}
+
+export function onTournamentDeleted(handler) {
+    const s = getSocket();
+    s.on("tournament:deleted", handler);
+    return () => s.off("tournament:deleted", handler);
+}
+
+export async function kickParticipant(tournamentId, userId) {
+    const data = await requestJSON(
+        `/tournaments/${tournamentId}/participants/${userId}`,
+        { method: "DELETE" }
+    );
+    return normalizeSnapshot(data);
+}
+
+export function onTournamentKicked(handler) {
+    const s = getSocket();
+    s.on("tournament:kicked", handler);
+    return () => s.off("tournament:kicked", handler);
 }

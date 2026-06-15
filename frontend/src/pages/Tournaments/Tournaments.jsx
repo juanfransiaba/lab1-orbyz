@@ -11,12 +11,18 @@ import {
     setTournamentMatchWinner,
     startTournament,
     updateTournament,
+    watchTournament,
+    unwatchTournament,
+    onTournamentUpdated,
+    onTournamentDeleted,
+    kickParticipant,
 } from "../../services/TournamentService.js";
 import {
     connectOnlineSocket,
     decodeToken,
     emitWithAck,
 } from "../../services/OnlineSocketService.js";
+import { joinAsSpectator } from "../../services/OnlineSpectatorService.js";
 import "./Tournaments.css";
 
 const MODE_OPTIONS = [
@@ -169,6 +175,35 @@ function Tournaments() {
     useEffect(() => {
         refreshDetail(selectedId);
     }, [refreshDetail, selectedId]);
+
+    // 👇 NUEVO: tiempo real del torneo seleccionado
+    useEffect(() => {
+        if (!selectedId) return;
+
+        connectOnlineSocket();
+        watchTournament(selectedId);
+
+        const offUpdated = onTournamentUpdated(({ tournamentId }) => {
+            if (Number(tournamentId) === Number(selectedId)) {
+                refreshDetail(selectedId);
+            }
+        });
+
+        const offDeleted = onTournamentDeleted(({ tournamentId }) => {
+            if (Number(tournamentId) === Number(selectedId)) {
+                setDetail(null);
+                setSelectedId(null);
+                setFeedback("El torneo se cerró.");
+                loadList();
+            }
+        });
+
+        return () => {
+            unwatchTournament(selectedId);
+            offUpdated();
+            offDeleted();
+        };
+    }, [selectedId, refreshDetail, loadList]);
 
     useEffect(() => {
         if (!selectedTournament) return;
@@ -341,6 +376,39 @@ function Tournaments() {
             Number(match.player2Id) === Number(currentUserId);
 
         return selectedTournament?.status === "active" && playableStatus && isMyMatch;
+    }
+
+    function canSpectateMatch(match) {
+        const isMyMatch =
+            Number(match.player1Id) === Number(currentUserId) ||
+            Number(match.player2Id) === Number(currentUserId);
+
+        return (
+            selectedTournament?.status === "active" &&
+            match.status === "playing" &&
+            Boolean(match.onlineRoomCode) &&
+            !isMyMatch
+        );
+    }
+
+    function handleSpectateMatch(match) {
+        runAction(`spectate-${match.id}`, async () => {
+            await connectOnlineSocket();
+            const snapshot = await joinAsSpectator(match.onlineRoomCode);
+
+            navigate("/online/spectate", {
+                state: { snapshot, code: match.onlineRoomCode },
+            });
+        });
+    }
+
+    function handleKick(targetUserId) {
+        if (!selectedTournament) return;
+
+        runAction(`kick-${targetUserId}`, async () => {
+            const snapshot = await kickParticipant(selectedTournament.id, targetUserId);
+            applySnapshot(snapshot);
+        });
     }
 
     const canStart =
@@ -650,6 +718,15 @@ function Tournaments() {
                                     </div>
                                 </div>
 
+                                {selectedTournament.status === "finished" &&
+                                    selectedTournament.winnerUsername && (
+                                        <div className="tournaments-winner-banner">
+                                            <span>🏆 Campeón del torneo</span>
+                                            <strong>
+                                                {selectedTournament.winnerUsername}
+                                            </strong>
+                                        </div>
+                                    )}
                                 <div className="tournaments-summary">
                                     <div className="tournaments-summary-main">
                                         <span>Cupo actual</span>
@@ -861,6 +938,24 @@ function Tournaments() {
                                                                 : "Activo"}
                                                         </small>
                                                     </div>
+
+                                                    {selectedTournament.isCreator &&
+                                                        selectedTournament.status === "waiting" &&
+                                                        Number(participant.userId) !==
+                                                            Number(selectedTournament.createdBy) && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    handleKick(participant.userId)
+                                                                }
+                                                                disabled={
+                                                                    actionLoading ===
+                                                                    `kick-${participant.userId}`
+                                                                }
+                                                            >
+                                                                Sacar
+                                                            </button>
+                                                        )}
                                                 </div>
                                             ))}
                                         </div>
@@ -994,6 +1089,24 @@ function Tournaments() {
                                                                         "playing"
                                                                             ? "Entrar a mi partida"
                                                                             : "Jugar mi partida"}
+                                                                    </button>
+                                                                )}
+
+                                                                {canSpectateMatch(match) && (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="tournaments-play-match-button"
+                                                                        onClick={() =>
+                                                                            handleSpectateMatch(
+                                                                                match
+                                                                            )
+                                                                        }
+                                                                        disabled={
+                                                                            actionLoading ===
+                                                                            `spectate-${match.id}`
+                                                                        }
+                                                                    >
+                                                                        Ver partida
                                                                     </button>
                                                                 )}
 

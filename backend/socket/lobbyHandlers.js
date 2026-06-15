@@ -7,6 +7,7 @@ const {
     findRoomByUser,
     serializeRoom,
 } = require("./roomManager");
+const { startGame } = require("./gameHandlers");
 
 const VALID_MODES = [
     "country-by-capital",
@@ -14,7 +15,6 @@ const VALID_MODES = [
     "country-by-shape",
     "country-by-continent",
     "country-by-map",
-
 ];
 
 async function getUsername(userId) {
@@ -109,6 +109,11 @@ function registerLobbyHandlers(io, socket) {
             io.to(normalizedCode).emit("room:update", serializeRoom(result.room));
 
             console.log(`Usuario ${userId} se unió a la sala ${normalizedCode}`);
+
+            // Auto-arrancar la partida cuando se completa la sala (2 jugadores)
+            if (result.room.players.size === 2 && result.room.status === "waiting") {
+                await startGame(io, result.room);
+            }
         } catch (error) {
             console.error("Error en room:join:", error);
             callback?.({ error: "Error del servidor" });

@@ -60,6 +60,10 @@ async function notifyRankingPassed(passerUserId, passerUsername, oldScore, newSc
 }
 
 async function saveMatchResults(room, gameOver) {
+
+    if (room.tournament) {
+        return;
+    }
     const players = gameOver.players;
 
     if (players.length !== 2) {
@@ -141,6 +145,10 @@ async function saveMatchResults(room, gameOver) {
 }
 
 async function saveAbandonedMatch(room, abandonerUserId) {
+
+    if (room.tournament) {
+        return;
+    }
     const players = Array.from(room.players.values());
 
     if (players.length !== 2) {

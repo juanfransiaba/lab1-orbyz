@@ -13,6 +13,8 @@ const {
     leaveTournament,
     startTournament,
     setMatchResult,
+    kickParticipant,
+
 } = require("../controllers/tournamentsController");
 
 router.use(verifyToken);
@@ -27,5 +29,6 @@ router.post("/:tournamentId/join", joinTournament);
 router.post("/:tournamentId/leave", leaveTournament);
 router.post("/:tournamentId/start", startTournament);
 router.post("/:tournamentId/matches/:matchId/result", setMatchResult);
+router.delete("/:tournamentId/participants/:userId", kickParticipant);
 
 module.exports = router;

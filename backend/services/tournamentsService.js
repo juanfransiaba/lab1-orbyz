@@ -229,41 +229,52 @@ async function getTournamentSnapshot(tournamentId, viewerId, db = pool) {
 async function listTournaments({ status = "", viewerId }) {
     const cleanStatus = String(status || "").trim().toLowerCase();
     const params = [viewerId];
-    let statusClause = "";
+
+    // Solo mostramos torneos donde el usuario participa o que creó él.
+    // Para unirse a uno nuevo se usa el código (privado).
+    const conditions = [
+        `(t.created_by = $1 OR EXISTS (
+            SELECT 1
+            FROM tournament_participants my_tp
+            WHERE my_tp.tournament_id = t.tournament_id
+              AND my_tp.user_id = $1
+        ))`,
+    ];
 
     if (cleanStatus) {
         if (!VALID_STATUSES.has(cleanStatus)) {
             fail(400, "Filtro de estado invalido");
         }
-
         params.push(cleanStatus);
-        statusClause = `WHERE t.status = $${params.length}`;
+        conditions.push(`t.status = $${params.length}`);
     }
+
+    const whereClause = `WHERE ${conditions.join(" AND ")}`;
 
     const { rows } = await pool.query(
         `SELECT t.*,
                 creator.username AS creator_username,
                 winner.username AS winner_username,
                 COUNT(tp.participant_id)::int AS participant_count,
-                EXISTS (
-                    SELECT 1
-                    FROM tournament_participants own_tp
-                    WHERE own_tp.tournament_id = t.tournament_id
-                      AND own_tp.user_id = $1
-                ) AS is_joined
+             EXISTS (
+                 SELECT 1
+                 FROM tournament_participants own_tp
+                 WHERE own_tp.tournament_id = t.tournament_id
+                   AND own_tp.user_id = $1
+             ) AS is_joined
          FROM tournaments t
-         JOIN users creator ON creator.user_id = t.created_by
-         LEFT JOIN users winner ON winner.user_id = t.winner_user_id
-         LEFT JOIN tournament_participants tp ON tp.tournament_id = t.tournament_id
-         ${statusClause}
+                  JOIN users creator ON creator.user_id = t.created_by
+                  LEFT JOIN users winner ON winner.user_id = t.winner_user_id
+                  LEFT JOIN tournament_participants tp ON tp.tournament_id = t.tournament_id
+             ${whereClause}
          GROUP BY t.tournament_id, creator.username, winner.username
          ORDER BY
-            CASE t.status
-                WHEN 'waiting' THEN 0
-                WHEN 'active' THEN 1
-                WHEN 'finished' THEN 2
-                ELSE 3
-            END,
+             CASE t.status
+             WHEN 'waiting' THEN 0
+             WHEN 'active' THEN 1
+             WHEN 'finished' THEN 2
+             ELSE 3
+        END,
             t.updated_at DESC,
             t.tournament_id DESC
          LIMIT 60`,
@@ -373,6 +384,19 @@ async function joinTournament(tournamentId, userId) {
     return withTransaction(async (client) => {
         const tournament = await getTournamentForUpdate(client, tournamentId);
 
+        // ¿Ya es participante? -> lo dejamos re-entrar (devolvemos el torneo),
+        // sin importar el estado. Sirve si se desconectó y vuelve con el código.
+        const already = await client.query(
+            `SELECT 1 FROM tournament_participants
+             WHERE tournament_id = $1 AND user_id = $2`,
+            [tournamentId, userId]
+        );
+
+        if (already.rows.length > 0) {
+            return getTournamentSnapshot(tournamentId, userId, client);
+        }
+
+        // Si NO es participante, solo puede unirse si está en inscripción y hay cupo
         if (tournament.status !== "waiting") {
             fail(400, "Solo podes unirte antes de que empiece el torneo");
         }
@@ -389,19 +413,11 @@ async function joinTournament(tournamentId, userId) {
             fail(400, "El torneo ya esta completo");
         }
 
-        try {
-            await client.query(
-                `INSERT INTO tournament_participants (tournament_id, user_id)
-                 VALUES ($1, $2)`,
-                [tournamentId, userId]
-            );
-        } catch (error) {
-            if (error.code === "23505") {
-                fail(400, "Ya estas unido a este torneo");
-            }
-
-            throw error;
-        }
+        await client.query(
+            `INSERT INTO tournament_participants (tournament_id, user_id)
+             VALUES ($1, $2)`,
+            [tournamentId, userId]
+        );
 
         await client.query(
             "UPDATE tournaments SET updated_at = CURRENT_TIMESTAMP WHERE tournament_id = $1",
@@ -827,6 +843,38 @@ async function advanceTournamentMatch(tournamentMatchId, winnerUserId) {
         return { tournamentId, finished: false };
     });
 }
+async function kickParticipant(tournamentId, targetUserId, requesterId) {
+    return withTransaction(async (client) => {
+        const tournament = await getTournamentForUpdate(client, tournamentId);
+
+        ensureCreator(tournament, requesterId);
+
+        if (tournament.status !== "waiting") {
+            fail(400, "Solo podes sacar jugadores antes de que empiece el torneo");
+        }
+
+        if (Number(targetUserId) === Number(requesterId)) {
+            fail(400, "El creador no se puede sacar a si mismo");
+        }
+
+        const { rowCount } = await client.query(
+            `DELETE FROM tournament_participants
+             WHERE tournament_id = $1 AND user_id = $2`,
+            [tournamentId, targetUserId]
+        );
+
+        if (rowCount === 0) {
+            fail(404, "Ese jugador no esta en el torneo");
+        }
+
+        await client.query(
+            "UPDATE tournaments SET updated_at = CURRENT_TIMESTAMP WHERE tournament_id = $1",
+            [tournamentId]
+        );
+
+        return getTournamentSnapshot(tournamentId, requesterId, client);
+    });
+}
 
 module.exports = {
     ServiceError,
@@ -844,4 +892,5 @@ module.exports = {
     attachRoomCode,
     markMatchPlaying,
     advanceTournamentMatch,
+    kickParticipant,
 };

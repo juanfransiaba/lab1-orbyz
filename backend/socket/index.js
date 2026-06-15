@@ -7,6 +7,7 @@ const registerChatHandlers = require("./chatHandlers");
 const registerSpectatorHandlers = require("./spectatorHandlers");
 const registerTournamentMatchHandlers = require("./tournamentMatchHandlers");
 const { setIO } = require("./ioRef");
+const registerTournamentSocketHandlers = require("./tournamentSocketHandlers");
 
 function isAllowedLocalOrigin(origin) {
     if (!origin) {
@@ -62,6 +63,7 @@ function initSocket(server) {
         registerSpectatorHandlers(io, socket);
         registerTournamentMatchHandlers(io, socket);
         handleConnection(io, socket);
+        registerTournamentSocketHandlers(io, socket);
 
         socket.on("disconnect", (reason) => {
             console.log(

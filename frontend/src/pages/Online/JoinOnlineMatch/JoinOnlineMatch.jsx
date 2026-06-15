@@ -22,7 +22,8 @@ function canOfferSpectatorMode(message = "") {
     const normalizedMessage = message.toLowerCase();
     return (
         normalizedMessage.includes("empez") ||
-        normalizedMessage.includes("llena")
+        normalizedMessage.includes("llena") ||
+        normalizedMessage.includes("torneo")
     );
 }
 

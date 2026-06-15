@@ -451,11 +451,17 @@ function OnlineMatchCode() {
         socket.on("spectator:update", handleSpectatorUpdate);
         socket.on("tournament:matchEnded", handleTournamentMatchEnded);
 
-        connectOnlineSocket().catch((error) => {
-            if (active) {
-                setFeedback(error.message || "No se pudo conectar al servidor online.");
-            }
-        });
+        connectOnlineSocket()
+            .then(() => {
+                if (active) {
+                    socket.emit("room:sync");
+                }
+            })
+            .catch((error) => {
+                if (active) {
+                    setFeedback(error.message || "No se pudo conectar al servidor online.");
+                }
+            });
 
         return () => {
             active = false;
