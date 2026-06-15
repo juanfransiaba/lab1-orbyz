@@ -1170,14 +1170,49 @@
     color: #1d4ed8;
 }
 
+.online-question-image-frame {
+    position: relative;
+    width: 100%;
+    min-height: 220px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    margin: 16px 0;
+    border: 1px solid rgba(191, 219, 254, 0.7);
+    border-radius: 18px;
+    background: #f8fbff;
+    isolation: isolate;
+}
+
+.online-question-image-frame::before {
+    content: "";
+    position: absolute;
+    inset: -22px;
+    z-index: -2;
+    background-image: var(--question-image);
+    background-size: cover;
+    background-position: center;
+    filter: blur(18px) saturate(0.92);
+    opacity: 0.24;
+    transform: scale(1.06);
+}
+
+.online-question-image-frame::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+        radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.5), transparent 34%),
+        linear-gradient(90deg, rgba(248, 251, 255, 0.9), rgba(248, 251, 255, 0.46), rgba(248, 251, 255, 0.9));
+}
+
 .online-question-image {
     width: 100%;
     max-height: 220px;
-    object-fit: cover;
+    object-fit: contain;
     display: block;
-    margin: 16px 0;
-    border-radius: 14px;
-    border: 1px solid rgba(226, 232, 240, 0.94);
+    border-radius: 12px;
 }
 
 .online-question-card h2 {
@@ -1213,7 +1248,20 @@
 }
 
 .online-answer-button.is-removed {
-    visibility: hidden;
+    border-color: rgba(148, 163, 184, 0.3);
+    background:
+        repeating-linear-gradient(
+            -45deg,
+            rgba(148, 163, 184, 0.08),
+            rgba(148, 163, 184, 0.08) 8px,
+            rgba(226, 232, 240, 0.22) 8px,
+            rgba(226, 232, 240, 0.22) 16px
+        ),
+        #eef2f7;
+    color: #94a3b8;
+    text-decoration: line-through;
+    cursor: not-allowed;
+    opacity: 0.78;
 }
 
 .online-answer-button.is-correct {
@@ -1229,13 +1277,41 @@
 }
 
 .online-question-empty {
-    min-height: 220px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #64748b;
-    font-weight: 850;
+    min-height: 240px;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 10px;
+    padding: 28px;
     text-align: center;
+    color: #64748b;
+    background: linear-gradient(180deg, rgba(239, 246, 255, 0.92), rgba(255, 255, 255, 0.96));
+    border: 1px dashed rgba(37, 99, 235, 0.22);
+    border-radius: 18px;
+}
+
+.online-question-empty span {
+    color: #1d4ed8;
+    font-size: 0.76rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.online-question-empty strong {
+    color: #0b1f3f;
+    font-size: clamp(1.45rem, 3vw, 2rem);
+    font-weight: 950;
+    letter-spacing: 0;
+}
+
+.online-question-empty p {
+    max-width: 360px;
+    margin: 0;
+    color: #52647c;
+    font-size: 1rem;
+    font-weight: 750;
+    line-height: 1.45;
 }
 
 .online-powerups {
@@ -2178,6 +2254,522 @@
     padding-right: 116px;
 }
 
+.online-room-main.is-ended {
+    width: 100%;
+    min-height: calc(100vh - 88px);
+    margin: 0;
+    padding: 0;
+}
+
+.online-result-layout {
+    width: 100%;
+    min-height: calc(100vh - 88px);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 32px;
+    align-items: stretch;
+    padding: 0 0 0 36px;
+}
+
+.online-result-panel {
+    position: relative;
+    width: min(980px, 100%);
+    min-height: 560px;
+    justify-self: center;
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    overflow: hidden;
+    padding: 44px;
+    border: 1px solid rgba(173, 190, 214, 0.78);
+    border-radius: 24px;
+    background:
+        radial-gradient(circle at 12% 12%, rgba(59, 130, 246, 0.12), transparent 28%),
+        linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+    box-shadow:
+        0 24px 70px rgba(15, 32, 61, 0.16),
+        0 2px 8px rgba(15, 32, 61, 0.05);
+}
+
+.online-result-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 7px;
+    background: linear-gradient(90deg, #1f4e8c 0%, #3b82f6 52%, #1e3a8a 100%);
+}
+
+.online-result-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.online-result-hero span {
+    color: #64748b;
+    font-size: 0.8rem;
+    font-weight: 950;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+}
+
+.online-result-hero h2 {
+    margin: 8px 0 10px;
+    color: #09244d;
+    font-size: clamp(3rem, 6vw, 5rem);
+    line-height: 0.96;
+    letter-spacing: 0;
+}
+
+.online-result-hero p {
+    margin: 0;
+    color: #52647c;
+    font-size: 1.08rem;
+    font-weight: 800;
+}
+
+.online-result-hero > strong {
+    min-width: 156px;
+    min-height: 56px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+    border-radius: 999px;
+    background: #102845;
+    color: #ffffff;
+    font-size: 1rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    box-shadow: 0 16px 34px rgba(15, 32, 61, 0.2);
+}
+
+.online-result-players {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.online-result-player-card {
+    min-height: 226px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 22px;
+    padding: 24px;
+    border: 1px solid rgba(191, 219, 254, 0.78);
+    border-radius: 22px;
+    background: rgba(248, 253, 255, 0.96);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+.online-result-player-card.is-winner {
+    border-color: rgba(147, 197, 253, 0.34);
+    background:
+        radial-gradient(circle at 18% 18%, rgba(96, 165, 250, 0.32), transparent 32%),
+        linear-gradient(145deg, #071f49 0%, #123865 58%, #1f4e8c 100%);
+    color: #ffffff;
+    box-shadow:
+        0 22px 48px rgba(31, 78, 140, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.online-result-player-head {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.online-result-player-head span {
+    display: block;
+    color: #64748b;
+    font-size: 0.74rem;
+    font-weight: 950;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+}
+
+.online-result-player-head strong {
+    display: block;
+    margin-top: 3px;
+    color: #102845;
+    font-size: 1.5rem;
+    line-height: 1.05;
+}
+
+.online-result-player-head em {
+    margin-left: auto;
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba(219, 234, 254, 0.16);
+    color: #ffffff;
+    font-size: 0.78rem;
+    font-style: normal;
+    font-weight: 950;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.online-result-player-card.is-winner .online-result-player-head span,
+.online-result-player-card.is-winner .online-result-player-head strong {
+    color: #ffffff;
+}
+
+.online-result-player-card.is-winner .online-player-avatar {
+    background: rgba(255, 255, 255, 0.18);
+    box-shadow:
+        0 0 0 4px rgba(219, 234, 254, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.online-result-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.online-result-metrics div {
+    min-height: 86px;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 4px;
+    border-radius: 16px;
+    background: #edf5ff;
+    color: #102845;
+}
+
+.online-result-player-card.is-winner .online-result-metrics div {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+
+.online-result-metrics strong {
+    font-size: 2.15rem;
+    line-height: 1;
+}
+
+.online-result-metrics span {
+    color: #52647c;
+    font-size: 0.76rem;
+    font-weight: 950;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.online-result-player-card.is-winner .online-result-metrics span {
+    color: rgba(226, 232, 240, 0.78);
+}
+
+.online-result-panel .online-room-primary-button {
+    min-height: 60px;
+    margin-top: auto;
+    border-radius: 18px;
+    font-size: 1.05rem;
+}
+
+.online-result-chat-slot {
+    min-height: calc(100vh - 88px);
+    display: flex;
+    align-self: stretch;
+}
+
+.online-result-chat-slot .online-chat-panel {
+    width: 100%;
+    min-height: 100%;
+    border-top: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: 0;
+    box-shadow: -18px 0 48px rgba(15, 32, 61, 0.1);
+}
+
+.online-room-page.is-playing {
+    height: 100vh;
+    overflow: hidden;
+}
+
+.online-room-page.is-playing .online-room-status {
+    min-width: 116px;
+    min-height: 50px;
+    border-color: rgba(191, 219, 254, 0.34);
+    background: rgba(96, 165, 250, 0.26);
+    color: #ffffff;
+    font-size: 1.28rem;
+    box-shadow:
+        0 14px 30px rgba(2, 6, 23, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.online-room-main.is-game {
+    width: 100%;
+    height: calc(100vh - 88px);
+    margin: 0;
+    padding: 0 0 0 24px;
+    overflow: hidden;
+}
+
+.online-room-main.is-game .online-game-layout {
+    width: 100%;
+    height: calc(100vh - 88px);
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr) 424px;
+    gap: 18px;
+    align-items: stretch;
+}
+
+.online-room-main.is-game .online-game-main {
+    position: relative;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 10px 0;
+    overflow: hidden;
+}
+
+.online-room-main.is-game .online-game-scoreboard {
+    margin: 0;
+    gap: 10px;
+}
+
+.online-room-main.is-game .online-player-card {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 14px;
+    border-radius: 18px;
+}
+
+.online-room-main.is-game .online-player-card-head {
+    gap: 10px;
+}
+
+.online-room-main.is-game .online-player-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
+    font-size: 1.2rem;
+}
+
+.online-room-main.is-game .online-player-card-head strong {
+    font-size: 1rem;
+}
+
+.online-room-main.is-game .online-player-card-head span {
+    font-size: 0.66rem;
+}
+
+.online-room-main.is-game .online-player-metrics {
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 0;
+}
+
+.online-room-main.is-game .online-player-metrics span {
+    min-height: 24px;
+    padding: 0 8px;
+    font-size: 0.72rem;
+}
+
+.online-room-main.is-game .online-room-mini-status.is-compact {
+    min-height: 28px;
+    margin: 0;
+    font-size: 0.8rem;
+}
+
+.online-room-main.is-game .online-question-card {
+    position: relative;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 8px;
+    overflow: hidden;
+    padding: 12px 24px;
+    border-radius: 18px;
+}
+
+.online-room-main.is-game .online-question-card.has-image {
+    grid-template-rows: auto auto minmax(230px, 1fr) auto;
+}
+
+.online-room-main.is-game .online-question-image-frame {
+    height: 100%;
+    min-height: 230px;
+    margin: 0;
+    border-radius: 20px;
+}
+
+.online-room-main.is-game .online-question-image {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+    object-fit: contain;
+    object-position: center;
+    margin: 0;
+    padding: 10px;
+}
+
+.online-game-side-tools {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px 0 18px;
+}
+
+.online-game-spectators {
+    width: 72px;
+    min-height: 78px;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 3px;
+    border: 1px solid rgba(147, 197, 253, 0.34);
+    border-radius: 20px;
+    background: rgba(8, 21, 44, 0.82);
+    color: #ffffff;
+    box-shadow:
+        0 16px 34px rgba(15, 32, 61, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.online-game-spectators .online-lobby-eye {
+    width: 26px;
+    height: 16px;
+}
+
+.online-game-spectators .online-lobby-eye::before {
+    width: 7px;
+    height: 7px;
+}
+
+.online-game-spectators strong {
+    color: #ffffff;
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+.online-game-spectators small {
+    color: rgba(226, 232, 240, 0.72);
+    font-size: 0.62rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.online-room-main.is-game .online-question-card h2 {
+    margin: 0;
+    font-size: clamp(1.3rem, 1.85vw, 1.85rem);
+    line-height: 1.08;
+    text-align: center;
+}
+
+.online-room-main.is-game .online-answer-grid {
+    margin-top: 0;
+    gap: 10px;
+}
+
+.online-room-main.is-game .online-answer-button {
+    min-height: 48px;
+    padding: 10px 14px;
+}
+
+.online-room-main.is-game .online-game-feedback {
+    min-height: 34px;
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 6px 14px;
+}
+
+.online-room-main.is-game .online-game-feedback.is-empty {
+    visibility: hidden;
+}
+
+.online-room-main.is-game .online-powerups {
+    align-self: stretch;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.online-room-main.is-game .online-powerups button {
+    width: 72px;
+    min-height: 72px;
+    padding: 8px;
+    border-radius: 18px;
+    box-shadow:
+        0 16px 34px rgba(15, 32, 61, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.online-room-main.is-game .online-powerups span {
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+}
+
+.online-room-main.is-game .online-powerups strong {
+    margin-top: 4px;
+    font-size: 1.72rem;
+}
+
+.online-room-main.is-game .online-chat-panel {
+    width: 100%;
+    height: calc(100vh - 88px);
+    min-height: 0;
+    align-self: stretch;
+    border-top: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: 0;
+    box-shadow: -18px 0 48px rgba(15, 32, 61, 0.1);
+}
+
+.online-freeze-alert {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    z-index: 3;
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 0 14px;
+    border: 1px solid rgba(96, 165, 250, 0.4);
+    border-radius: 14px;
+    background:
+        linear-gradient(135deg, rgba(8, 21, 44, 0.96) 0%, rgba(31, 78, 140, 0.94) 100%);
+    color: #ffffff;
+    box-shadow: 0 16px 34px rgba(15, 32, 61, 0.16);
+}
+
+.online-freeze-alert strong {
+    font-size: 0.82rem;
+    font-weight: 950;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.online-freeze-alert span {
+    color: rgba(226, 232, 240, 0.88);
+    font-weight: 850;
+}
+
 @media (max-width: 980px) {
     .online-lobby-layout {
         width: min(760px, calc(100% - 32px));
@@ -2214,6 +2806,87 @@
         right: 14px;
         bottom: 14px;
         width: min(420px, calc(100vw - 28px));
+    }
+
+    .online-result-layout {
+        grid-template-columns: 1fr;
+        gap: 22px;
+        padding: 24px;
+    }
+
+    .online-result-panel {
+        width: 100%;
+        min-height: 0;
+    }
+
+    .online-result-chat-slot {
+        min-height: 420px;
+    }
+
+    .online-result-chat-slot .online-chat-panel {
+        min-height: 420px;
+        border: 1px solid rgba(173, 190, 214, 0.78);
+        border-radius: 22px;
+        box-shadow:
+            0 16px 32px rgba(15, 32, 61, 0.08),
+            0 2px 8px rgba(15, 32, 61, 0.05);
+    }
+
+    .online-room-page.is-playing {
+        height: auto;
+        overflow: auto;
+    }
+
+    .online-room-main.is-game {
+        height: auto;
+        padding: 18px;
+        overflow: visible;
+    }
+
+    .online-room-main.is-game .online-game-layout {
+        height: auto;
+        grid-template-columns: 1fr;
+    }
+
+    .online-room-main.is-game .online-game-main {
+        display: flex;
+        overflow: visible;
+    }
+
+    .online-game-side-tools {
+        display: grid;
+        grid-template-columns: 92px minmax(0, 1fr);
+        align-items: stretch;
+        padding: 0;
+    }
+
+    .online-game-spectators {
+        width: 100%;
+        min-height: 64px;
+    }
+
+    .online-room-main.is-game .online-chat-panel {
+        height: auto;
+        min-height: 420px;
+        border: 1px solid rgba(173, 190, 214, 0.78);
+        border-radius: 22px;
+        box-shadow:
+            0 16px 32px rgba(15, 32, 61, 0.08),
+            0 2px 8px rgba(15, 32, 61, 0.05);
+    }
+
+    .online-room-main.is-game .online-powerups {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        padding: 0;
+    }
+
+    .online-room-main.is-game .online-powerups button {
+        width: 100%;
+    }
+
+    .online-freeze-alert {
+        position: static;
+        margin-bottom: 10px;
     }
 }
 
@@ -2261,5 +2934,27 @@
         right: 12px;
         bottom: 12px;
         width: calc(100vw - 24px);
+    }
+
+    .online-result-layout {
+        padding: 18px;
+    }
+
+    .online-result-panel {
+        padding: 30px 20px 22px;
+        border-radius: 22px;
+    }
+
+    .online-result-hero {
+        display: grid;
+    }
+
+    .online-result-hero > strong {
+        justify-self: start;
+    }
+
+    .online-result-players,
+    .online-result-metrics {
+        grid-template-columns: 1fr;
     }
 }

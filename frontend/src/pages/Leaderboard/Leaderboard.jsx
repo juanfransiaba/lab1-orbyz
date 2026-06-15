@@ -1,29 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import NotificationBell from "../../components/NotificationBell.jsx";
-import {
-    getCurrentProfile,
-    getFriendsLeaderboard,
-    getGlobalLeaderboard,
-} from "../../services/LeaderboardService.js";
+import { getFriendsLeaderboard } from "../../services/LeaderboardService.js";
 import "./Leaderboard.css";
 
-const RANKING_TABS = [
-    {
-        id: "global",
-        label: "Global",
-        eyebrow: "Top 100",
-        title: "Ranking global",
-        description: "Los jugadores con mas puntos de todo ORBYZ.",
-    },
-    {
-        id: "friends",
-        label: "Amigos",
-        eyebrow: "Tu red",
-        title: "Ranking de amigos",
-        description: "Vos y tus amigos aceptados ordenados por puntos.",
-    },
-];
+const RANKING_COPY = {
+    eyebrow: "Tu red",
+    title: "Ranking de amigos",
+    description: "Vos y tus amigos aceptados ordenados por puntos.",
+};
 
 function getInitials(username) {
     return String(username || "J")
@@ -33,9 +18,7 @@ function getInitials(username) {
 }
 
 function Leaderboard() {
-    const [activeTab, setActiveTab] = useState("global");
     const [players, setPlayers] = useState([]);
-    const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -45,15 +28,8 @@ function Leaderboard() {
             setError("");
 
             try {
-                const [leaderboardData, profileData] = await Promise.all([
-                    activeTab === "friends"
-                        ? getFriendsLeaderboard()
-                        : getGlobalLeaderboard(),
-                    getCurrentProfile(),
-                ]);
-
+                const leaderboardData = await getFriendsLeaderboard();
                 setPlayers(leaderboardData);
-                setProfile(profileData);
             } catch (err) {
                 setError(err.message || "No se pudo cargar el ranking.");
             } finally {
@@ -62,19 +38,9 @@ function Leaderboard() {
         };
 
         void loadLeaderboard();
-    }, [activeTab]);
+    }, []);
 
-    const currentTab = RANKING_TABS.find((tab) => tab.id === activeTab) || RANKING_TABS[0];
-
-    const currentPlayer = useMemo(() => {
-        if (!profile) {
-            return null;
-        }
-
-        return players.find(
-            (player) => player.isMe || String(player.id) === String(profile.user_id)
-        );
-    }, [players, profile]);
+    const currentPlayer = players.find((player) => player.isMe);
 
     const podium = players.slice(0, 3);
     const tablePlayers = players.slice(3);
@@ -103,29 +69,16 @@ function Leaderboard() {
             <main className="leaderboard-main">
                 <section className="leaderboard-hero">
                     <div className="leaderboard-hero-copy">
-                        <span className="leaderboard-eyebrow">{currentTab.eyebrow}</span>
-                        <h2>{currentTab.title}</h2>
-                        <p>{currentTab.description}</p>
+                        <span className="leaderboard-eyebrow">{RANKING_COPY.eyebrow}</span>
+                        <h2>{RANKING_COPY.title}</h2>
+                        <p>{RANKING_COPY.description}</p>
                     </div>
 
                     <div className="leaderboard-player-summary">
                         <span>Tu posicion</span>
                         <strong>{currentPlayer ? `#${currentPlayer.rank}` : "-"}</strong>
-                        <p>{profile?.username || "Usuario"}</p>
+                        <p>{currentPlayer?.username || "Usuario"}</p>
                     </div>
-                </section>
-
-                <section className="leaderboard-tabs" aria-label="Tipo de ranking">
-                    {RANKING_TABS.map((tab) => (
-                        <button
-                            type="button"
-                            key={tab.id}
-                            className={activeTab === tab.id ? "is-active" : ""}
-                            onClick={() => setActiveTab(tab.id)}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
                 </section>
 
                 <section className="leaderboard-panel">
@@ -135,7 +88,7 @@ function Leaderboard() {
                         <div className="leaderboard-empty-state is-error">{error}</div>
                     ) : players.length === 0 ? (
                         <div className="leaderboard-empty-state">
-                            Todavia no hay jugadores con puntaje.
+                            Todavia no hay jugadores con puntaje en tu red.
                         </div>
                     ) : (
                         <>
@@ -143,10 +96,7 @@ function Leaderboard() {
                                 {podium.map((player) => (
                                     <article
                                         className={`leaderboard-podium-card rank-${player.rank} ${
-                                            player.isMe ||
-                                            String(player.id) === String(profile?.user_id)
-                                                ? "is-current-user"
-                                                : ""
+                                            player.isMe ? "is-current-user" : ""
                                         }`}
                                         key={player.id}
                                     >
@@ -163,15 +113,10 @@ function Leaderboard() {
 
                             <div className="leaderboard-table" aria-label="Ranking completo">
                                 {tablePlayers.map((player) => {
-                                    const isCurrentUser =
-                                        player.isMe ||
-                                        (profile &&
-                                            String(player.id) === String(profile.user_id));
-
                                     return (
                                         <article
                                             className={`leaderboard-row ${
-                                                isCurrentUser ? "is-current-user" : ""
+                                                player.isMe ? "is-current-user" : ""
                                             }`}
                                             key={player.id}
                                         >

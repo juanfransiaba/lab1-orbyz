@@ -13,7 +13,7 @@ const API_URL = import.meta.env.VITE_API_URL || "";
 
 const LOBBY_BACKGROUND_IMAGES = [
     { src: "/images/paises/oman.jpg", position: "center 48%" },
-    { src: "/images/paises/españa.jpg", position: "center 46%" },
+    { src: "/images/paises/japan.jpg", position: "center 46%" },
     { src: "/images/paises/chile.jpg", position: "center 42%" },
     { src: "/images/paises/india.jpg", position: "center 48%" },
     { src: "/images/paises/noruega.jpg", position: "center 50%" },
@@ -78,21 +78,70 @@ function formatDuration(milliseconds) {
     return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
+function isLocalHost(hostname) {
+    return ["localhost", "127.0.0.1", "::1"].includes(hostname);
+}
+
+function getApiAssetBase() {
+    if (!API_URL || typeof window === "undefined") {
+        return API_URL;
+    }
+
+    try {
+        const apiUrl = new URL(API_URL, window.location.origin);
+        const pageUrl = new URL(window.location.href);
+
+        if (isLocalHost(apiUrl.hostname) && !isLocalHost(pageUrl.hostname)) {
+            apiUrl.hostname = pageUrl.hostname;
+        }
+
+        return apiUrl.origin;
+    } catch {
+        return API_URL;
+    }
+}
+
 function resolveQuestionImage(src) {
     if (!src) {
         return "";
     }
 
     if (/^(https?:|data:|blob:)/.test(src)) {
+        try {
+            const imageUrl = new URL(src);
+
+            if (imageUrl.pathname.startsWith("/images/")) {
+                return `${imageUrl.pathname}${imageUrl.search}${imageUrl.hash}`;
+            }
+
+            if (
+                typeof window !== "undefined" &&
+                isLocalHost(imageUrl.hostname) &&
+                !isLocalHost(window.location.hostname)
+            ) {
+                imageUrl.hostname = window.location.hostname;
+            }
+
+            return imageUrl.href;
+        } catch {
+            return src;
+        }
+    }
+
+    if (src.startsWith("/images/")) {
         return src;
     }
 
     if (src.startsWith("/")) {
-        return `${API_URL}${src}`;
+        return `${getApiAssetBase()}${src}`;
     }
 
     if (src.startsWith("static/")) {
-        return `${API_URL}/${src}`;
+        return `${getApiAssetBase()}/${src}`;
+    }
+
+    if (src.startsWith("images/")) {
+        return `/${src}`;
     }
 
     return src;
@@ -146,6 +195,11 @@ function OnlineMatchCode() {
         ? removedByQuestion[question.index] || []
         : [];
     const questionImage = resolveQuestionImage(question?.imageSrc);
+    const gameFeedback = answerResult
+        ? answerResult.correct
+            ? "Correcto"
+            : `Incorrecto. Era ${answerResult.correctValue}`
+        : feedback;
 
     useEffect(() => {
         const intervalId = window.setInterval(() => setNow(Date.now()), 500);
@@ -586,6 +640,84 @@ function OnlineMatchCode() {
         );
     }
 
+    function renderResultPlayerCard(player, label) {
+        const isWinner =
+            !gameResult?.draw &&
+            Number(gameResult?.winnerUserId) === Number(player.userId);
+
+        return (
+            <article
+                className={`online-result-player-card ${isWinner ? "is-winner" : ""}`}
+            >
+                <div className="online-result-player-head">
+                    <div className="online-player-avatar" aria-hidden="true">
+                        {(player.username || "J").charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                        <span>{label}</span>
+                        <strong>{player.username || "Jugador"}</strong>
+                    </div>
+                    {isWinner && <em>Ganador</em>}
+                </div>
+                <div className="online-result-metrics">
+                    <div>
+                        <strong>{player.correctCount ?? 0}</strong>
+                        <span>Aciertos</span>
+                    </div>
+                    <div>
+                        <strong>{player.wrongCount ?? 0}</strong>
+                        <span>Errores</span>
+                    </div>
+                    <div>
+                        <strong>{player.lives ?? 0}</strong>
+                        <span>Vidas</span>
+                    </div>
+                </div>
+            </article>
+        );
+    }
+
+    function renderPowerups() {
+        return (
+            <aside className="online-game-side-tools">
+                <div className="online-game-spectators">
+                    <span className="online-lobby-eye" aria-hidden="true" />
+                    <strong>{room?.spectatorCount ?? 0}</strong>
+                    <small>mirando</small>
+                </div>
+
+                <section className="online-powerups" aria-label="Habilidades especiales">
+                    <button
+                        type="button"
+                        onClick={() => handleUsePowerup("fifty_fifty")}
+                        disabled={
+                            !question ||
+                            isFrozen ||
+                            (myProgress?.powerups?.fiftyFifty ?? 0) <= 0 ||
+                            pendingAction === "fifty_fifty"
+                        }
+                    >
+                        <span>50/50</span>
+                        <strong>{myProgress?.powerups?.fiftyFifty ?? 0}</strong>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleUsePowerup("freeze")}
+                        disabled={
+                            !question ||
+                            isFrozen ||
+                            (myProgress?.powerups?.freeze ?? 0) <= 0 ||
+                            pendingAction === "freeze"
+                        }
+                    >
+                        <span>Freeze</span>
+                        <strong>{myProgress?.powerups?.freeze ?? 0}</strong>
+                    </button>
+                </section>
+            </aside>
+        );
+    }
+
     function renderChat() {
         return (
             <aside className="online-chat-panel">
@@ -674,7 +806,7 @@ function OnlineMatchCode() {
     }
 
     return (
-        <div className="online-room-page">
+        <div className={`online-room-page ${phase === "playing" ? "is-playing" : ""}`}>
             <header className="online-room-header">
                 <div className="online-room-header-glow" />
                 <button
@@ -686,7 +818,13 @@ function OnlineMatchCode() {
                 </button>
                 <div className="online-room-title-block">
                     <span>Sala {room.code}</span>
-                    <h1>{phase === "playing" ? "Partida online" : "Lobby online"}</h1>
+                    <h1>
+                        {phase === "playing"
+                            ? "Partida online"
+                            : phase === "ended"
+                              ? "Resultado online"
+                              : "Lobby online"}
+                    </h1>
                 </div>
                 <span className="online-room-status">
                     {phase === "playing"
@@ -698,7 +836,9 @@ function OnlineMatchCode() {
             <main
                 className={`online-room-main ${
                     phase === "playing" ? "is-game" : ""
-                } ${phase === "lobby" ? "is-lobby" : ""}`}
+                } ${phase === "lobby" ? "is-lobby" : ""} ${
+                    phase === "ended" ? "is-ended" : ""
+                }`}
             >
                 {phase === "lobby" && (
                     <>
@@ -732,11 +872,6 @@ function OnlineMatchCode() {
                                 <div className="online-lobby-room-meta">
                                     <span>{roomPlayers.length} / 2</span>
                                     <small>jugadores</small>
-                                </div>
-
-                                <div className="online-lobby-spectators">
-                                    <span className="online-lobby-eye" aria-hidden="true" />
-                                    <strong>{room?.spectatorCount ?? 0}</strong>
                                 </div>
                             </aside>
 
@@ -803,16 +938,27 @@ function OnlineMatchCode() {
 
                 {phase === "playing" && (
                     <section className="online-game-layout">
+                        {renderPowerups()}
                         <div className="online-game-main">
                             <div className="online-game-scoreboard">
                                 {renderPlayerCard(myProgress, "Vos")}
                                 {renderPlayerCard(rivalProgress, "Rival")}
                             </div>
-                            <p className="online-room-mini-status is-compact">
-                                {room?.spectatorCount ?? 0} espectadores mirando
-                            </p>
 
-                            <article className="online-question-card">
+                            <article
+                                className={`online-question-card ${
+                                    questionImage ? "has-image" : ""
+                                }`}
+                            >
+                                {isFrozen && (
+                                    <div className="online-freeze-alert">
+                                        <strong>Freeze aplicado</strong>
+                                        <span>
+                                            Tu rival te congelo por{" "}
+                                            {formatDuration(frozenLeft)}
+                                        </span>
+                                    </div>
+                                )}
                                 <div className="online-question-head">
                                     <span>
                                         Pregunta {(question?.index ?? 0) + 1} /{" "}
@@ -827,14 +973,21 @@ function OnlineMatchCode() {
 
                                 {question ? (
                                     <>
-                                        {questionImage && (
-                                            <img
-                                                src={questionImage}
-                                                alt={question.imageAlt || "Pregunta"}
-                                                className="online-question-image"
-                                            />
-                                        )}
                                         <h2>{question.prompt}</h2>
+                                        {questionImage && (
+                                            <div
+                                                className="online-question-image-frame"
+                                                style={{
+                                                    "--question-image": `url("${questionImage}")`,
+                                                }}
+                                            >
+                                                <img
+                                                    src={questionImage}
+                                                    alt={question.imageAlt || "Pregunta"}
+                                                    className="online-question-image"
+                                                />
+                                            </div>
+                                        )}
                                         <div className="online-answer-grid">
                                             {question.options.map((option, index) => {
                                                 const removed =
@@ -877,53 +1030,23 @@ function OnlineMatchCode() {
                                     </>
                                 ) : (
                                     <div className="online-question-empty">
-                                        Terminaste tus preguntas. Esperando resultado...
+                                        <span>Partida finalizada</span>
+                                        <strong>Esperando al rival</strong>
+                                        <p>
+                                            Cuando el otro jugador termine, vas a ver el
+                                            resultado final.
+                                        </p>
                                     </div>
                                 )}
                             </article>
 
-                            <section className="online-powerups">
-                                <button
-                                    type="button"
-                                    onClick={() => handleUsePowerup("fifty_fifty")}
-                                    disabled={
-                                        !question ||
-                                        isFrozen ||
-                                        (myProgress?.powerups?.fiftyFifty ?? 0) <= 0 ||
-                                        pendingAction === "fifty_fifty"
-                                    }
-                                >
-                                    <span>50/50</span>
-                                    <strong>{myProgress?.powerups?.fiftyFifty ?? 0}</strong>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleUsePowerup("freeze")}
-                                    disabled={
-                                        !question ||
-                                        isFrozen ||
-                                        (myProgress?.powerups?.freeze ?? 0) <= 0 ||
-                                        pendingAction === "freeze"
-                                    }
-                                >
-                                    <span>Freeze</span>
-                                    <strong>{myProgress?.powerups?.freeze ?? 0}</strong>
-                                </button>
-                            </section>
-
-                            {(feedback || answerResult) && (
-                                <p
-                                    className={`online-room-feedback ${
-                                        answerResult?.correct ? "is-success" : ""
-                                    }`}
-                                >
-                                    {answerResult
-                                        ? answerResult.correct
-                                            ? "Correcto"
-                                            : `Incorrecto. Era ${answerResult.correctValue}`
-                                        : feedback}
-                                </p>
-                            )}
+                            <p
+                                className={`online-room-feedback online-game-feedback ${
+                                    gameFeedback ? "" : "is-empty"
+                                } ${answerResult?.correct ? "is-success" : ""}`}
+                            >
+                                {gameFeedback || "Sin feedback"}
+                            </p>
                         </div>
 
                         {renderChat()}
@@ -931,24 +1054,41 @@ function OnlineMatchCode() {
                 )}
 
                 {phase === "ended" && (
-                    <section className="online-lobby-layout">
-                        <div className="online-room-panel">
-                            <div className="online-room-panel-head">
-                                <span>Resultado</span>
-                                <h2>
+                    <section className="online-result-layout">
+                        <div className="online-result-panel">
+                            <div className="online-result-hero">
+                                <div>
+                                    <span>Resultado final</span>
+                                    <h2>
+                                        {gameResult?.type === "abandoned"
+                                            ? "Partida abandonada"
+                                            : gameResult?.draw
+                                              ? "Empate"
+                                              : Number(gameResult?.winnerUserId) ===
+                                                  Number(currentUserId)
+                                                ? "Ganaste"
+                                                : "Perdiste"}
+                                    </h2>
+                                    <p>
+                                        {gameResult?.draw
+                                            ? "Los dos terminaron con el mismo puntaje."
+                                            : "Resumen de la partida"}
+                                    </p>
+                                </div>
+                                <strong>
                                     {gameResult?.type === "abandoned"
-                                        ? "Partida abandonada"
+                                        ? "Abandono"
                                         : gameResult?.draw
                                           ? "Empate"
                                           : Number(gameResult?.winnerUserId) ===
                                               Number(currentUserId)
-                                            ? "Ganaste"
-                                            : "Perdiste"}
-                                </h2>
+                                            ? "Victoria"
+                                            : "Derrota"}
+                                </strong>
                             </div>
-                            <div className="online-lobby-players">
+                            <div className="online-result-players">
                                 {players.map((player) =>
-                                    renderPlayerCard(
+                                    renderResultPlayerCard(
                                         player,
                                         Number(player.userId) === Number(currentUserId)
                                             ? "Vos"
@@ -966,7 +1106,7 @@ function OnlineMatchCode() {
                                     : "Volver al modo online"}
                             </button>
                         </div>
-                        {renderChat()}
+                        <div className="online-result-chat-slot">{renderChat()}</div>
                     </section>
                 )}
             </main>

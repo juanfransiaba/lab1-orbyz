@@ -291,12 +291,8 @@ function registerGameHandlers(io, socket) {
             if (finishedAlive) {
                 // Terminó todas las preguntas vivo: gana
                 finishGame(io, room, buildGameOver(room, player.userId));
-            } else if (noLives) {
-                // [Opción A] Se quedó sin vidas: gana el rival (eliminación)
-                const rival = opponentOf(room, userId);
-                finishGame(io, room, buildGameOver(room, rival ? rival.userId : null));
             } else if (allFinished(room)) {
-                // Red de seguridad
+                // Si ambos terminaron por vidas/preguntas, define por progreso.
                 finishGame(io, room, buildGameOver(room));
             }
         } catch (error) {

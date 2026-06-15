@@ -32,21 +32,7 @@ function normalizePlayer(player, index) {
     };
 }
 
-export async function getLeaderboard() {
-    const data = await requestJSON("/ranking/global");
-    return Array.isArray(data) ? data.map(normalizePlayer) : [];
-}
-
-export async function getGlobalLeaderboard() {
-    const data = await requestJSON("/ranking/global");
-    return Array.isArray(data) ? data.map(normalizePlayer) : [];
-}
-
 export async function getFriendsLeaderboard() {
     const data = await requestJSON("/ranking/friends");
     return Array.isArray(data) ? data.map(normalizePlayer) : [];
-}
-
-export async function getCurrentProfile() {
-    return requestJSON("/user/profile");
 }
