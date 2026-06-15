@@ -642,6 +642,12 @@ async function setMatchResult(tournamentId, matchId, winnerUserId, userId) {
                 [cleanWinnerUserId, tournamentId]
             );
 
+            // El campeón del torneo suma 5 puntos al ranking
+            await client.query(
+                "UPDATE users SET score = score + 5 WHERE user_id = $1",
+                [cleanWinnerUserId]
+            );
+
             return getTournamentSnapshot(tournamentId, userId, client);
         }
 
@@ -807,6 +813,13 @@ async function advanceTournamentMatch(tournamentMatchId, winnerUserId) {
                  WHERE tournament_id = $2`,
                 [cleanWinnerUserId, tournamentId]
             );
+
+            // El campeón del torneo suma 5 puntos al ranking
+            await client.query(
+                "UPDATE users SET score = score + 5 WHERE user_id = $1",
+                [cleanWinnerUserId]
+            );
+
             return { tournamentId, finished: true };
         }
 
