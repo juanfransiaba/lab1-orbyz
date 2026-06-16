@@ -296,9 +296,6 @@ function OnlineSpectator() {
                         <span>Jugador {index + 1}</span>
                         <strong>{player?.username || "Esperando..."}</strong>
                     </div>
-                    <div className="online-spectator-lives">
-                        {player?.lives ?? 0} vidas
-                    </div>
                 </div>
 
                 <div className="online-spectator-progress">
@@ -329,7 +326,7 @@ function OnlineSpectator() {
                     </div>
                     <div>
                         <span>Racha</span>
-                        <strong>{player?.correctStreak ?? 0}/10</strong>
+                        <strong>{player?.correctStreak ?? 0}</strong>
                     </div>
                 </div>
 

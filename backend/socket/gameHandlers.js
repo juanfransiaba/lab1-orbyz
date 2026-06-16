@@ -246,35 +246,23 @@ function registerGameHandlers(io, socket) {
                     ? normalizeAnswer(option) === normalizeAnswer(question.correctValue)
                     : option === question.correctValue;
 
-            let extraLife = false;
-
+            // En online ya no hay vidas: nadie se elimina por errar.
+            // La racha es solo informativa (infinita, sin power-ups).
             if (isCorrect) {
                 player.correctCount += 1;
                 player.correctStreak += 1;
-
-                // Vida extra cada X correctas seguidas (solo si perdiste vidas)
-                if (player.correctStreak >= STREAK_FOR_EXTRA_LIFE) {
-                    if (player.lives < MAX_LIVES) {
-                        player.lives += 1;
-                        player.extraLivesAwarded += 1;
-                        extraLife = true;
-                    }
-                    player.correctStreak = 0; // se reinicia haya dado vida o no
-                }
             } else {
                 player.wrongCount += 1;
-                player.lives -= 1;
                 player.correctStreak = 0;
             }
 
             player.currentIndex += 1;
 
-            const noLives = player.lives <= 0;
             const noQuestions = player.currentIndex >= room.questions.length;
-            // terminó la secuencia SIGUIENDO vivo => gana por terminar primero
-            const finishedAlive = noQuestions && !noLives;
+            // Se gana por terminar primero todas las preguntas, o por tiempo.
+            const finishedAlive = noQuestions;
 
-            if (noLives || noQuestions) {
+            if (noQuestions) {
                 player.finished = true;
             }
 
@@ -286,23 +274,12 @@ function registerGameHandlers(io, socket) {
             callback?.({
                 correct: isCorrect,
                 correctValue: question.correctValue, // se revela DESPUÉS de responder
-                lives: player.lives,
                 correctCount: player.correctCount,
                 wrongCount: player.wrongCount,
                 correctStreak: player.correctStreak,
-                extraLife,
                 finished: player.finished,
                 nextQuestion,
             });
-
-            // Si ganó una vida extra, avisar a la sala
-            if (extraLife) {
-                io.to(room.code).emit("powerup:awarded", {
-                    userId: player.userId,
-                    type: "extra_life",
-                    lives: player.lives,
-                });
-            }
 
             // Avisar el progreso a toda la sala
             io.to(room.code).emit("game:progress", playerProgress(player));

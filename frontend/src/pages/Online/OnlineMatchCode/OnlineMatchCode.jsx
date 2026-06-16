@@ -783,9 +783,8 @@ function OnlineMatchCode() {
                     </div>
                 </div>
                 <div className="online-player-metrics">
-                    {!isMapQuestion && <span>{player.lives ?? "-"} vidas</span>}
                     <span>{player.correctCount ?? 0} aciertos</span>
-                    <span>racha {streak}/10</span>
+                    <span>racha {streak}</span>
                 </div>
                 {frozen && (
                     <div className="online-player-freeze">
