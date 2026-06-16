@@ -100,6 +100,7 @@ function serializeRoom(room) {
         mode: room.mode,
         continent: room.continent,
         hostUserId: room.hostUserId,
+        isTournament: Boolean(room.tournament),
         status: room.status,
         players: Array.from(room.players.values()),
         spectatorCount: room.spectators.length,

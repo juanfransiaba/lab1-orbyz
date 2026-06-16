@@ -78,7 +78,7 @@ function registerTournamentMatchHandlers(io, socket) {
 
             if (bothIn && room.status === "waiting") {
                 await markMatchPlaying(match.tournament_match_id);
-                await startGame(io, room);
+                await startGame(io, room, { source: "tournament" });
             }
         } catch (error) {
             console.error("Error en tournament:playMatch:", error);

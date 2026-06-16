@@ -222,3 +222,4 @@ function handleConnection(io, socket) {
 }
 
 module.exports = handleConnection;
+module.exports.endMatchByAbandon = endMatchByAbandon;

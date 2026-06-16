@@ -226,6 +226,39 @@ async function getTournamentSnapshot(tournamentId, viewerId, db = pool) {
     };
 }
 
+async function getCurrentTournamentSnapshot(viewerId) {
+    const { rows } = await pool.query(
+        `SELECT t.tournament_id
+         FROM tournaments t
+         WHERE t.status IN ('active', 'waiting')
+           AND (
+               t.created_by = $1
+               OR EXISTS (
+                   SELECT 1
+                   FROM tournament_participants my_tp
+                   WHERE my_tp.tournament_id = t.tournament_id
+                     AND my_tp.user_id = $1
+               )
+           )
+         ORDER BY
+             CASE t.status
+                 WHEN 'active' THEN 0
+                 WHEN 'waiting' THEN 1
+                 ELSE 2
+             END,
+             t.updated_at DESC,
+             t.tournament_id DESC
+         LIMIT 1`,
+        [viewerId]
+    );
+
+    if (rows.length === 0) {
+        return null;
+    }
+
+    return getTournamentSnapshot(rows[0].tournament_id, viewerId);
+}
+
 async function listTournaments({ status = "", viewerId }) {
     const cleanStatus = String(status || "").trim().toLowerCase();
     const params = [viewerId];
@@ -891,8 +924,8 @@ async function kickParticipant(tournamentId, targetUserId, requesterId) {
 
 module.exports = {
     ServiceError,
-    listTournaments,
     getTournamentSnapshot,
+    getCurrentTournamentSnapshot,
     createTournament,
     updateTournament,
     joinTournament,
@@ -900,7 +933,6 @@ module.exports = {
     leaveTournament,
     deleteTournament,
     startTournament,
-    setMatchResult,
     getMatchForPlay,
     attachRoomCode,
     markMatchPlaying,

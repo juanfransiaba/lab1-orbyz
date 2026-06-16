@@ -17,18 +17,6 @@ function notifyTournament(tournamentId, event = "tournament:updated") {
     }
 }
 
-const listTournaments = async (req, res) => {
-    try {
-        const tournaments = await tournamentsService.listTournaments({
-            status: req.query.status,
-            viewerId: req.user.user_id,
-        });
-        res.json(tournaments);
-    } catch (error) {
-        handleError(res, error, "listTournaments");
-    }
-};
-
 const getTournamentById = async (req, res) => {
     try {
         const snapshot = await tournamentsService.getTournamentSnapshot(
@@ -38,6 +26,18 @@ const getTournamentById = async (req, res) => {
         res.json(snapshot);
     } catch (error) {
         handleError(res, error, "getTournamentById");
+    }
+};
+
+const getCurrentTournament = async (req, res) => {
+    try {
+        const snapshot = await tournamentsService.getCurrentTournamentSnapshot(
+            req.user.user_id
+        );
+
+        res.json(snapshot || { tournament: null, participants: [], matches: [] });
+    } catch (error) {
+        handleError(res, error, "getCurrentTournament");
     }
 };
 
@@ -132,21 +132,6 @@ const startTournament = async (req, res) => {
     }
 };
 
-const setMatchResult = async (req, res) => {
-    try {
-        const snapshot = await tournamentsService.setMatchResult(
-            req.params.tournamentId,
-            req.params.matchId,
-            req.body.winner_user_id ?? req.body.winnerUserId,
-            req.user.user_id
-        );
-        notifyTournament(req.params.tournamentId);
-        res.json(snapshot);
-    } catch (error) {
-        handleError(res, error, "setMatchResult");
-    }
-};
-
 const kickParticipant = async (req, res) => {
     try {
         const targetUserId = req.params.userId;
@@ -175,8 +160,8 @@ const kickParticipant = async (req, res) => {
 };
 
 module.exports = {
-    listTournaments,
     getTournamentById,
+    getCurrentTournament,
     createTournament,
     updateTournament,
     deleteTournament,
@@ -184,6 +169,5 @@ module.exports = {
     joinTournamentByCode,
     leaveTournament,
     startTournament,
-    setMatchResult,
     kickParticipant,
 };

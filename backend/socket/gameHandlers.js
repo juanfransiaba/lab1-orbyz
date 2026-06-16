@@ -136,9 +136,11 @@ function finishGame(io, room, gameOver) {
     }
 }
 
-// Arranca la partida en una sala (lo usan el game:start manual y los cruces de torneo)
-async function startGame(io, room) {
+// Arranca la partida solo desde el boton manual casual o desde un cruce de torneo.
+async function startGame(io, room, { source } = {}) {
     if (room.status !== "waiting") return; // ya arrancó
+    if (!room.tournament && source !== "manual") return;
+    if (room.tournament && source !== "tournament") return;
 
     const questions = await generateQuestions(room.mode, room.continent);
 
@@ -187,6 +189,11 @@ function registerGameHandlers(io, socket) {
             if (room.hostUserId !== userId) {
                 return callback?.({ error: "Solo el host puede empezar la partida" });
             }
+            if (room.tournament) {
+                return callback?.({
+                    error: "Las partidas de torneo empiezan automaticamente",
+                });
+            }
             if (room.status !== "waiting") {
                 return callback?.({ error: "La partida ya empezó o terminó" });
             }
@@ -194,7 +201,7 @@ function registerGameHandlers(io, socket) {
                 return callback?.({ error: "Faltan jugadores" });
             }
 
-            await startGame(io, room);
+            await startGame(io, room, { source: "manual" });
             callback?.({ ok: true });
         } catch (error) {
             console.error("Error en game:start:", error);

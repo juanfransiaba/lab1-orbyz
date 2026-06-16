@@ -97,21 +97,13 @@ function normalizeSnapshot(snapshot) {
     };
 }
 
-export async function getTournaments({ status = "" } = {}) {
-    const query = new URLSearchParams();
-
-    if (status) {
-        query.set("status", status);
-    }
-
-    const suffix = query.toString() ? `?${query.toString()}` : "";
-    const data = await requestJSON(`/tournaments${suffix}`);
-
-    return Array.isArray(data) ? data.map(normalizeTournament) : [];
-}
-
 export async function getTournament(tournamentId) {
     const data = await requestJSON(`/tournaments/${tournamentId}`);
+    return normalizeSnapshot(data);
+}
+
+export async function getCurrentTournament() {
+    const data = await requestJSON("/tournaments/current");
     return normalizeSnapshot(data);
 }
 
@@ -168,18 +160,6 @@ export async function startTournament(tournamentId) {
     const data = await requestJSON(`/tournaments/${tournamentId}/start`, {
         method: "POST",
     });
-
-    return normalizeSnapshot(data);
-}
-
-export async function setTournamentMatchWinner(tournamentId, matchId, winnerUserId) {
-    const data = await requestJSON(
-        `/tournaments/${tournamentId}/matches/${matchId}/result`,
-        {
-            method: "POST",
-            body: JSON.stringify({ winner_user_id: winnerUserId }),
-        }
-    );
 
     return normalizeSnapshot(data);
 }

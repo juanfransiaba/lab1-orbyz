@@ -149,6 +149,43 @@ function resolveQuestionImage(src) {
     return src;
 }
 
+async function copyTextToClipboard(text) {
+    if (navigator.clipboard?.writeText && window.isSecureContext) {
+        try {
+            await navigator.clipboard.writeText(text);
+            return true;
+        } catch {
+            // Try the textarea fallback below.
+        }
+    }
+
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    textarea.style.top = "-9999px";
+
+    const selection = document.getSelection();
+    const selectedRange =
+        selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+
+    try {
+        return document.execCommand("copy");
+    } finally {
+        document.body.removeChild(textarea);
+
+        if (selection && selectedRange) {
+            selection.removeAllRanges();
+            selection.addRange(selectedRange);
+        }
+    }
+}
+
 function OnlineMapQuestion({ iso }) {
     return (
         <div className="online-map-frame">
@@ -221,6 +258,7 @@ function OnlineMatchCode() {
     const [chatText, setChatText] = useState("");
     const [chatError, setChatError] = useState("");
     const [lobbyChatOpen, setLobbyChatOpen] = useState(false);
+    const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
     const [pendingAction, setPendingAction] = useState("");
     const [copyFeedback, setCopyFeedback] = useState("");
     const [mapAnswer, setMapAnswer] = useState("");
@@ -236,9 +274,12 @@ function OnlineMatchCode() {
     const rivalProgress = players.find(
         (player) => Number(player.userId) !== Number(currentUserId)
     );
-    const isHost = Number(room?.hostUserId) === Number(currentUserId);
     const roomPlayers = players.length ? players : playersFromRoom(room);
-    const canStart = isHost && roomPlayers.length >= 2 && room?.status === "waiting";
+    const isTournamentRoom = Boolean(tournamentReturnId || room?.isTournament);
+    const isRoomHost = Number(room?.hostUserId) === Number(currentUserId);
+    const isWaitingRoom = room?.status === "waiting";
+    const hasTwoPlayers = roomPlayers.length >= 2;
+    const canStartCasualMatch = !isTournamentRoom && isRoomHost && isWaitingRoom;
     const matchTimeLeft = matchEndsAt ? matchEndsAt - now : 0;
     const isFrozen = myProgress?.frozenUntil ? myProgress.frozenUntil > now : false;
     const frozenLeft = isFrozen ? myProgress.frozenUntil - now : 0;
@@ -248,6 +289,11 @@ function OnlineMatchCode() {
     const isMapQuestion =
         Boolean(question?.iso) || room?.mode === "country-by-map";
     const questionImage = resolveQuestionImage(question?.imageSrc);
+    const isAbandonedResult = gameResult?.type === "abandoned";
+    const abandonedByCurrentUser =
+        isAbandonedResult &&
+        Number(gameResult?.abandonerUserId) === Number(currentUserId);
+    const abandonedByRival = isAbandonedResult && !abandonedByCurrentUser;
     const gameFeedback = answerResult
         ? answerResult.correct
             ? "Correcto"
@@ -313,6 +359,7 @@ function OnlineMatchCode() {
         function handleGameOver(result) {
             setPhase("ended");
             setGameResult({ ...result, type: "game_over" });
+            setLeaveConfirmOpen(false);
             setQuestion(null);
             setPlayers((currentPlayers) =>
                 mergePlayers(currentPlayers, (result.players || []).map(normalizePlayer))
@@ -325,6 +372,7 @@ function OnlineMatchCode() {
         function handleGameAbandoned(result) {
             setPhase("ended");
             setGameResult({ ...result, type: "abandoned" });
+            setLeaveConfirmOpen(false);
             setQuestion(null);
             setPlayers((currentPlayers) =>
                 mergePlayers(currentPlayers, (result.players || []).map(normalizePlayer))
@@ -489,20 +537,23 @@ function OnlineMatchCode() {
         };
     }, [currentUserId, navigate, tournamentReturnId]);
 
-    async function handleStartGame() {
-        setPendingAction("start");
-        setFeedback("");
-
-        try {
-            await emitWithAck("game:start");
-        } catch (error) {
-            setFeedback(error.message || "No se pudo iniciar la partida.");
-        } finally {
-            setPendingAction("");
+    function handleLeave() {
+        if (phase === "playing") {
+            setLeaveConfirmOpen(true);
+            return;
         }
+
+        leaveRoom();
     }
 
-    async function handleLeave() {
+    async function leaveRoom() {
+        if (pendingAction === "leave") {
+            return;
+        }
+
+        setPendingAction("leave");
+        setLeaveConfirmOpen(false);
+
         try {
             await emitWithAck("room:leave");
         } catch {
@@ -519,17 +570,48 @@ function OnlineMatchCode() {
         });
     }
 
+    function handleCancelLeave() {
+        setLeaveConfirmOpen(false);
+    }
+
+    function handleConfirmLeave() {
+        leaveRoom();
+    }
+
     async function handleCopyRoomCode() {
         if (!room?.code) {
             return;
         }
 
         try {
-            await navigator.clipboard.writeText(room.code);
+            const copied = await copyTextToClipboard(room.code);
+
+            if (!copied) {
+                throw new Error("copy-failed");
+            }
+
             setCopyFeedback("Copiado");
             window.setTimeout(() => setCopyFeedback(""), 1400);
         } catch {
             setCopyFeedback("No se pudo copiar");
+            window.setTimeout(() => setCopyFeedback(""), 1800);
+        }
+    }
+
+    async function handleStartGame() {
+        if (!canStartCasualMatch || pendingAction === "start") {
+            return;
+        }
+
+        setPendingAction("start");
+        setFeedback("");
+
+        try {
+            await emitWithAck("game:start");
+        } catch (error) {
+            setFeedback(error.message || "No se pudo iniciar la partida.");
+        } finally {
+            setPendingAction("");
         }
     }
 
@@ -964,21 +1046,20 @@ function OnlineMatchCode() {
                                 </div>
 
                                 <div className="online-lobby-action-area">
-                                    {isHost ? (
+                                    {canStartCasualMatch && (
                                         <button
                                             type="button"
                                             className="online-room-primary-button"
                                             onClick={handleStartGame}
-                                            disabled={!canStart || pendingAction === "start"}
+                                            disabled={
+                                                !hasTwoPlayers ||
+                                                pendingAction === "start"
+                                            }
                                         >
                                             {pendingAction === "start"
                                                 ? "Iniciando..."
                                                 : "Iniciar partida"}
                                         </button>
-                                    ) : (
-                                        <p className="online-room-feedback">
-                                            Esperando que el anfitrion inicie la partida.
-                                        </p>
                                     )}
                                     {feedback && (
                                         <p className="online-room-feedback is-error">
@@ -1198,8 +1279,10 @@ function OnlineMatchCode() {
                                 <div>
                                     <span>Resultado final</span>
                                     <h2>
-                                        {gameResult?.type === "abandoned"
-                                            ? "Partida abandonada"
+                                        {abandonedByRival
+                                            ? "El rival abandono la partida"
+                                            : abandonedByCurrentUser
+                                              ? "Abandonaste la partida"
                                             : gameResult?.draw
                                               ? "Empate"
                                               : Number(gameResult?.winnerUserId) ===
@@ -1208,8 +1291,12 @@ function OnlineMatchCode() {
                                                 : "Perdiste"}
                                     </h2>
                                     <p>
-                                        {gameResult?.draw
-                                            ? "Los dos terminaron con el mismo puntaje."
+                                        {abandonedByRival
+                                            ? "La partida termino porque tu rival se fue."
+                                            : abandonedByCurrentUser
+                                              ? "Saliste de la partida online."
+                                              : gameResult?.draw
+                                                ? "Los dos terminaron con el mismo puntaje."
                                             : "Resumen de la partida"}
                                     </p>
                                 </div>
@@ -1239,15 +1326,61 @@ function OnlineMatchCode() {
                                 className="online-room-primary-button"
                                 onClick={handleLeave}
                             >
-                                {tournamentReturnId
-                                    ? "Volver al torneo"
-                                    : "Volver al modo online"}
+                                {abandonedByRival
+                                    ? "Salir"
+                                    : tournamentReturnId
+                                      ? "Volver al torneo"
+                                      : "Volver al modo online"}
                             </button>
                         </div>
                         <div className="online-result-chat-slot">{renderChat()}</div>
                     </section>
                 )}
             </main>
+
+            {leaveConfirmOpen && phase === "playing" && (
+                <div className="online-leave-modal-backdrop" role="presentation">
+                    <section
+                        className="online-leave-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="online-leave-title"
+                        aria-describedby="online-leave-description"
+                    >
+                        <div className="online-leave-modal-icon" aria-hidden="true">
+                            !
+                        </div>
+                        <div className="online-leave-modal-copy">
+                            <span>Partida en curso</span>
+                            <h2 id="online-leave-title">Seguro que quieres salir?</h2>
+                            <p id="online-leave-description">
+                                Si abandonas ahora, tu rival gana la partida y se le
+                                avisara que te fuiste.
+                            </p>
+                        </div>
+                        <div className="online-leave-modal-actions">
+                            <button
+                                type="button"
+                                className="online-leave-cancel-button"
+                                onClick={handleCancelLeave}
+                                disabled={pendingAction === "leave"}
+                            >
+                                Seguir jugando
+                            </button>
+                            <button
+                                type="button"
+                                className="online-leave-confirm-button"
+                                onClick={handleConfirmLeave}
+                                disabled={pendingAction === "leave"}
+                            >
+                                {pendingAction === "leave"
+                                    ? "Saliendo..."
+                                    : "Abandonar partida"}
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            )}
         </div>
     );
 }

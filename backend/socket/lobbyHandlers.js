@@ -7,7 +7,7 @@ const {
     findRoomByUser,
     serializeRoom,
 } = require("./roomManager");
-const { startGame } = require("./gameHandlers");
+const { endMatchByAbandon } = require("./connectionHandlers");
 
 const VALID_MODES = [
     "country-by-capital",
@@ -110,10 +110,7 @@ function registerLobbyHandlers(io, socket) {
 
             console.log(`Usuario ${userId} se unió a la sala ${normalizedCode}`);
 
-            // Auto-arrancar la partida cuando se completa la sala (2 jugadores)
-            if (result.room.players.size === 2 && result.room.status === "waiting") {
-                await startGame(io, result.room);
-            }
+            // En salas casuales el host inicia manualmente desde el lobby.
         } catch (error) {
             console.error("Error en room:join:", error);
             callback?.({ error: "Error del servidor" });
@@ -122,6 +119,16 @@ function registerLobbyHandlers(io, socket) {
 
     // ── Salir de la sala ──
     socket.on("room:leave", (payload, callback) => {
+        const current = findRoomByUser(userId);
+
+        if (current?.status === "playing") {
+            endMatchByAbandon(io, current, userId);
+            socket.leave(current.code);
+            callback?.({ ok: true, abandoned: true });
+            console.log(`Usuario ${userId} abandono la partida ${current.code}`);
+            return;
+        }
+
         leaveCurrentRoom(io, socket, userId);
         callback?.({ ok: true });
         console.log(`Usuario ${userId} salió de su sala`);

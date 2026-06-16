@@ -3,12 +3,11 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
     createTournament,
     deleteTournament,
+    getCurrentTournament,
     getTournament,
-    getTournaments,
     joinTournament,
     joinTournamentByCode,
     leaveTournament,
-    setTournamentMatchWinner,
     startTournament,
     updateTournament,
     watchTournament,
@@ -97,23 +96,26 @@ function Tournaments() {
         []
     );
     const currentUserId = currentUser?.user_id;
+    const currentTournamentStorageKey = currentUserId
+        ? `orbyz:currentTournament:${currentUserId}`
+        : "";
 
-    const [filter, setFilter] = useState("");
-    const [tournaments, setTournaments] = useState([]);
-    const [selectedId, setSelectedId] = useState(
-        () => location.state?.tournamentId || null
-    );
+    const [selectedId, setSelectedId] = useState(() => {
+        if (location.state?.tournamentId) {
+            return location.state.tournamentId;
+        }
+
+        return currentTournamentStorageKey
+            ? localStorage.getItem(currentTournamentStorageKey)
+            : null;
+    });
     const [detail, setDetail] = useState(null);
     const [createForm, setCreateForm] = useState(buildEmptyForm);
     const [editForm, setEditForm] = useState(buildEmptyForm);
     const [joinCode, setJoinCode] = useState("");
-    const [loadingList, setLoadingList] = useState(false);
     const [loadingDetail, setLoadingDetail] = useState(false);
     const [actionLoading, setActionLoading] = useState("");
     const [feedback, setFeedback] = useState("");
-    const [showTournamentList, setShowTournamentList] = useState(
-        () => Boolean(location.state?.tournamentId)
-    );
 
     const selectedTournament = detail?.tournament || null;
     const participants = useMemo(
@@ -130,43 +132,40 @@ function Tournaments() {
         [rounds]
     );
 
-    const loadList = useCallback(async () => {
-        setLoadingList(true);
-        setFeedback("");
+    const refreshDetail = useCallback(
+        async (tournamentId) => {
+            if (!tournamentId) {
+                if (currentTournamentStorageKey) {
+                    localStorage.removeItem(currentTournamentStorageKey);
+                }
+                setDetail(null);
+                return;
+            }
 
-        try {
-            const data = await getTournaments({ status: filter });
-            setTournaments(data);
-        } catch (error) {
-            setFeedback(error.message || "No se pudieron cargar los torneos.");
-        } finally {
-            setLoadingList(false);
-        }
-    }, [filter]);
+            setLoadingDetail(true);
 
-    const refreshDetail = useCallback(async (tournamentId) => {
-        if (!tournamentId) {
-            setDetail(null);
-            return;
-        }
-
-        setLoadingDetail(true);
-
-        try {
-            const snapshot = await getTournament(tournamentId);
-            setDetail(snapshot);
-        } catch (error) {
-            setFeedback(error.message || "No se pudo cargar el torneo.");
-        } finally {
-            setLoadingDetail(false);
-        }
-    }, []);
+            try {
+                const snapshot = await getTournament(tournamentId);
+                setDetail(snapshot);
+            } catch (error) {
+                if (currentTournamentStorageKey) {
+                    localStorage.removeItem(currentTournamentStorageKey);
+                }
+                setDetail(null);
+                setSelectedId(null);
+                setFeedback(error.message || "No se pudo cargar el torneo.");
+            } finally {
+                setLoadingDetail(false);
+            }
+        },
+        [currentTournamentStorageKey]
+    );
 
     useEffect(() => {
-        loadList();
-    }, [loadList]);
+        if (location.state?.tournamentId) {
+            setSelectedId(location.state.tournamentId);
+        }
 
-    useEffect(() => {
         if (location.state?.feedback) {
             setFeedback(location.state.feedback);
         }
@@ -175,6 +174,57 @@ function Tournaments() {
     useEffect(() => {
         refreshDetail(selectedId);
     }, [refreshDetail, selectedId]);
+
+    useEffect(() => {
+        let active = true;
+
+        if (selectedId || !currentUserId) {
+            return undefined;
+        }
+
+        setLoadingDetail(true);
+
+        getCurrentTournament()
+            .then((snapshot) => {
+                if (!active || !snapshot?.tournament?.id) return;
+
+                setDetail(snapshot);
+                setSelectedId(snapshot.tournament.id);
+            })
+            .catch((error) => {
+                if (active) {
+                    setFeedback(error.message || "No se pudo recuperar tu torneo.");
+                }
+            })
+            .finally(() => {
+                if (active) {
+                    setLoadingDetail(false);
+                }
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [currentUserId, selectedId]);
+
+    useEffect(() => {
+        if (!currentTournamentStorageKey || !selectedTournament) {
+            return;
+        }
+
+        const shouldRemember =
+            selectedTournament.status !== "cancelled" &&
+            (selectedTournament.isJoined || selectedTournament.isCreator);
+
+        if (shouldRemember) {
+            localStorage.setItem(
+                currentTournamentStorageKey,
+                String(selectedTournament.id)
+            );
+        } else {
+            localStorage.removeItem(currentTournamentStorageKey);
+        }
+    }, [currentTournamentStorageKey, selectedTournament]);
 
     // 👇 NUEVO: tiempo real del torneo seleccionado
     useEffect(() => {
@@ -191,10 +241,12 @@ function Tournaments() {
 
         const offDeleted = onTournamentDeleted(({ tournamentId }) => {
             if (Number(tournamentId) === Number(selectedId)) {
+                if (currentTournamentStorageKey) {
+                    localStorage.removeItem(currentTournamentStorageKey);
+                }
                 setDetail(null);
                 setSelectedId(null);
                 setFeedback("El torneo se cerró.");
-                loadList();
             }
         });
 
@@ -203,7 +255,7 @@ function Tournaments() {
             offUpdated();
             offDeleted();
         };
-    }, [selectedId, refreshDetail, loadList]);
+    }, [selectedId, refreshDetail, currentTournamentStorageKey]);
 
     useEffect(() => {
         if (!selectedTournament) return;
@@ -219,22 +271,6 @@ function Tournaments() {
     function applySnapshot(snapshot) {
         setDetail(snapshot);
         setSelectedId(snapshot.tournament.id);
-        setShowTournamentList(false);
-        setTournaments((current) => {
-            const exists = current.some(
-                (tournament) => tournament.id === snapshot.tournament.id
-            );
-
-            if (exists) {
-                return current.map((tournament) =>
-                    tournament.id === snapshot.tournament.id
-                        ? snapshot.tournament
-                        : tournament
-                );
-            }
-
-            return [snapshot.tournament, ...current];
-        });
     }
 
     function buildPayload(form) {
@@ -329,23 +365,12 @@ function Tournaments() {
 
         runAction("delete", async () => {
             await deleteTournament(selectedTournament.id);
+            if (currentTournamentStorageKey) {
+                localStorage.removeItem(currentTournamentStorageKey);
+            }
             setDetail(null);
             setSelectedId(null);
             setFeedback("Torneo eliminado o cancelado.");
-            await loadList();
-        });
-    }
-
-    function handleWinner(matchId, winnerUserId) {
-        if (!selectedTournament) return;
-
-        runAction(`winner-${matchId}-${winnerUserId}`, async () => {
-            const snapshot = await setTournamentMatchWinner(
-                selectedTournament.id,
-                matchId,
-                winnerUserId
-            );
-            applySnapshot(snapshot);
         });
     }
 
@@ -397,7 +422,11 @@ function Tournaments() {
             const snapshot = await joinAsSpectator(match.onlineRoomCode);
 
             navigate("/online/spectate", {
-                state: { snapshot, code: match.onlineRoomCode },
+                state: {
+                    snapshot,
+                    code: match.onlineRoomCode,
+                    tournamentId: selectedTournament?.id,
+                },
             });
         });
     }
@@ -410,6 +439,8 @@ function Tournaments() {
             applySnapshot(snapshot);
         });
     }
+
+    const spectatableMatches = matches.filter(canSpectateMatch);
 
     const canStart =
         selectedTournament?.isCreator &&
@@ -426,8 +457,8 @@ function Tournaments() {
     return (
         <div
             className={`tournaments-page ${
-                showTournamentList ? "is-showing-list" : ""
-            } ${selectedTournament ? "has-selected-tournament" : ""}`}
+                selectedTournament ? "has-selected-tournament" : ""
+            }`}
         >
             <header className="tournaments-header">
                 <div className="tournaments-header-actions">
@@ -616,74 +647,7 @@ function Tournaments() {
                     </form>
                 </section>
 
-                <section className="tournaments-browse-strip">
-                    <div>
-                        <span>Torneos existentes</span>
-                        <strong>Ver copas creadas</strong>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() =>
-                            setShowTournamentList((isVisible) => !isVisible)
-                        }
-                    >
-                        {showTournamentList ? "Ocultar lista" : "Ver torneos"}
-                    </button>
-                </section>
-
                 <section className="tournaments-workspace">
-                    <aside className="tournaments-list-card">
-                        <div className="tournaments-list-head">
-                            <div>
-                                <span>Torneos</span>
-                                <h3>Disponibles</h3>
-                            </div>
-                            <select
-                                value={filter}
-                                onChange={(event) => setFilter(event.target.value)}
-                            >
-                                <option value="">Todos</option>
-                                <option value="waiting">Inscripcion</option>
-                                <option value="active">En juego</option>
-                                <option value="finished">Finalizados</option>
-                            </select>
-                        </div>
-
-                        <div className="tournaments-list">
-                            {loadingList && (
-                                <p className="tournaments-muted">Cargando torneos...</p>
-                            )}
-
-                            {!loadingList &&
-                                tournaments.map((tournament) => (
-                                    <button
-                                        key={tournament.id}
-                                        type="button"
-                                        className={`tournaments-list-item ${
-                                            selectedId === tournament.id
-                                                ? "is-selected"
-                                                : ""
-                                        }`}
-                                        onClick={() => setSelectedId(tournament.id)}
-                                    >
-                                        <span>{STATUS_LABELS[tournament.status]}</span>
-                                        <strong>{tournament.name}</strong>
-                                        <small>
-                                            {tournament.participantCount}/
-                                            {tournament.maxPlayers} jugadores
-                                        </small>
-                                    </button>
-                                ))}
-
-                            {!loadingList && tournaments.length === 0 && (
-                                <div className="tournaments-empty-list">
-                                    <strong>No hay torneos</strong>
-                                    <p>Crea una copa o entra con un codigo.</p>
-                                </div>
-                            )}
-                        </div>
-                    </aside>
-
                     <section className="tournaments-detail">
                         {!selectedTournament && (
                             <div className="tournaments-empty-detail">
@@ -906,6 +870,65 @@ function Tournaments() {
                                     </details>
                                 )}
 
+                                {selectedTournament.status === "active" && (
+                                    <section className="tournaments-spectator-card">
+                                        <div className="tournaments-section-head">
+                                            <span>Espectar</span>
+                                            <strong>
+                                                {spectatableMatches.length} en curso
+                                            </strong>
+                                        </div>
+
+                                        {spectatableMatches.length === 0 && (
+                                            <p className="tournaments-muted">
+                                                No hay partidas del torneo en juego para mirar.
+                                            </p>
+                                        )}
+
+                                        {spectatableMatches.length > 0 && (
+                                            <div className="tournaments-spectator-list">
+                                                {spectatableMatches.map((match) => (
+                                                    <article
+                                                        className="tournaments-spectator-match"
+                                                        key={match.id}
+                                                    >
+                                                        <div>
+                                                            <span>
+                                                                {getRoundLabel(
+                                                                    match.roundNumber,
+                                                                    selectedTournament.maxPlayers
+                                                                )}{" "}
+                                                                - Cruce {match.matchOrder}
+                                                            </span>
+                                                            <strong>
+                                                                {match.player1Username ||
+                                                                    "Pendiente"}{" "}
+                                                                vs{" "}
+                                                                {match.player2Username ||
+                                                                    "Pendiente"}
+                                                            </strong>
+                                                        </div>
+
+                                                        <button
+                                                            type="button"
+                                                            className="tournaments-play-match-button tournaments-watch-match-button"
+                                                            onClick={() =>
+                                                                handleSpectateMatch(match)
+                                                            }
+                                                            disabled={
+                                                                actionLoading ===
+                                                                `spectate-${match.id}`
+                                                            }
+                                                        >
+                                                            Ver partida
+                                                        </button>
+                                                    </article>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </section>
+                                )}
+
                                 <div className="tournaments-content-grid">
                                     <section className="tournaments-participants-card">
                                         <div className="tournaments-section-head">
@@ -945,6 +968,7 @@ function Tournaments() {
                                                             Number(selectedTournament.createdBy) && (
                                                             <button
                                                                 type="button"
+                                                                className="tournaments-kick-button"
                                                                 onClick={() =>
                                                                     handleKick(participant.userId)
                                                                 }
@@ -1044,29 +1068,6 @@ function Tournaments() {
                                                                                     "Pendiente"}
                                                                             </strong>
 
-                                                                            {selectedTournament.isCreator &&
-                                                                                selectedTournament.status ===
-                                                                                    "active" &&
-                                                                                match.status ===
-                                                                                    "ready" &&
-                                                                                !match.onlineRoomCode &&
-                                                                                playerId && (
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        onClick={() =>
-                                                                                            handleWinner(
-                                                                                                match.id,
-                                                                                                playerId
-                                                                                            )
-                                                                                        }
-                                                                                        disabled={
-                                                                                            actionLoading ===
-                                                                                            `winner-${match.id}-${playerId}`
-                                                                                        }
-                                                                                    >
-                                                                                        Gana
-                                                                                    </button>
-                                                                                )}
                                                                         </div>
                                                                     );
                                                                 })}
@@ -1095,7 +1096,7 @@ function Tournaments() {
                                                                 {canSpectateMatch(match) && (
                                                                     <button
                                                                         type="button"
-                                                                        className="tournaments-play-match-button"
+                                                                        className="tournaments-play-match-button tournaments-watch-match-button"
                                                                         onClick={() =>
                                                                             handleSpectateMatch(
                                                                                 match
