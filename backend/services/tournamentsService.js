@@ -280,6 +280,10 @@ async function listTournaments({ status = "", viewerId }) {
         }
         params.push(cleanStatus);
         conditions.push(`t.status = $${params.length}`);
+    } else {
+        // Por defecto ocultamos los torneos finalizados/cancelados:
+        // esos viven en el historial, no en la pagina de torneos.
+        conditions.push(`t.status IN ('waiting', 'active')`);
     }
 
     const whereClause = `WHERE ${conditions.join(" AND ")}`;
@@ -681,6 +685,13 @@ async function setMatchResult(tournamentId, matchId, winnerUserId, userId) {
                 [cleanWinnerUserId]
             );
 
+            await saveTournamentHistory(
+                client,
+                tournamentId,
+                cleanWinnerUserId,
+                tournament.name
+            );
+
             return getTournamentSnapshot(tournamentId, userId, client);
         }
 
@@ -789,11 +800,12 @@ async function markMatchPlaying(tournamentMatchId) {
 async function advanceTournamentMatch(tournamentMatchId, winnerUserId) {
     return withTransaction(async (client) => {
         const matchResult = await client.query(
-            `SELECT tm.*, t.max_players, t.status AS tournament_status
+            `SELECT tm.*, t.max_players, t.status AS tournament_status,
+                    t.name AS tournament_name
              FROM tournament_matches tm
-             JOIN tournaments t ON t.tournament_id = tm.tournament_id
+                      JOIN tournaments t ON t.tournament_id = tm.tournament_id
              WHERE tm.tournament_match_id = $1
-             FOR UPDATE OF tm`,
+                 FOR UPDATE OF tm`,
             [tournamentMatchId]
         );
 
@@ -851,6 +863,13 @@ async function advanceTournamentMatch(tournamentMatchId, winnerUserId) {
             await client.query(
                 "UPDATE users SET score = score + 5 WHERE user_id = $1",
                 [cleanWinnerUserId]
+            );
+
+            await saveTournamentHistory(
+                client,
+                tournamentId,
+                cleanWinnerUserId,
+                match.tournament_name
             );
 
             return { tournamentId, finished: true };
@@ -921,7 +940,39 @@ async function kickParticipant(tournamentId, targetUserId, requesterId) {
         return getTournamentSnapshot(tournamentId, requesterId, client);
     });
 }
+// Guarda el torneo terminado en el historial (matches) de cada participante
+async function saveTournamentHistory(client, tournamentId, championUserId, tournamentName) {
+    const championRow = await client.query(
+        "SELECT username FROM users WHERE user_id = $1",
+        [championUserId]
+    );
+    const championUsername = championRow.rows[0]?.username || "Jugador";
 
+    const participants = await client.query(
+        "SELECT user_id FROM tournament_participants WHERE tournament_id = $1",
+        [tournamentId]
+    );
+
+    for (const row of participants.rows) {
+        const isChampion = Number(row.user_id) === Number(championUserId);
+        await client.query(
+            `INSERT INTO matches
+                (user_id, mode, status, score, metadata, started_at, finished_at, updated_at)
+             VALUES ($1, 'tournament', 'completed', $2, $3,
+                     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+            [
+                row.user_id,
+                isChampion ? 5 : 0,
+                JSON.stringify({
+                    is_tournament: true,
+                    tournament_name: tournamentName,
+                    result: isChampion ? "win" : "loss",
+                    champion_username: championUsername,
+                }),
+            ]
+        );
+    }
+}
 module.exports = {
     ServiceError,
     getTournamentSnapshot,

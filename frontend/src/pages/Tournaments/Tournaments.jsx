@@ -214,6 +214,7 @@ function Tournaments() {
 
         const shouldRemember =
             selectedTournament.status !== "cancelled" &&
+            selectedTournament.status !== "finished" &&
             (selectedTournament.isJoined || selectedTournament.isCreator);
 
         if (shouldRemember) {
@@ -768,6 +769,27 @@ function Tournaments() {
                                                     : "Cancelar"}
                                             </button>
                                         )}
+
+                                    {selectedTournament.status === "finished" && (
+                                        <button
+                                            type="button"
+                                            className="tournaments-secondary-button"
+                                            onClick={() => {
+                                                if (currentTournamentStorageKey) {
+                                                    localStorage.removeItem(
+                                                        currentTournamentStorageKey
+                                                    );
+                                                }
+                                                setDetail(null);
+                                                setSelectedId(null);
+                                                setFeedback(
+                                                    "El torneo finalizó. Lo encontrás en tu historial."
+                                                );
+                                            }}
+                                        >
+                                            Volver al inicio
+                                        </button>
+                                    )}
                                 </div>
 
                                 {!canStart &&

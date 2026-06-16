@@ -1,3 +1,104 @@
+.profile-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(5, 12, 28, 0.72);
+    backdrop-filter: blur(6px);
+    animation: profile-confirm-fade 0.18s ease;
+}
+
+@keyframes profile-confirm-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.profile-confirm-modal {
+    width: min(440px, 100%);
+    border-radius: 22px;
+    padding: 30px 28px;
+    color: #eaf2ff;
+    background: linear-gradient(
+        145deg,
+        rgba(8, 21, 44, 0.98) 0%,
+        rgba(15, 38, 76, 0.97) 55%,
+        rgba(31, 78, 140, 0.95) 100%
+    );
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    box-shadow: 0 30px 70px rgba(5, 12, 28, 0.55);
+    animation: profile-confirm-pop 0.2s ease;
+}
+
+@keyframes profile-confirm-pop {
+    from { transform: translateY(10px) scale(0.97); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.profile-confirm-kicker {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #93b4e8;
+    margin-bottom: 10px;
+}
+
+.profile-confirm-modal h2 {
+    margin: 0 0 10px;
+    font-size: 1.45rem;
+    color: #ffffff;
+}
+
+.profile-confirm-modal p {
+    margin: 0 0 24px;
+    line-height: 1.5;
+    color: rgba(226, 236, 255, 0.82);
+}
+
+.profile-confirm-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.profile-confirm-secondary,
+.profile-confirm-danger {
+    border: none;
+    border-radius: 12px;
+    padding: 11px 22px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.profile-confirm-secondary {
+    background: rgba(148, 163, 184, 0.16);
+    color: #dce7f7;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+}
+
+.profile-confirm-danger {
+    background: linear-gradient(135deg, #e11d48 0%, #b91c3c 100%);
+    color: #ffffff;
+}
+
+.profile-confirm-secondary:hover:not(:disabled),
+.profile-confirm-danger:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+}
+
+.profile-confirm-secondary:disabled,
+.profile-confirm-danger:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .profile-page {
     min-height: 100vh;
     background:

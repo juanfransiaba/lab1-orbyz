@@ -121,7 +121,12 @@ export async function getMatchById(matchId) {
     return normalizeMatch(data);
 }
 
-export async function getMyMatches({ page = 1, limit = 8, status = "" } = {}) {
+export async function getMyMatches({
+    page = 1,
+    limit = 8,
+    status = "",
+    kind = "",
+} = {}) {
     const query = new URLSearchParams({
         page: String(page),
         limit: String(limit),
@@ -129,6 +134,10 @@ export async function getMyMatches({ page = 1, limit = 8, status = "" } = {}) {
 
     if (status) {
         query.set("status", status);
+    }
+
+    if (kind) {
+        query.set("kind", kind);
     }
 
     const data = await requestJSON(`/matches?${query.toString()}`);

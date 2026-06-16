@@ -184,6 +184,13 @@ const getMyMatches = async (req, res) => {
             whereClause += " AND status <> 'abandoned'";
         }
 
+        const kind = String(req.query.kind || "normal").trim().toLowerCase();
+        if (kind === "tournament") {
+            whereClause += " AND mode = 'tournament'";
+        } else {
+            whereClause += " AND mode <> 'tournament'";
+        }
+
         const countResult = await pool.query(
             `SELECT COUNT(*)::int AS total
              FROM matches

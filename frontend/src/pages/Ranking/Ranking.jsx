@@ -10,6 +10,7 @@ import "./Ranking.css";
 const STATUS_FILTERS = [
     { id: "", label: "Todas" },
     { id: "ongoing", label: "En curso" },
+    { id: "tournaments", label: "Torneos" },
     { id: "completed", label: "Finalizadas" },
 ];
 
@@ -113,10 +114,12 @@ function Ranking() {
             setError("");
 
             try {
+                const isTournaments = status === "tournaments";
                 const response = await getMyMatches({
                     page,
                     limit: 8,
-                    status,
+                    status: isTournaments ? "" : status,
+                    kind: isTournaments ? "tournament" : "",
                 });
 
                 setMatches(response.data);
@@ -138,10 +141,12 @@ function Ranking() {
         try {
             await abandonMatch(matchId);
 
+            const isTournaments = status === "tournaments";
             const response = await getMyMatches({
                 page,
                 limit: 8,
-                status,
+                status: isTournaments ? "" : status,
+                kind: isTournaments ? "tournament" : "",
             });
 
             const shouldGoToPreviousPage =
@@ -299,6 +304,74 @@ function Ranking() {
                     ) : (
                         <div className="ranking-list">
                             {matches.map((match) => {
+                                const isTournament =
+                                    match.mode === "tournament" ||
+                                    Boolean(match.metadata?.is_tournament);
+
+                                if (isTournament) {
+                                    const won = match.metadata?.result === "win";
+
+                                    return (
+                                        <article
+                                            className="ranking-match-card"
+                                            key={match.id}
+                                        >
+                                            <div className="ranking-match-head">
+                                                <div className="ranking-match-title-block">
+                                                    <div className="ranking-match-topline">
+                                                        <span
+                                                            className={`ranking-status-badge ${
+                                                                won
+                                                                    ? "is-completed"
+                                                                    : "is-abandoned"
+                                                            }`}
+                                                        >
+                                                            {won ? "Ganaste" : "Perdiste"}
+                                                        </span>
+                                                        <span className="ranking-match-mode">
+                                                            Torneo
+                                                        </span>
+                                                    </div>
+
+                                                    <h3>
+                                                        {match.metadata?.tournament_name ||
+                                                            "Torneo"}
+                                                    </h3>
+                                                </div>
+                                            </div>
+
+                                            <div className="ranking-match-body">
+                                                <div className="ranking-match-quick-stats">
+                                                    <div>
+                                                        <span>Resultado</span>
+                                                        <strong>
+                                                            {won
+                                                                ? "Campeon"
+                                                                : "Eliminado"}
+                                                        </strong>
+                                                    </div>
+                                                    <div>
+                                                        <span>Campeon</span>
+                                                        <strong>
+                                                            {match.metadata
+                                                                ?.champion_username ||
+                                                                "-"}
+                                                        </strong>
+                                                    </div>
+                                                    <div>
+                                                        <span>Fecha</span>
+                                                        <strong>
+                                                            {formatDate(
+                                                                match.finishedAt
+                                                            )}
+                                                        </strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </article>
+                                    );
+                                }
+
                                 const statusMeta =
                                     STATUS_META[match.status] || STATUS_META.ongoing;
                                 const isProcessing = processingMatchId === match.id;

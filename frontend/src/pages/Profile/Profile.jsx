@@ -19,6 +19,7 @@ function Profile() {
 
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
@@ -32,15 +33,11 @@ function Profile() {
         navigate("/login");
     };
 
-    const handleDeleteAccount = async () => {
-        const confirmed = window.confirm(
-            "¿Estás seguro de que querés eliminar tu cuenta? Esta acción no se puede deshacer."
-        );
+    const handleDeleteAccount = () => {
+        setShowDeleteConfirm(true);
+    };
 
-        if (!confirmed) {
-            return;
-        }
-
+    const confirmDeleteAccount = async () => {
         const token = localStorage.getItem("token");
 
         if (!token) {
@@ -48,6 +45,7 @@ function Profile() {
             return;
         }
 
+        setShowDeleteConfirm(false);
         setDeleting(true);
         setMessage("");
         setError("");
@@ -419,6 +417,43 @@ function Profile() {
                     </div>
                 </section>
             </main>
+
+            {showDeleteConfirm && (
+                <div
+                    className="profile-confirm-overlay"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="profile-delete-title"
+                >
+                    <div className="profile-confirm-modal">
+                        <span className="profile-confirm-kicker">Cuenta</span>
+                        <h2 id="profile-delete-title">Eliminar cuenta</h2>
+                        <p>
+                            ¿Estás seguro de que querés eliminar tu cuenta? Esta acción
+                            no se puede deshacer.
+                        </p>
+
+                        <div className="profile-confirm-actions">
+                            <button
+                                type="button"
+                                className="profile-confirm-secondary"
+                                onClick={() => setShowDeleteConfirm(false)}
+                                disabled={deleting}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                className="profile-confirm-danger"
+                                onClick={confirmDeleteAccount}
+                                disabled={deleting}
+                            >
+                                {deleting ? "Eliminando..." : "Eliminar cuenta"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
