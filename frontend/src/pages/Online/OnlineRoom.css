@@ -1378,6 +1378,26 @@
     filter: drop-shadow(0 0 9px rgba(34, 197, 94, 0.8));
 }
 
+/* Anillo pulsante que marca el pais objetivo (clave para paises chicos) */
+.online-map-target-ring {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: online-map-ring-pulse 1.6s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes online-map-ring-pulse {
+    0%,
+    100% {
+        opacity: 0.35;
+        transform: scale(0.65);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+}
+
 .online-map-answer-form {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 160px;

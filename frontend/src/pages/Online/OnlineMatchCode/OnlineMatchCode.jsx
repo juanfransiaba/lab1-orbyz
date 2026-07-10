@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ComposableMap, Geographies, Geography } from "react-simple-maps";
+import {
+    ComposableMap,
+    Geographies,
+    Geography,
+    ZoomableGroup,
+    Marker,
+} from "react-simple-maps";
+import { geoCentroid, geoArea } from "d3-geo";
+import { feature } from "topojson-client";
 import { disconnectSocket, getSocket } from "../../../services/socket.js";
 import {
     connectOnlineSocket,
@@ -11,7 +19,7 @@ import { onChatMessage, sendChatMessage } from "../../../services/OnlineChatServ
 import "../OnlineRoom.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
-const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
 
 const LOBBY_BACKGROUND_IMAGES = [
     { src: "/images/paises/oman.jpg", position: "center 48%" },
@@ -187,6 +195,59 @@ async function copyTextToClipboard(text) {
 }
 
 function OnlineMapQuestion({ iso }) {
+    const [view, setView] = useState({ center: [0, 8], zoom: 1 });
+
+    useEffect(() => {
+        let active = true;
+
+        fetch(GEO_URL)
+            .then((res) => res.json())
+            .then((topo) => {
+                if (!active) return;
+
+                const features = feature(topo, topo.objects.countries).features;
+                const target = features.find(
+                    (geo) => Number(geo.id) === Number(iso)
+                );
+
+                if (!target) {
+                    setView({ center: [0, 8], zoom: 1 });
+                    return;
+                }
+
+                const center = geoCentroid(target);
+
+                if (!Number.isFinite(center[0]) || !Number.isFinite(center[1])) {
+                    setView({ center: [0, 8], zoom: 1 });
+                    return;
+                }
+
+                // Usamos el AREA real del pais (no el rectangulo que lo contiene),
+                // asi los paises con islas desperdigadas igual se detectan como chicos.
+                const areaKm2 = geoArea(target) * 40.6e6; // geoArea viene en esteroradianes
+
+                // Si el pais es mediano/grande se ve bien en el mapa mundial: sin zoom.
+                const SMALL_COUNTRY_MAX_AREA_KM2 = 90000; // subilo/bajalo para ajustar
+                if (areaKm2 >= SMALL_COUNTRY_MAX_AREA_KM2) {
+                    setView({ center: [0, 8], zoom: 1 });
+                    return;
+                }
+
+                // Pais chico: nos acercamos. Cuanto mas chico, mas zoom.
+                const sizeDeg = Math.max(Math.sqrt(areaKm2) / 111, 0.15);
+                const zoom = Math.min(Math.max(Math.round(13 / sizeDeg), 4), 9);
+
+                setView({ center, zoom });
+            })
+            .catch(() => {
+                if (active) setView({ center: [0, 8], zoom: 1 });
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [iso]);
+
     return (
         <div className="online-map-frame">
             <ComposableMap
@@ -196,39 +257,84 @@ function OnlineMapQuestion({ iso }) {
                 height={420}
                 className="online-map"
             >
-                <Geographies geography={GEO_URL}>
-                    {({ geographies }) =>
-                        geographies.map((geo) => {
-                            const isTarget = Number(geo.id) === Number(iso);
-                            const countryFill = isTarget ? "#22c55e" : "#f8fbff";
-                            const hoverFill = isTarget ? "#22c55e" : "#e7f0fb";
+                <ZoomableGroup
+                    key={`${view.center[0]}-${view.center[1]}-${view.zoom}`}
+                    center={view.center}
+                    zoom={view.zoom}
+                    minZoom={1}
+                    maxZoom={16}
+                >
+                    <Geographies geography={GEO_URL}>
+                        {({ geographies }) => {
+                            const target = geographies.find(
+                                (geo) => Number(geo.id) === Number(iso)
+                            );
+                            const targetCenter = target
+                                ? geoCentroid(target)
+                                : null;
 
                             return (
-                                <Geography
-                                    key={geo.rsmKey}
-                                    geography={geo}
-                                    className={isTarget ? "is-target" : ""}
-                                    style={{
-                                        default: {
-                                            fill: countryFill,
-                                            stroke: "#8fa8c8",
-                                            strokeWidth: 0.42,
-                                            outline: "none",
-                                        },
-                                        hover: {
-                                            fill: hoverFill,
-                                            outline: "none",
-                                        },
-                                        pressed: {
-                                            fill: isTarget ? "#16a34a" : "#dbeafe",
-                                            outline: "none",
-                                        },
-                                    }}
-                                />
+                                <>
+                                    {geographies.map((geo) => {
+                                        const isTarget =
+                                            Number(geo.id) === Number(iso);
+                                        const countryFill = isTarget
+                                            ? "#22c55e"
+                                            : "#f8fbff";
+                                        const hoverFill = isTarget
+                                            ? "#22c55e"
+                                            : "#e7f0fb";
+
+                                        return (
+                                            <Geography
+                                                key={geo.rsmKey}
+                                                geography={geo}
+                                                className={
+                                                    isTarget ? "is-target" : ""
+                                                }
+                                                style={{
+                                                    default: {
+                                                        fill: countryFill,
+                                                        stroke: "#8fa8c8",
+                                                        strokeWidth: 0.42,
+                                                        outline: "none",
+                                                    },
+                                                    hover: {
+                                                        fill: hoverFill,
+                                                        outline: "none",
+                                                    },
+                                                    pressed: {
+                                                        fill: isTarget
+                                                            ? "#16a34a"
+                                                            : "#dbeafe",
+                                                        outline: "none",
+                                                    },
+                                                }}
+                                            />
+                                        );
+                                    })}
+
+                                    {view.zoom > 1 && targetCenter && (
+                                        <Marker coordinates={targetCenter}>
+                                            <circle
+                                                r={22 / view.zoom}
+                                                fill="rgba(34, 197, 94, 0.28)"
+                                                stroke="none"
+                                            />
+                                            <circle
+                                                className="online-map-target-ring"
+                                                r={22 / view.zoom}
+                                                fill="none"
+                                                stroke="#16a34a"
+                                                strokeWidth={2.5 / view.zoom}
+                                            />
+                                        </Marker>
+                                    )}
+                                </>
                             );
-                        })
-                    }
-                </Geographies>
+                        }}
+                    </Geographies>
+                </ZoomableGroup>
             </ComposableMap>
         </div>
     );
