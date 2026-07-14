@@ -7,6 +7,7 @@ const {
 } = require("./roomManager");
 const { saveAbandonedMatch } = require("./matchRepository");
 const { advanceTournamentMatch } = require("../services/tournamentsService");
+const { getPublicPlayerProfile } = require("../services/playerProfileService");
 
 // Tiempo para reconectarse antes de que cuente como abandono.
 const GRACE_PERIOD_MS = Number(process.env.GRACE_PERIOD_MS) || 30000;
@@ -27,16 +28,30 @@ function playerProgress(player) {
     return {
         userId: player.userId,
         username: player.username,
+        avatar: player.avatar || null,
         correctCount: player.correctCount ?? 0,
         wrongCount: player.wrongCount ?? 0,
         lives: player.lives ?? 0,
         currentIndex: player.currentIndex ?? 0,
         finished: player.finished ?? false,
         correctStreak: player.correctStreak ?? 0,
-        powerups: player.powerups ?? { fiftyFifty: 0, freeze: 0 },
-        powerupsUsed: player.powerupsUsed ?? { fiftyFifty: 0, freeze: 0 },
+        powerups: { fiftyFifty: 0, freeze: 0, screamer: 0, ...(player.powerups || {}) },
+        powerupsUsed: { fiftyFifty: 0, freeze: 0, screamer: 0, ...(player.powerupsUsed || {}) },
         frozenUntil: player.frozenUntil ?? 0,
+        screamerUntil: player.screamerUntil ?? 0,
     };
+}
+
+async function refreshPlayerProfile(room, userId) {
+    const player = room.players.get(userId);
+
+    if (!player) {
+        return;
+    }
+
+    const profile = await getPublicPlayerProfile(userId, player.username);
+    player.username = profile.username;
+    player.avatar = profile.avatar;
 }
 
 // Termina la partida por abandono de un jugador
@@ -134,29 +149,38 @@ function handleConnection(io, socket) {
 
     // Sincronización a pedido: cuando el cliente abre la pantalla de la sala,
     // pide el estado actual (para no perderse el game:started por timing)
-    socket.on("room:sync", () => {
-        const current = findRoomByUser(userId);
-        if (!current) return;
+    socket.on("room:sync", async () => {
+        try {
+            const current = findRoomByUser(userId);
+            if (!current) return;
 
-        socket.join(current.code);
+            await refreshPlayerProfile(current, userId);
+            socket.join(current.code);
 
-        if (current.status === "playing") {
-            const player = current.players.get(userId);
-            const currentQuestion =
-                player && !player.finished
-                    ? publicQuestion(current.questions[player.currentIndex])
-                    : null;
+            if (current.status === "playing") {
+                const player = current.players.get(userId);
+                const currentQuestion =
+                    player && !player.finished
+                        ? publicQuestion(current.questions[player.currentIndex])
+                        : null;
 
-            socket.emit("game:reconnected", {
-                room: serializeRoom(current),
-                totalQuestions: current.questions.length,
-                question: currentQuestion,
-                players: Array.from(current.players.values()).map(playerProgress),
-                matchEndsAt: current.matchEndsAt,
-                messages: current.messages || [],
-            });
-        } else {
-            socket.emit("room:update", serializeRoom(current));
+                socket.emit("game:reconnected", {
+                    room: serializeRoom(current),
+                    totalQuestions: current.questions.length,
+                    question: currentQuestion,
+                    players: Array.from(current.players.values()).map(playerProgress),
+                    matchEndsAt: current.matchEndsAt,
+                    messages: current.messages || [],
+                });
+
+                if (player) {
+                    io.to(current.code).emit("game:progress", playerProgress(player));
+                }
+            } else {
+                io.to(current.code).emit("room:update", serializeRoom(current));
+            }
+        } catch (error) {
+            console.error("Error en room:sync:", error);
         }
     });
 

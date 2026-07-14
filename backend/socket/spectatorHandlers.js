@@ -14,15 +14,17 @@ function playerProgress(player) {
     return {
         userId: player.userId,
         username: player.username,
+        avatar: player.avatar || null,
         correctCount: player.correctCount ?? 0,
         wrongCount: player.wrongCount ?? 0,
         lives: player.lives ?? 0,
         currentIndex: player.currentIndex ?? 0,
         finished: player.finished ?? false,
         correctStreak: player.correctStreak ?? 0,
-        powerups: player.powerups ?? { fiftyFifty: 0, freeze: 0 },
-        powerupsUsed: player.powerupsUsed ?? { fiftyFifty: 0, freeze: 0 },
+        powerups: { fiftyFifty: 0, freeze: 0, screamer: 0, ...(player.powerups || {}) },
+        powerupsUsed: { fiftyFifty: 0, freeze: 0, screamer: 0, ...(player.powerupsUsed || {}) },
         frozenUntil: player.frozenUntil ?? 0,
+        screamerUntil: player.screamerUntil ?? 0,
     };
 }
 

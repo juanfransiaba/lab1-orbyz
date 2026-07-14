@@ -2,13 +2,31 @@ const pool = require("../db");
 const bcrypt = require("bcrypt");
 const { validatePassword } = require('../utils/passwordValidator');
 const { validateUsername, validateEmail } = require('../utils/userValidator');
+const {
+    ensureStoreTables,
+    getAvatarProfile,
+    getOwnedAvatarsForUser,
+} = require("../services/storeService");
 
 const VALID_ROLES = ["user", "admin"];
 
+function serializeProfileUser(user, ownedAvatars = []) {
+    const avatar = getAvatarProfile(user.profile_avatar_id);
+
+    return {
+        ...user,
+        profile_avatar_id: avatar?.id || null,
+        avatar,
+        ownedAvatars,
+    };
+}
+
 const getUsers = async (req, res) => {
     try {
+        await ensureStoreTables();
+
         const result = await pool.query(
-            "SELECT user_id, username, email, score, roles FROM users ORDER BY username ASC"
+            "SELECT user_id, username, email, score, roles, profile_avatar_id FROM users ORDER BY username ASC"
         );
 
         res.json(result.rows);
@@ -20,10 +38,12 @@ const getUsers = async (req, res) => {
 
 const getUserById = async (req, res) => {
     try {
+        await ensureStoreTables();
+
         const { id } = req.params;
 
         const result = await pool.query(
-            "SELECT user_id, username, email, score, roles FROM users WHERE user_id = $1",
+            "SELECT user_id, username, email, score, roles, profile_avatar_id FROM users WHERE user_id = $1",
             [id]
         );
 
@@ -56,8 +76,10 @@ const getLeaderboard = async (req, res) => {
 
 const getProfile = async (req, res) => {
     try {
+        await ensureStoreTables();
+
         const result = await pool.query(
-            "SELECT user_id, username, email, score, roles FROM users WHERE user_id = $1",
+            "SELECT user_id, username, email, score, roles, profile_avatar_id FROM users WHERE user_id = $1",
             [req.user.user_id]
         );
 
@@ -65,7 +87,9 @@ const getProfile = async (req, res) => {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
-        res.json(result.rows[0]);
+        const ownedAvatars = await getOwnedAvatarsForUser(req.user.user_id);
+
+        res.json(serializeProfileUser(result.rows[0], ownedAvatars));
     } catch (error) {
         console.error("Error en getProfile:", error);
         res.status(500).json({ message: "Error del servidor" });
@@ -74,6 +98,8 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
     try {
+        await ensureStoreTables();
+
         const { username, email, password } = req.body;
         const userId = req.user.user_id;
 
@@ -150,16 +176,58 @@ const updateProfile = async (req, res) => {
                  email = $2,
                  password_hash = $3
              WHERE user_id = $4
-             RETURNING user_id, username, email, score, roles`,
+             RETURNING user_id, username, email, score, roles, profile_avatar_id`,
             [newUsername, newEmail, passwordHash, userId]
         );
+        const ownedAvatars = await getOwnedAvatarsForUser(userId);
 
         res.json({
             message: "Perfil actualizado correctamente",
-            user: result.rows[0]
+            user: serializeProfileUser(result.rows[0], ownedAvatars)
         });
     } catch (error) {
         console.error("Error al actualizar perfil:", error);
+        res.status(500).json({ message: "Error del servidor" });
+    }
+};
+
+const updateProfileAvatar = async (req, res) => {
+    try {
+        await ensureStoreTables();
+
+        const userId = req.user.user_id;
+        const avatarId = String(req.body.avatarId || "").trim();
+        const avatar = getAvatarProfile(avatarId);
+
+        if (!avatar) {
+            return res.status(400).json({ message: "Avatar invalido" });
+        }
+
+        const ownedAvatars = await getOwnedAvatarsForUser(userId);
+        const ownsAvatar = ownedAvatars.some((ownedAvatar) => ownedAvatar.id === avatarId);
+
+        if (!ownsAvatar) {
+            return res.status(403).json({ message: "No compraste este avatar" });
+        }
+
+        const result = await pool.query(
+            `UPDATE users
+             SET profile_avatar_id = $1
+             WHERE user_id = $2
+             RETURNING user_id, username, email, score, roles, profile_avatar_id`,
+            [avatarId, userId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+
+        res.json({
+            message: "Avatar actualizado correctamente",
+            user: serializeProfileUser(result.rows[0], ownedAvatars),
+        });
+    } catch (error) {
+        console.error("Error al actualizar avatar:", error);
         res.status(500).json({ message: "Error del servidor" });
     }
 };
@@ -248,6 +316,7 @@ module.exports = {
     getUserById,
     getLeaderboard,
     updateProfile,
+    updateProfileAvatar,
     updateUserRole,
     deleteProfile,
     getProfile,

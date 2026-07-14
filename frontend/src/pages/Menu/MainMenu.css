@@ -16,7 +16,7 @@
     width: 100%;
     height: 88px;
     display: grid;
-    grid-template-columns: 100px 1fr 220px;
+    grid-template-columns: 100px 1fr 292px;
     align-items: center;
     padding: 0 28px;
     background: linear-gradient(
@@ -63,10 +63,13 @@
 .main-menu-header-actions {
     position: relative;
     z-index: 1;
+    grid-column: 3;
+    justify-self: end;
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    min-width: 220px;
+    gap: 12px;
+    min-width: 292px;
 }
 
 .main-menu-profile-chip {
@@ -109,6 +112,72 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
+.main-menu-store-button {
+    width: 54px;
+    height: 54px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 18px;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.2) 0%,
+        rgba(125, 211, 252, 0.13) 100%
+    );
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow:
+        0 12px 24px rgba(11, 30, 60, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.main-menu-store-button:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.25) 0%,
+        rgba(125, 211, 252, 0.18) 100%
+    );
+    border-color: rgba(191, 219, 254, 0.38);
+    box-shadow:
+        0 16px 28px rgba(11, 30, 60, 0.23),
+        inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.main-menu-store-button svg {
+    width: 34px;
+    height: 34px;
+    display: block;
+    filter: drop-shadow(0 6px 12px rgba(2, 6, 23, 0.25));
+}
+
+.main-menu-store-roof {
+    fill: #facc15;
+}
+
+.main-menu-store-awning {
+    fill: #38bdf8;
+}
+
+.main-menu-store-body {
+    fill: #f8fafc;
+}
+
+.main-menu-store-door {
+    fill: #1f4e8c;
+}
+
+.main-menu-store-window {
+    fill: #93c5fd;
+}
+
 .main-menu-profile-avatar {
     width: 40px;
     height: 40px;
@@ -130,6 +199,17 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.28),
         0 8px 16px rgba(37, 99, 235, 0.22);
     position: relative;
+    overflow: hidden;
+}
+
+.main-menu-profile-avatar img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+    object-position: center;
+    transform: scale(0.9);
+    background: #0b1e3c;
 }
 
 .main-menu-profile-copy {
@@ -165,6 +245,7 @@
 }
 
 .main-menu-logo-box {
+    grid-column: 1;
     width: 100px;
     display: flex;
     align-items: center;
@@ -185,7 +266,10 @@
 }
 
 .main-menu-title-wrap {
-    position: relative;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     z-index: 1;
     display: flex;
     flex-direction: column;
@@ -419,7 +503,7 @@
 
     .main-menu-header {
         height: 88px;
-        grid-template-columns: 82px 1fr 170px;
+        grid-template-columns: 82px 1fr 228px;
         padding: 0 18px;
     }
 
@@ -444,8 +528,13 @@
         letter-spacing: 0.14em;
     }
 
+    .main-menu-title-wrap {
+        width: 210px;
+    }
+
     .main-menu-header-actions {
-        min-width: 170px;
+        min-width: 228px;
+        gap: 10px;
     }
 
     .main-menu-profile-chip {
@@ -464,6 +553,17 @@
     .main-menu-profile-name {
         max-width: 92px;
         font-size: 0.88rem;
+    }
+
+    .main-menu-store-button {
+        width: 46px;
+        height: 46px;
+        border-radius: 16px;
+    }
+
+    .main-menu-store-button svg {
+        width: 30px;
+        height: 30px;
     }
 
     .main-menu-options {
@@ -520,11 +620,26 @@
 
 @media (max-width: 640px) {
     .main-menu-header {
-        grid-template-columns: 82px 1fr 62px;
+        grid-template-columns: 82px 1fr 104px;
     }
 
     .main-menu-header-actions {
-        min-width: 62px;
+        min-width: 104px;
+        gap: 8px;
+    }
+
+    .main-menu-title-wrap {
+        width: 170px;
+    }
+
+    .main-menu-title-kicker {
+        font-size: 0.52rem;
+        letter-spacing: 0.14em;
+    }
+
+    .main-menu-title {
+        font-size: 1.48rem;
+        letter-spacing: 0.1em;
     }
 
     .main-menu-profile-chip {

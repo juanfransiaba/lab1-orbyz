@@ -13,6 +13,7 @@ const friendsRoutes = require("./routes/friendsRoutes");
 const initSocket = require("./socket");
 const notificationsRoutes = require("./routes/notificationsRoutes");
 const tournamentsRoutes = require("./routes/tournamentsRoutes");
+const storeRoutes = require("./routes/storeRoutes");
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use("/matches", matchesRoutes);
 app.use("/ranking", rankingRoutes);
 app.use("/notifications", notificationsRoutes);
 app.use("/tournaments", tournamentsRoutes);
+app.use("/store", storeRoutes);
 
 app.get("/", (req, res) => {
     res.send("Backend funcionando");

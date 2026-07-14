@@ -89,6 +89,7 @@ async function saveMatchResults(room, gameOver) {
                 extra_lives_awarded: raw.extraLivesAwarded ?? 0,
                 fifty_fifty_used: raw.powerupsUsed?.fiftyFifty ?? 0,
                 freeze_used: raw.powerupsUsed?.freeze ?? 0,
+                screamer_used: raw.powerupsUsed?.screamer ?? 0,
             },
         };
 
@@ -174,6 +175,7 @@ async function saveAbandonedMatch(room, abandonerUserId) {
                 extra_lives_awarded: player.extraLivesAwarded ?? 0,
                 fifty_fifty_used: player.powerupsUsed?.fiftyFifty ?? 0,
                 freeze_used: player.powerupsUsed?.freeze ?? 0,
+                screamer_used: player.powerupsUsed?.screamer ?? 0,
             },
         };
 

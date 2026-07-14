@@ -2,13 +2,42 @@ const { findRoomByUser } = require("./roomManager");
 const { generateQuestions } = require("./questionGenerator");
 const { saveMatchResults } = require("./matchRepository");
 const { advanceTournamentMatch } = require("../services/tournamentsService");
+const {
+    consumeInventoryItem,
+    getLatestScreamerImageForUser,
+    getPurchasedPowerupsForUser,
+} = require("../services/storeService");
 
 const MAX_LIVES = 3;
 
 // ── Config de power-ups y partida (configurables por env) ──
 const MATCH_DURATION_MS = Number(process.env.MATCH_DURATION_MS) || 5 * 60 * 1000; // 5 min
 const FREEZE_DURATION_MS = Number(process.env.FREEZE_DURATION_MS) || 10000;       // 10 s
+const SCREAMER_DURATION_MS = Number(process.env.SCREAMER_DURATION_MS) || 6500;    // 6.5 s
 const STREAK_FOR_EXTRA_LIFE = Number(process.env.STREAK_FOR_EXTRA_LIFE) || 10;
+
+const DEFAULT_POWERUPS = { fiftyFifty: 1, freeze: 1, screamer: 0 };
+const EMPTY_POWERUPS = { fiftyFifty: 0, freeze: 0, screamer: 0 };
+const POWERUP_INVENTORY_ITEMS = {
+    fifty_fifty: {
+        key: "fiftyFifty",
+        itemId: "fifty-fifty",
+        defaultAmount: DEFAULT_POWERUPS.fiftyFifty,
+        emptyMessage: "No te queda 50/50",
+    },
+    freeze: {
+        key: "freeze",
+        itemId: "freeze",
+        defaultAmount: DEFAULT_POWERUPS.freeze,
+        emptyMessage: "No te queda congelar",
+    },
+    screamer: {
+        key: "screamer",
+        itemId: "screamer",
+        defaultAmount: DEFAULT_POWERUPS.screamer,
+        emptyMessage: "No te queda screamer",
+    },
+};
 
 function shuffle(arr) {
     const copy = [...arr];
@@ -46,15 +75,19 @@ function playerProgress(player) {
     return {
         userId: player.userId,
         username: player.username,
+        avatar: player.avatar || null,
         correctCount: player.correctCount,
         wrongCount: player.wrongCount,
         lives: player.lives,
         currentIndex: player.currentIndex,
         finished: player.finished,
         correctStreak: player.correctStreak ?? 0,
-        powerups: player.powerups ?? { fiftyFifty: 0, freeze: 0 },
-        powerupsUsed: player.powerupsUsed ?? { fiftyFifty: 0, freeze: 0 },
+        powerups: { ...EMPTY_POWERUPS, ...(player.powerups || {}) },
+        powerupsUsed: { ...EMPTY_POWERUPS, ...(player.powerupsUsed || {}) },
         frozenUntil: player.frozenUntil ?? 0,
+        screamerUntil: player.screamerUntil ?? 0,
+        screamerImageId: player.activeScreamerImageId ?? "screamer",
+        screamerImageSrc: player.activeScreamerImageSrc ?? "/images/paises/screamer.jpg",
     };
 }
 
@@ -70,6 +103,33 @@ function opponentOf(room, userId) {
         if (p.userId !== userId) return p;
     }
     return null;
+}
+
+async function consumePurchasedPowerupIfNeeded(player, type) {
+    const powerup = POWERUP_INVENTORY_ITEMS[type];
+
+    if (!powerup) {
+        return { ok: false, error: "Power-up desconocido" };
+    }
+
+    const usedBefore = Number(player.powerupsUsed?.[powerup.key]) || 0;
+
+    if (usedBefore < powerup.defaultAmount) {
+        return { ok: true };
+    }
+
+    const result = await consumeInventoryItem(
+        player.userId,
+        "abilities",
+        powerup.itemId
+    );
+
+    if (!result.ok) {
+        player.powerups[powerup.key] = Math.max(0, powerup.defaultAmount - usedBefore);
+        return { ok: false, error: powerup.emptyMessage };
+    }
+
+    return { ok: true, remainingPurchased: result.quantity };
 }
 
 // Arma el game over. Si se pasa winnerUserId explícito (ganó por terminar
@@ -156,9 +216,20 @@ async function startGame(io, room, { source } = {}) {
         player.currentIndex = 0;
         player.finished = false;
         player.correctStreak = 0;
-        player.powerups = { fiftyFifty: 1, freeze: 1 };
+        const purchasedPowerups = await getPurchasedPowerupsForUser(player.userId);
+        player.powerups = {
+            fiftyFifty: DEFAULT_POWERUPS.fiftyFifty + purchasedPowerups.fiftyFifty,
+            freeze: DEFAULT_POWERUPS.freeze + purchasedPowerups.freeze,
+            screamer: DEFAULT_POWERUPS.screamer + purchasedPowerups.screamer,
+        };
+        const screamerImage = await getLatestScreamerImageForUser(player.userId);
+        player.selectedScreamerImageId = screamerImage.id;
+        player.selectedScreamerImageSrc = screamerImage.src;
+        player.activeScreamerImageId = "screamer";
+        player.activeScreamerImageSrc = "/images/paises/screamer.jpg";
         player.frozenUntil = 0;
-        player.powerupsUsed = { fiftyFifty: 0, freeze: 0 };
+        player.screamerUntil = 0;
+        player.powerupsUsed = { ...EMPTY_POWERUPS };
         player.extraLivesAwarded = 0;
     }
 
@@ -170,6 +241,7 @@ async function startGame(io, room, { source } = {}) {
         totalQuestions: questions.length,
         question: publicQuestion(questions[0]),
         matchEndsAt: room.matchEndsAt,
+        players: Array.from(room.players.values()).map(playerProgress),
     });
 
     console.log(`Partida iniciada en sala ${room.code}`);
@@ -227,11 +299,18 @@ function registerGameHandlers(io, socket) {
                 return callback?.({ error: "Ya terminaste tu partida" });
             }
 
-            // Power-up del rival: si estás congelado no podés responder
-            if (Date.now() < (player.frozenUntil || 0)) {
+            // Power-up del rival: si estás congelado o con screamer no podés responder
+            const now = Date.now();
+            if (now < (player.frozenUntil || 0)) {
                 return callback?.({
                     error: "Estás congelado",
                     frozenUntil: player.frozenUntil,
+                });
+            }
+            if (now < (player.screamerUntil || 0)) {
+                return callback?.({
+                    error: "El screamer está bloqueando tu pantalla",
+                    screamerUntil: player.screamerUntil,
                 });
             }
 
@@ -299,7 +378,7 @@ function registerGameHandlers(io, socket) {
     });
 
     // ── Usar un power-up (50/50 o congelar rival) ──
-    socket.on("game:usePowerup", (payload, callback) => {
+    socket.on("game:usePowerup", async (payload, callback) => {
         try {
             const { type } = payload || {};
             const room = findRoomByUser(userId);
@@ -315,8 +394,16 @@ function registerGameHandlers(io, socket) {
             if (player.finished) {
                 return callback?.({ error: "Ya terminaste tu partida" });
             }
-            if (Date.now() < (player.frozenUntil || 0)) {
+
+            player.powerups = { ...EMPTY_POWERUPS, ...(player.powerups || {}) };
+            player.powerupsUsed = { ...EMPTY_POWERUPS, ...(player.powerupsUsed || {}) };
+
+            const now = Date.now();
+            if (now < (player.frozenUntil || 0)) {
                 return callback?.({ error: "Estás congelado" });
+            }
+            if (now < (player.screamerUntil || 0)) {
+                return callback?.({ error: "El screamer está bloqueando tu pantalla" });
             }
 
             // ── 50/50: el server elimina 2 opciones incorrectas ──
@@ -338,6 +425,15 @@ function registerGameHandlers(io, socket) {
                     .filter((i) => i !== -1);
 
                 const removedIndices = shuffle(wrongIndices).slice(0, 2);
+
+                const consumedPowerup = await consumePurchasedPowerupIfNeeded(
+                    player,
+                    "fifty_fifty"
+                );
+                if (!consumedPowerup.ok) {
+                    io.to(room.code).emit("game:progress", playerProgress(player));
+                    return callback?.({ error: consumedPowerup.error });
+                }
 
                 player.powerups.fiftyFifty -= 1;
                 player.powerupsUsed.fiftyFifty += 1;
@@ -364,6 +460,15 @@ function registerGameHandlers(io, socket) {
                     return callback?.({ error: "No hay rival activo para congelar" });
                 }
 
+                const consumedPowerup = await consumePurchasedPowerupIfNeeded(
+                    player,
+                    "freeze"
+                );
+                if (!consumedPowerup.ok) {
+                    io.to(room.code).emit("game:progress", playerProgress(player));
+                    return callback?.({ error: consumedPowerup.error });
+                }
+
                 player.powerups.freeze -= 1;
                 player.powerupsUsed.freeze += 1;
                 rival.frozenUntil = Date.now() + FREEZE_DURATION_MS;
@@ -381,6 +486,53 @@ function registerGameHandlers(io, socket) {
                     ok: true,
                     type: "freeze",
                     frozenUntil: rival.frozenUntil,
+                    powerups: player.powerups,
+                });
+            }
+
+            if (type === "screamer") {
+                if (!player.powerups || player.powerups.screamer <= 0) {
+                    return callback?.({ error: "No te queda screamer" });
+                }
+
+                const rival = opponentOf(room, userId);
+                if (!rival || rival.finished) {
+                    return callback?.({ error: "No hay rival activo para usar screamer" });
+                }
+
+                const consumedPowerup = await consumePurchasedPowerupIfNeeded(
+                    player,
+                    "screamer"
+                );
+                if (!consumedPowerup.ok) {
+                    io.to(room.code).emit("game:progress", playerProgress(player));
+                    return callback?.({ error: consumedPowerup.error });
+                }
+
+                player.powerups.screamer -= 1;
+                player.powerupsUsed.screamer += 1;
+                rival.screamerUntil = Date.now() + SCREAMER_DURATION_MS;
+                rival.activeScreamerImageId = player.selectedScreamerImageId || "screamer";
+                rival.activeScreamerImageSrc =
+                    player.selectedScreamerImageSrc || "/images/paises/screamer.jpg";
+
+                io.to(room.code).emit("player:screamed", {
+                    userId: rival.userId,
+                    by: userId,
+                    screamerUntil: rival.screamerUntil,
+                    screamerImageId: rival.activeScreamerImageId,
+                    screamerImageSrc: rival.activeScreamerImageSrc,
+                    durationMs: SCREAMER_DURATION_MS,
+                });
+
+                io.to(room.code).emit("game:progress", playerProgress(player));
+
+                return callback?.({
+                    ok: true,
+                    type: "screamer",
+                    screamerUntil: rival.screamerUntil,
+                    screamerImageId: rival.activeScreamerImageId,
+                    screamerImageSrc: rival.activeScreamerImageSrc,
                     powerups: player.powerups,
                 });
             }

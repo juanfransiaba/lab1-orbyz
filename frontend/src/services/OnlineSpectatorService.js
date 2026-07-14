@@ -27,6 +27,7 @@ function subscribe(event, handler) {
 export const onProgress        = (h) => subscribe("game:progress", h);
 export const onPowerupAwarded  = (h) => subscribe("powerup:awarded", h);
 export const onPlayerFrozen    = (h) => subscribe("player:frozen", h);
+export const onPlayerScreamed  = (h) => subscribe("player:screamed", h);
 export const onGameOver        = (h) => subscribe("game:over", h);
 export const onGameAbandoned   = (h) => subscribe("game:abandoned", h);
 export const onSpectatorUpdate = (h) => subscribe("spectator:update", h);

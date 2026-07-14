@@ -3,6 +3,7 @@ const {
     attachRoomCode,
     markMatchPlaying,
 } = require("../services/tournamentsService");
+const { getPublicPlayerProfile } = require("../services/playerProfileService");
 const {
     createRoom,
     getRoom,
@@ -29,6 +30,10 @@ function registerTournamentMatchHandlers(io, socket) {
                 Number(id) === Number(match.player1_id)
                     ? match.player1_username
                     : match.player2_username;
+            const playerProfile = await getPublicPlayerProfile(
+                userId,
+                usernameOf(userId)
+            );
 
             // 2. Conseguir la sala existente del cruce, o crear una nueva taggeada
             let room = match.online_room_code ? getRoom(match.online_room_code) : null;
@@ -48,7 +53,8 @@ function registerTournamentMatchHandlers(io, socket) {
                     mode: match.mode,
                     continent: match.continent,
                     hostUserId: userId,
-                    hostUsername: usernameOf(userId),
+                    hostUsername: playerProfile.username,
+                    hostAvatar: playerProfile.avatar,
                     tournament: {
                         tournamentId: match.tournament_id,
                         tournamentMatchId: match.tournament_match_id,
@@ -60,7 +66,8 @@ function registerTournamentMatchHandlers(io, socket) {
             } else if (!room.players.has(userId)) {
                 const added = addPlayer(room.code, {
                     userId,
-                    username: usernameOf(userId),
+                    username: playerProfile.username,
+                    avatar: playerProfile.avatar,
                 });
                 if (added.error) {
                     return callback?.({ error: added.error });

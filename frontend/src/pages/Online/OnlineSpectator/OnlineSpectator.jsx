@@ -9,6 +9,7 @@ import {
     onGameAbandoned,
     onGameOver,
     onPlayerFrozen,
+    onPlayerScreamed,
     onPowerupAwarded,
     onProgress,
     onSpectatorUpdate,
@@ -27,6 +28,7 @@ function normalizePlayer(player = {}) {
     return {
         userId: player.userId,
         username: player.username || "Jugador",
+        avatar: player.avatar || null,
         correctCount: player.correctCount ?? 0,
         wrongCount: player.wrongCount ?? 0,
         lives: player.lives ?? 0,
@@ -36,13 +38,28 @@ function normalizePlayer(player = {}) {
         powerups: {
             fiftyFifty: player.powerups?.fiftyFifty ?? 0,
             freeze: player.powerups?.freeze ?? 0,
+            screamer: player.powerups?.screamer ?? 0,
         },
         powerupsUsed: {
             fiftyFifty: player.powerupsUsed?.fiftyFifty ?? 0,
             freeze: player.powerupsUsed?.freeze ?? 0,
+            screamer: player.powerupsUsed?.screamer ?? 0,
         },
         frozenUntil: player.frozenUntil ?? 0,
+        screamerUntil: player.screamerUntil ?? 0,
     };
+}
+
+function getPlayerAvatarLabel(player = {}) {
+    return player.avatar?.icon || (player.username || "J").charAt(0).toUpperCase();
+}
+
+function renderPlayerAvatarContent(player = {}) {
+    if (player.avatar?.imageSrc) {
+        return <img src={player.avatar.imageSrc} alt="" />;
+    }
+
+    return <span>{getPlayerAvatarLabel(player)}</span>;
 }
 
 function mergePlayers(currentPlayers, incomingPlayers) {
@@ -191,6 +208,19 @@ function OnlineSpectator() {
                 );
                 setActivity("Freeze usado: un jugador quedo congelado.");
             }),
+            onPlayerScreamed((payload) => {
+                setPlayers((currentPlayers) =>
+                    currentPlayers.map((player) =>
+                        Number(player.userId) === Number(payload.userId)
+                            ? normalizePlayer({
+                                  ...player,
+                                  screamerUntil: payload.screamerUntil,
+                              })
+                            : player
+                    )
+                );
+                setActivity("SCREAMER usado: un jugador quedo bloqueado.");
+            }),
             onSpectatorUpdate((payload) => {
                 setSpectatorCount(payload.spectatorCount ?? 0);
             }),
@@ -281,6 +311,7 @@ function OnlineSpectator() {
 
     function renderPlayerCard(player, index) {
         const frozen = Boolean(now && player?.frozenUntil > now);
+        const screamed = Boolean(now && player?.screamerUntil > now);
         const questionProgress = totalQuestions
             ? Math.min(100, ((player.currentIndex || 0) / totalQuestions) * 100)
             : 0;
@@ -292,6 +323,9 @@ function OnlineSpectator() {
                 }`}
             >
                 <div className="online-spectator-player-top">
+                    <div className="online-player-avatar" aria-hidden="true">
+                        {renderPlayerAvatarContent(player)}
+                    </div>
                     <div>
                         <span>Jugador {index + 1}</span>
                         <strong>{player?.username || "Esperando..."}</strong>
@@ -341,11 +375,21 @@ function OnlineSpectator() {
                         <strong>{player?.powerupsUsed?.freeze ?? 0}</strong>
                         <small>quedan {player?.powerups?.freeze ?? 0}</small>
                     </div>
+                    <div>
+                        <span>Screamer usados</span>
+                        <strong>{player?.powerupsUsed?.screamer ?? 0}</strong>
+                        <small>quedan {player?.powerups?.screamer ?? 0}</small>
+                    </div>
                 </div>
 
                 {frozen && (
                     <div className="online-player-freeze">
                         Congelado {formatDuration(player.frozenUntil - now)}
+                    </div>
+                )}
+                {screamed && (
+                    <div className="online-player-freeze online-player-screamer">
+                        Screamer {formatDuration(player.screamerUntil - now)}
                     </div>
                 )}
             </article>

@@ -18,6 +18,12 @@ import {
 import { onChatMessage, sendChatMessage } from "../../../services/OnlineChatService.js";
 import "../OnlineRoom.css";
 
+const SCREAMER_IMAGES = {
+    screamer: "/images/paises/screamer.jpg",
+    "screamer-2": "/images/paises/Screamer2.jpg",
+};
+const DEFAULT_SCREAMER_IMAGE_SRC = SCREAMER_IMAGES.screamer;
+
 const API_URL = import.meta.env.VITE_API_URL || "";
 const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
 
@@ -39,10 +45,136 @@ const LOBBY_BACKGROUND_IMAGES = [
     { src: "/images/paises/sanmarino.jpg", position: "center 46%" },
 ];
 
+function startScreamerSiren() {
+    if (typeof window === "undefined") {
+        return () => undefined;
+    }
+
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioContextClass) {
+        return () => undefined;
+    }
+
+    let audioContext;
+
+    try {
+        audioContext = new AudioContextClass();
+    } catch {
+        return () => undefined;
+    }
+
+    const masterGain = audioContext.createGain();
+    const filter = audioContext.createBiquadFilter();
+    const lowOscillator = audioContext.createOscillator();
+    const highOscillator = audioContext.createOscillator();
+    const rumbleOscillator = audioContext.createOscillator();
+    const lowGain = audioContext.createGain();
+    const highGain = audioContext.createGain();
+    const rumbleGain = audioContext.createGain();
+    const tremolo = audioContext.createOscillator();
+    const tremoloGain = audioContext.createGain();
+    let highTone = false;
+    let stopped = false;
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(900, audioContext.currentTime);
+    filter.Q.setValueAtTime(7, audioContext.currentTime);
+
+    lowOscillator.type = "sawtooth";
+    highOscillator.type = "square";
+    rumbleOscillator.type = "triangle";
+    tremolo.type = "sine";
+
+    lowOscillator.frequency.setValueAtTime(125, audioContext.currentTime);
+    highOscillator.frequency.setValueAtTime(250, audioContext.currentTime);
+    rumbleOscillator.frequency.setValueAtTime(54, audioContext.currentTime);
+    tremolo.frequency.setValueAtTime(8.5, audioContext.currentTime);
+
+    lowGain.gain.setValueAtTime(0.48, audioContext.currentTime);
+    highGain.gain.setValueAtTime(0.16, audioContext.currentTime);
+    rumbleGain.gain.setValueAtTime(0.12, audioContext.currentTime);
+    tremoloGain.gain.setValueAtTime(0.055, audioContext.currentTime);
+    masterGain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+    masterGain.gain.exponentialRampToValueAtTime(0.22, audioContext.currentTime + 0.08);
+
+    lowOscillator.connect(lowGain);
+    highOscillator.connect(highGain);
+    rumbleOscillator.connect(rumbleGain);
+    lowGain.connect(filter);
+    highGain.connect(filter);
+    rumbleGain.connect(filter);
+    filter.connect(masterGain);
+    tremolo.connect(tremoloGain);
+    tremoloGain.connect(masterGain.gain);
+    masterGain.connect(audioContext.destination);
+
+    [lowOscillator, highOscillator, rumbleOscillator, tremolo].forEach((oscillator) =>
+        oscillator.start()
+    );
+
+    if (audioContext.state === "suspended") {
+        audioContext.resume().catch(() => undefined);
+    }
+
+    const intervalId = window.setInterval(() => {
+        highTone = !highTone;
+        const targetTime = audioContext.currentTime;
+        lowOscillator.frequency.cancelScheduledValues(targetTime);
+        highOscillator.frequency.cancelScheduledValues(targetTime);
+        filter.frequency.cancelScheduledValues(targetTime);
+        lowOscillator.frequency.setTargetAtTime(highTone ? 390 : 125, targetTime, 0.12);
+        highOscillator.frequency.setTargetAtTime(highTone ? 780 : 250, targetTime, 0.12);
+        filter.frequency.setTargetAtTime(highTone ? 1500 : 720, targetTime, 0.14);
+        masterGain.gain.setTargetAtTime(
+            highTone ? 0.25 : 0.18,
+            targetTime,
+            0.08
+        );
+    }, 720);
+
+    return () => {
+        if (stopped) {
+            return;
+        }
+
+        stopped = true;
+        window.clearInterval(intervalId);
+
+        try {
+            masterGain.gain.cancelScheduledValues(audioContext.currentTime);
+            masterGain.gain.setTargetAtTime(0.0001, audioContext.currentTime, 0.04);
+            window.setTimeout(() => {
+                [lowOscillator, highOscillator, rumbleOscillator, tremolo].forEach(
+                    (oscillator) => {
+                        try {
+                            oscillator.stop();
+                        } catch {
+                            // El oscilador puede haberse detenido si React desmonta el efecto dos veces.
+                        }
+                    }
+                );
+                audioContext.close?.().catch(() => undefined);
+            }, 180);
+        } catch {
+            audioContext.close?.().catch(() => undefined);
+        }
+    };
+}
+
+function resolveScreamerImageSrc(player = {}) {
+    if (Object.values(SCREAMER_IMAGES).includes(player.screamerImageSrc)) {
+        return player.screamerImageSrc;
+    }
+
+    return SCREAMER_IMAGES[player.screamerImageId] || DEFAULT_SCREAMER_IMAGE_SRC;
+}
+
 function normalizePlayer(player = {}) {
     return {
         userId: player.userId,
         username: player.username || "Jugador",
+        avatar: player.avatar || null,
         correctCount: player.correctCount ?? 0,
         wrongCount: player.wrongCount ?? 0,
         lives: player.lives ?? 3,
@@ -52,10 +184,26 @@ function normalizePlayer(player = {}) {
         powerups: {
             fiftyFifty: player.powerups?.fiftyFifty ?? 1,
             freeze: player.powerups?.freeze ?? 1,
+            screamer: player.powerups?.screamer ?? 0,
         },
         frozenUntil: player.frozenUntil ?? 0,
+        screamerUntil: player.screamerUntil ?? 0,
+        screamerImageId: player.screamerImageId ?? "screamer",
+        screamerImageSrc: resolveScreamerImageSrc(player),
         connected: player.connected ?? true,
     };
+}
+
+function getPlayerAvatarLabel(player = {}) {
+    return player.avatar?.icon || (player.username || "J").charAt(0).toUpperCase();
+}
+
+function renderPlayerAvatarContent(player = {}) {
+    if (player.avatar?.imageSrc) {
+        return <img src={player.avatar.imageSrc} alt="" />;
+    }
+
+    return <span>{getPlayerAvatarLabel(player)}</span>;
 }
 
 function playersFromRoom(room) {
@@ -347,6 +495,7 @@ function OnlineMatchCode() {
     const tournamentReturnId = location.state?.tournamentId || null;
     const answerTimerRef = useRef(null);
     const tournamentRedirectRef = useRef(null);
+    const screamerAudioRef = useRef(null);
     const [room, setRoom] = useState(() => initialRoom);
     const [phase, setPhase] = useState(() =>
         initialRoom?.status === "playing" ? "playing" : "lobby"
@@ -389,6 +538,12 @@ function OnlineMatchCode() {
     const matchTimeLeft = matchEndsAt ? matchEndsAt - now : 0;
     const isFrozen = myProgress?.frozenUntil ? myProgress.frozenUntil > now : false;
     const frozenLeft = isFrozen ? myProgress.frozenUntil - now : 0;
+    const isScreamerActive = myProgress?.screamerUntil
+        ? myProgress.screamerUntil > now
+        : false;
+    const screamerLeft = isScreamerActive ? myProgress.screamerUntil - now : 0;
+    const currentScreamerImageSrc = resolveScreamerImageSrc(myProgress);
+    const isPowerupBlocked = isFrozen || isScreamerActive;
     const currentRemovedIndices = question
         ? removedByQuestion[question.index] || []
         : [];
@@ -410,6 +565,25 @@ function OnlineMatchCode() {
         const intervalId = window.setInterval(() => setNow(Date.now()), 500);
         return () => window.clearInterval(intervalId);
     }, []);
+
+    useEffect(() => {
+        if (!isScreamerActive) {
+            if (screamerAudioRef.current) {
+                screamerAudioRef.current();
+                screamerAudioRef.current = null;
+            }
+
+            return undefined;
+        }
+
+        screamerAudioRef.current?.();
+        screamerAudioRef.current = startScreamerSiren();
+
+        return () => {
+            screamerAudioRef.current?.();
+            screamerAudioRef.current = null;
+        };
+    }, [isScreamerActive]);
 
     useEffect(() => {
         let active = true;
@@ -438,8 +612,15 @@ function OnlineMatchCode() {
             setRoom((currentRoom) =>
                 currentRoom ? { ...currentRoom, status: "playing" } : currentRoom
             );
-            setPlayers((currentPlayers) =>
-                currentPlayers.map((player) =>
+            setPlayers((currentPlayers) => {
+                if (Array.isArray(payload.players) && payload.players.length) {
+                    return mergePlayers(
+                        currentPlayers,
+                        payload.players.map(normalizePlayer)
+                    );
+                }
+
+                return currentPlayers.map((player) =>
                     normalizePlayer({
                         ...player,
                         correctCount: 0,
@@ -449,10 +630,11 @@ function OnlineMatchCode() {
                         finished: false,
                         correctStreak: 0,
                         frozenUntil: 0,
-                        powerups: { fiftyFifty: 1, freeze: 1 },
+                        screamerUntil: 0,
+                        powerups: { fiftyFifty: 1, freeze: 1, screamer: 0 },
                     })
-                )
-            );
+                );
+            });
             setFeedback("");
         }
 
@@ -529,6 +711,25 @@ function OnlineMatchCode() {
             }
         }
 
+        function handlePlayerScreamed(payload) {
+            setPlayers((currentPlayers) =>
+                currentPlayers.map((player) =>
+                    Number(player.userId) === Number(payload.userId)
+                        ? normalizePlayer({
+                              ...player,
+                              screamerUntil: payload.screamerUntil,
+                              screamerImageId: payload.screamerImageId,
+                              screamerImageSrc: payload.screamerImageSrc,
+                          })
+                        : player
+                )
+            );
+
+            if (Number(payload.userId) === Number(currentUserId)) {
+                setFeedback("Tu rival uso SCREAMER.");
+            }
+        }
+
         function handleDisconnected(payload) {
             setPlayers((currentPlayers) =>
                 currentPlayers.map((player) =>
@@ -600,6 +801,7 @@ function OnlineMatchCode() {
         socket.on("game:reconnected", handleGameReconnected);
         socket.on("powerup:awarded", handlePowerupAwarded);
         socket.on("player:frozen", handlePlayerFrozen);
+        socket.on("player:screamed", handlePlayerScreamed);
         socket.on("player:disconnected", handleDisconnected);
         socket.on("player:reconnected", handleReconnected);
         socket.on("spectator:update", handleSpectatorUpdate);
@@ -628,6 +830,7 @@ function OnlineMatchCode() {
             socket.off("game:reconnected", handleGameReconnected);
             socket.off("powerup:awarded", handlePowerupAwarded);
             socket.off("player:frozen", handlePlayerFrozen);
+            socket.off("player:screamed", handlePlayerScreamed);
             socket.off("player:disconnected", handleDisconnected);
             socket.off("player:reconnected", handleReconnected);
             socket.off("spectator:update", handleSpectatorUpdate);
@@ -740,13 +943,16 @@ function OnlineMatchCode() {
                     correctStreak: response.correctStreak,
                     powerups: myProgress?.powerups,
                     frozenUntil: myProgress?.frozenUntil ?? 0,
+                    screamerUntil: myProgress?.screamerUntil ?? 0,
+                    screamerImageId: myProgress?.screamerImageId,
+                    screamerImageSrc: myProgress?.screamerImageSrc,
                 },
             ])
         );
     }
 
     async function handleAnswer(option) {
-        if (!question || answerResult || isFrozen) {
+        if (!question || answerResult || isPowerupBlocked) {
             return;
         }
 
@@ -788,6 +994,16 @@ function OnlineMatchCode() {
                     ])
                 );
             }
+            if (error.screamerUntil) {
+                setPlayers((currentPlayers) =>
+                    mergePlayers(currentPlayers, [
+                        {
+                            userId: currentUserId,
+                            screamerUntil: error.screamerUntil,
+                        },
+                    ])
+                );
+            }
 
             setFeedback(error.message || "No se pudo responder.");
         } finally {
@@ -808,7 +1024,7 @@ function OnlineMatchCode() {
     }
 
     async function handleUsePowerup(type) {
-        if (!question || isFrozen) {
+        if (!question || isPowerupBlocked) {
             return;
         }
 
@@ -828,6 +1044,10 @@ function OnlineMatchCode() {
 
             if (response.type === "freeze") {
                 setFeedback("Congelaste al rival por unos segundos.");
+            }
+
+            if (response.type === "screamer") {
+                setFeedback("SCREAMER enviado al rival.");
             }
 
             setPlayers((currentPlayers) =>
@@ -864,6 +1084,7 @@ function OnlineMatchCode() {
 
     function renderPlayerCard(player, label) {
         const frozen = player?.frozenUntil > now;
+        const screamed = player?.screamerUntil > now;
         const streak = player?.correctStreak ?? 0;
 
         if (!player) {
@@ -878,10 +1099,14 @@ function OnlineMatchCode() {
         }
 
         return (
-            <article className={`online-player-card ${frozen ? "is-frozen" : ""}`}>
+            <article
+                className={`online-player-card ${frozen ? "is-frozen" : ""} ${
+                    screamed ? "is-screamed" : ""
+                }`}
+            >
                 <div className="online-player-card-head">
                     <div className="online-player-avatar" aria-hidden="true">
-                        {(player.username || "J").charAt(0).toUpperCase()}
+                        {renderPlayerAvatarContent(player)}
                     </div>
                     <div>
                         <span>{label}</span>
@@ -895,6 +1120,11 @@ function OnlineMatchCode() {
                 {frozen && (
                     <div className="online-player-freeze">
                         Congelado {formatDuration(player.frozenUntil - now)}
+                    </div>
+                )}
+                {screamed && (
+                    <div className="online-player-freeze online-player-screamer">
+                        Screamer {formatDuration(player.screamerUntil - now)}
                     </div>
                 )}
             </article>
@@ -912,7 +1142,7 @@ function OnlineMatchCode() {
             >
                 <div className="online-result-player-head">
                     <div className="online-player-avatar" aria-hidden="true">
-                        {(player.username || "J").charAt(0).toUpperCase()}
+                        {renderPlayerAvatarContent(player)}
                     </div>
                     <div>
                         <span>{label}</span>
@@ -960,7 +1190,7 @@ function OnlineMatchCode() {
                             onClick={() => handleUsePowerup("fifty_fifty")}
                             disabled={
                                 !question ||
-                                isFrozen ||
+                                isPowerupBlocked ||
                                 (myProgress?.powerups?.fiftyFifty ?? 0) <= 0 ||
                                 pendingAction === "fifty_fifty"
                             }
@@ -974,13 +1204,26 @@ function OnlineMatchCode() {
                         onClick={() => handleUsePowerup("freeze")}
                         disabled={
                             !question ||
-                            isFrozen ||
+                            isPowerupBlocked ||
                             (myProgress?.powerups?.freeze ?? 0) <= 0 ||
                             pendingAction === "freeze"
                         }
                     >
                         <span>Freeze</span>
                         <strong>{myProgress?.powerups?.freeze ?? 0}</strong>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleUsePowerup("screamer")}
+                        disabled={
+                            !question ||
+                            isPowerupBlocked ||
+                            (myProgress?.powerups?.screamer ?? 0) <= 0 ||
+                            pendingAction === "screamer"
+                        }
+                    >
+                        <span>Screamer</span>
+                        <strong>{myProgress?.powerups?.screamer ?? 0}</strong>
                     </button>
                 </section>
             </aside>
@@ -1227,6 +1470,15 @@ function OnlineMatchCode() {
                                         </span>
                                     </div>
                                 )}
+                                {isScreamerActive && (
+                                    <div className="online-freeze-alert online-screamer-alert">
+                                        <strong>SCREAMER</strong>
+                                        <span>
+                                            Pantalla bloqueada por{" "}
+                                            {formatDuration(screamerLeft)}
+                                        </span>
+                                    </div>
+                                )}
                                 <div className="online-question-head">
                                     <span>
                                         Pregunta {(question?.index ?? 0) + 1} /{" "}
@@ -1257,7 +1509,7 @@ function OnlineMatchCode() {
                                                             )
                                                         }
                                                         disabled={
-                                                            isFrozen ||
+                                                            isPowerupBlocked ||
                                                             Boolean(answerResult) ||
                                                             pendingAction === "answer"
                                                         }
@@ -1267,7 +1519,7 @@ function OnlineMatchCode() {
                                                     <button
                                                         type="submit"
                                                         disabled={
-                                                            isFrozen ||
+                                                            isPowerupBlocked ||
                                                             Boolean(answerResult) ||
                                                             pendingAction === "answer"
                                                         }
@@ -1335,7 +1587,7 @@ function OnlineMatchCode() {
                                                                     }
                                                                     disabled={
                                                                         removed ||
-                                                                        isFrozen ||
+                                                                        isPowerupBlocked ||
                                                                         Boolean(
                                                                             answerResult
                                                                         ) ||
@@ -1442,6 +1694,16 @@ function OnlineMatchCode() {
                     </section>
                 )}
             </main>
+
+            {phase === "playing" && isScreamerActive && (
+                <div className="online-screamer-overlay" role="alert" aria-live="assertive">
+                    <div className="online-screamer-image-pulse">
+                        <img src={currentScreamerImageSrc} alt="Screamer" />
+                    </div>
+                    <strong>SCREAMER</strong>
+                    <span>{formatDuration(screamerLeft)}</span>
+                </div>
+            )}
 
             {leaveConfirmOpen && phase === "playing" && (
                 <div className="online-leave-modal-backdrop" role="presentation">

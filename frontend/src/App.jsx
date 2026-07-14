@@ -9,6 +9,7 @@ import Friends from "./pages/Profile/friends/Friends.jsx";
 import Ranking from "./pages/Ranking/Ranking.jsx";
 import Leaderboard from "./pages/Leaderboard/Leaderboard.jsx";
 import Tournaments from "./pages/Tournaments/Tournaments.jsx";
+import Store from "./pages/Store/Store.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Admin from "./pages/Admin/Admin.jsx";
 import PlayOffline from "./pages/PlayOffline/PlayOffline.jsx";
@@ -72,6 +73,15 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <Tournaments />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/store"
+                    element={
+                        <ProtectedRoute>
+                            <Store />
                         </ProtectedRoute>
                     }
                 />

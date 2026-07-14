@@ -20,7 +20,7 @@ function generateCode() {
     return code;
 }
 
-function createRoom({ mode, continent, hostUserId, hostUsername, tournament }) {
+function createRoom({ mode, continent, hostUserId, hostUsername, hostAvatar, tournament }) {
     const code = generateCode();
 
     const room = {
@@ -38,6 +38,7 @@ function createRoom({ mode, continent, hostUserId, hostUsername, tournament }) {
     room.players.set(hostUserId, {
         userId: hostUserId,
         username: hostUsername,
+        avatar: hostAvatar || null,
         connected: true,
     });
 
@@ -49,15 +50,21 @@ function getRoom(code) {
     return rooms.get(code) || null;
 }
 
-function addPlayer(code, { userId, username }) {
+function addPlayer(code, { userId, username, avatar }) {
     const room = rooms.get(code);
 
     if (!room) return { error: "La sala no existe" };
     if (room.status !== "waiting") return { error: "La partida ya empezó" };
-    if (room.players.has(userId)) return { room }; // ya estaba dentro
+    if (room.players.has(userId)) {
+        const player = room.players.get(userId);
+        player.username = username || player.username;
+        player.avatar = avatar || player.avatar || null;
+        player.connected = true;
+        return { room }; // ya estaba dentro
+    }
     if (room.players.size >= MAX_PLAYERS) return { error: "La sala está llena" };
 
-    room.players.set(userId, { userId, username, connected: true });
+    room.players.set(userId, { userId, username, avatar: avatar || null, connected: true });
     return { room };
 }
 

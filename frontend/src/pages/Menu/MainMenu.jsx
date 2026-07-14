@@ -101,9 +101,19 @@ function MainMenu() {
                 <div className="main-menu-header-actions">
                     <Link to="/profile" className="main-menu-profile-chip">
                         <div className="main-menu-profile-avatar">
-                            <span>
-                                {user?.username ? user.username.charAt(0).toUpperCase() : "U"}
-                            </span>
+                            {user?.avatar?.imageSrc ? (
+                                <img
+                                    src={user.avatar.imageSrc}
+                                    alt={user.avatar.name || "Avatar"}
+                                />
+                            ) : (
+                                <span>
+                                    {user?.avatar?.icon ||
+                                        (user?.username
+                                            ? user.username.charAt(0).toUpperCase()
+                                            : "U")}
+                                </span>
+                            )}
                         </div>
 
                         <div className="main-menu-profile-copy">
@@ -111,6 +121,15 @@ function MainMenu() {
                                 {user?.username || "Usuario"}
                             </span>
                         </div>
+                    </Link>
+
+                    <Link
+                        to="/store"
+                        className="main-menu-store-button"
+                        aria-label="Ir a la tienda"
+                        title="Tienda"
+                    >
+                        <StoreIcon />
                     </Link>
                 </div>
             </header>
@@ -137,6 +156,33 @@ function MainMenu() {
                 ))}
             </section>
         </div>
+    );
+}
+
+function StoreIcon() {
+    return (
+        <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+            <path
+                className="main-menu-store-roof"
+                d="M11 19.2 14.5 9h19L37 19.2H11Z"
+            />
+            <path
+                className="main-menu-store-awning"
+                d="M11 19.2h26v3.1c0 2.4-2 4.4-4.4 4.4-1.8 0-3.4-1.1-4.1-2.7-.8 1.6-2.4 2.7-4.2 2.7s-3.4-1.1-4.2-2.7c-.8 1.6-2.4 2.7-4.2 2.7-2.7 0-4.9-2.1-4.9-4.8v-2.7Z"
+            />
+            <path
+                className="main-menu-store-body"
+                d="M14.2 26.5h19.6v12.7H14.2V26.5Z"
+            />
+            <path
+                className="main-menu-store-door"
+                d="M21.2 30.1h5.6v9.1h-5.6v-9.1Z"
+            />
+            <path
+                className="main-menu-store-window"
+                d="M29.2 30.2h3.1v3.2h-3.1v-3.2Z"
+            />
+        </svg>
     );
 }
 

@@ -1,4 +1,4 @@
-const pool = require("../db");
+const { getPublicPlayerProfile } = require("../services/playerProfileService");
 const {
     createRoom,
     getRoom,
@@ -17,12 +17,8 @@ const VALID_MODES = [
     "country-by-map",
 ];
 
-async function getUsername(userId) {
-    const { rows } = await pool.query(
-        "SELECT username FROM users WHERE user_id = $1",
-        [userId]
-    );
-    return rows[0]?.username || `user-${userId}`;
+async function getPlayerIdentity(userId) {
+    return getPublicPlayerProfile(userId);
 }
 
 // Saca al usuario de su sala actual (si tiene una) y avisa a los que quedan
@@ -54,12 +50,13 @@ function registerLobbyHandlers(io, socket) {
             // Si ya estaba en otra sala, salir primero
             leaveCurrentRoom(io, socket, userId);
 
-            const username = await getUsername(userId);
+            const { username, avatar } = await getPlayerIdentity(userId);
             const room = createRoom({
                 mode,
                 continent,
                 hostUserId: userId,
                 hostUsername: username,
+                hostAvatar: avatar,
             });
 
             socket.join(room.code);
@@ -95,8 +92,8 @@ function registerLobbyHandlers(io, socket) {
                 leaveCurrentRoom(io, socket, userId);
             }
 
-            const username = await getUsername(userId);
-            const result = addPlayer(normalizedCode, { userId, username });
+            const { username, avatar } = await getPlayerIdentity(userId);
+            const result = addPlayer(normalizedCode, { userId, username, avatar });
 
             if (result.error) {
                 return callback?.({ error: result.error });

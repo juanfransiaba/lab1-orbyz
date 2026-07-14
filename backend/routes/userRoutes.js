@@ -9,6 +9,7 @@ const {
     getUserById,
     getProfile,
     updateProfile,
+    updateProfileAvatar,
     updateUserRole,
     deleteProfile,
     searchUsers,
@@ -17,6 +18,7 @@ const {
 
 router.get('/profile', verifyToken, getProfile);
 router.put('/profile', verifyToken, updateProfile);
+router.put('/profile/avatar', verifyToken, updateProfileAvatar);
 router.delete('/profile', verifyToken, deleteProfile);
 
 router.get('/search', verifyToken, searchUsers);
