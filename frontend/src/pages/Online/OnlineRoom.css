@@ -1868,6 +1868,31 @@
         width: 100%;
     }
 
+    .online-room-main {
+        width: min(100%, calc(100% - 24px));
+        padding: 18px 0 24px;
+    }
+
+    .online-room-main.is-narrow,
+    .online-room-main.is-join,
+    .online-room-main.is-create {
+        width: 100%;
+        min-height: auto;
+        padding: 18px 12px 24px;
+        align-items: flex-start;
+    }
+
+    .online-room-main.is-join .online-join-panel {
+        width: 100%;
+        padding: 22px 18px;
+        border-radius: 22px;
+    }
+
+    .online-room-main.is-join .online-room-field input {
+        min-height: 56px;
+        font-size: 1.45rem;
+    }
+
     .online-room-mode-grid,
     .online-lobby-players,
     .online-game-scoreboard,
@@ -3259,6 +3284,7 @@
 
     .online-room-main.is-game .online-game-main {
         display: flex;
+        flex-direction: column;
         overflow: visible;
     }
 
@@ -3365,5 +3391,669 @@
     .online-result-players,
     .online-result-metrics {
         grid-template-columns: 1fr;
+    }
+
+    .online-room-panel {
+        padding: 20px 16px;
+    }
+
+    .online-room-main.is-game {
+        padding: 12px;
+    }
+
+    .online-game-side-tools {
+        grid-template-columns: 1fr;
+    }
+
+    .online-room-main.is-game .online-question-card {
+        padding: 14px;
+    }
+
+    .online-room-main.is-game .online-question-card.has-image,
+    .online-room-main.is-game .online-question-card.has-map {
+        grid-template-rows: auto auto minmax(220px, auto) auto;
+    }
+
+    .online-room-main.is-game .online-map-frame,
+    .online-room-main.is-game .online-map {
+        min-height: 240px;
+    }
+}
+
+@media (max-width: 560px) {
+    .online-room-main.is-create {
+        padding: 12px;
+    }
+
+    .online-room-create-panel {
+        width: 100%;
+        display: grid;
+        grid-template-rows: auto auto;
+        gap: 12px;
+        overflow: visible;
+        padding: 12px;
+    }
+
+    .online-room-create-panel .online-room-mode-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .online-room-create-panel .online-room-mode-card,
+    .online-room-create-panel .online-room-mode-card:nth-child(4),
+    .online-room-create-panel .online-room-mode-card:nth-child(5) {
+        grid-column: 1;
+        min-height: 112px;
+        flex-direction: row;
+        align-items: stretch;
+    }
+
+    .online-room-create-panel .online-room-mode-card.is-selected {
+        transform: none;
+        outline-width: 3px;
+    }
+
+    .online-room-create-panel .online-room-mode-card-image-wrap {
+        flex: 0 0 108px;
+        min-height: 112px;
+        border-right: 1px solid rgba(226, 232, 240, 0.86);
+        border-bottom: 0;
+    }
+
+    .online-room-create-panel .online-room-mode-card-content {
+        justify-content: center;
+        padding: 12px;
+    }
+
+    .online-room-create-panel .online-room-mode-card-content strong {
+        font-size: 0.94rem;
+    }
+
+    .online-room-create-panel .online-room-mode-card-content small {
+        max-width: none;
+        font-size: 0.76rem;
+        line-height: 1.25;
+    }
+
+    .online-room-create-panel .online-room-mode-card-content span {
+        margin-top: 6px;
+        font-size: 0.76rem;
+    }
+
+    .online-room-create-panel .online-room-create-footer {
+        gap: 8px;
+    }
+
+    .online-room-create-panel .online-room-create-footer .online-room-primary-button {
+        min-height: 50px;
+    }
+
+    .online-room-page.is-lobby-page .online-room-header {
+        min-height: 72px;
+        grid-template-columns: 66px minmax(0, 1fr) 54px;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+    }
+
+    .online-room-page.is-lobby-page .online-room-title-block {
+        order: 0;
+        min-width: 0;
+    }
+
+    .online-room-page.is-lobby-page .online-room-title-block span {
+        overflow: hidden;
+        color: rgba(226, 232, 240, 0.76);
+        font-size: 0.52rem;
+        letter-spacing: 0.12em;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .online-room-page.is-lobby-page .online-room-title-block h1 {
+        overflow: hidden;
+        font-size: 1.06rem;
+        letter-spacing: 0.06em;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .online-room-page.is-lobby-page .online-room-back-button {
+        width: auto;
+        min-height: 36px;
+        padding: 0 9px;
+        font-size: 0.78rem;
+    }
+
+    .online-room-page.is-lobby-page .online-room-status {
+        justify-self: end;
+        min-height: 34px;
+        padding: 0 8px;
+        font-size: 0.78rem;
+    }
+
+    .online-room-page.is-lobby-page .online-room-main.is-lobby {
+        min-height: calc(100svh - 72px);
+        align-items: stretch;
+        overflow: hidden;
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-layout {
+        width: 100%;
+        min-height: auto;
+        justify-content: flex-start;
+        padding: 10px 10px 64px;
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-side-info {
+        width: 100%;
+        grid-template-columns: minmax(0, 1fr) 76px;
+        gap: 8px;
+        margin: 0 0 10px;
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-side-info .online-lobby-code-box {
+        padding: 10px 12px;
+        border-radius: 16px;
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-side-info .online-lobby-code-box > span {
+        margin-bottom: 6px;
+        font-size: 0.58rem;
+        letter-spacing: 0.1em;
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-side-info .online-lobby-code-box > strong {
+        font-size: 1.24rem;
+        letter-spacing: 0.1em;
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-side-info .online-lobby-copy {
+        min-height: 32px;
+        margin-top: 8px;
+        border-radius: 11px;
+        font-size: 0.78rem;
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-side-info .online-lobby-room-meta {
+        min-height: 100%;
+        padding: 8px;
+        border-radius: 16px;
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-side-info .online-lobby-room-meta span {
+        font-size: 1.12rem;
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-side-info .online-lobby-room-meta small {
+        font-size: 0.52rem;
+        letter-spacing: 0.06em;
+        text-align: center;
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-stage {
+        width: 100%;
+        gap: 10px;
+        padding: 0;
+    }
+
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-lobby-stage .online-lobby-players {
+        width: 100%;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-lobby-stage .online-player-card,
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-player-card {
+        min-height: 138px;
+        padding: 10px;
+        border-radius: 18px;
+    }
+
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-player-card-head {
+        align-items: center;
+        gap: 8px;
+    }
+
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-player-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        font-size: 1.05rem;
+    }
+
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-player-card-head span {
+        font-size: 0.55rem;
+        letter-spacing: 0.06em;
+    }
+
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-player-card-head strong {
+        overflow-wrap: anywhere;
+        font-size: 0.88rem;
+    }
+
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-player-metrics {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 5px;
+        margin-top: 10px;
+    }
+
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-player-metrics span {
+        min-height: 30px;
+        padding: 0 4px;
+        border-radius: 10px;
+        font-size: 0.6rem;
+    }
+
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-player-waiting strong {
+        font-size: 0.86rem;
+    }
+
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-player-waiting p {
+        display: none;
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-stage .online-lobby-action-area {
+        width: 100%;
+        padding: 0;
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-stage .online-lobby-action-area .online-room-primary-button {
+        min-height: 46px;
+        border-radius: 14px;
+        font-size: 0.9rem;
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-chat-toggle {
+        right: 10px;
+        bottom: 10px;
+        min-height: 42px;
+        gap: 8px;
+        padding: 0 10px;
+        font-size: 0.78rem;
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-chat-toggle strong {
+        min-width: 24px;
+        min-height: 24px;
+        font-size: 0.72rem;
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-chat-toggle.is-open {
+        opacity: 0.18;
+        pointer-events: none;
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-chat-drawer {
+        inset: 8px;
+        width: auto;
+        transform: translateX(calc(100% + 20px));
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-chat-drawer.is-open {
+        transform: translateX(0);
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-chat-drawer .online-chat-panel {
+        border-radius: 18px;
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-chat-close {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 13;
+        min-height: 40px;
+        padding: 0 14px;
+        box-shadow: 0 12px 26px rgba(2, 6, 23, 0.18);
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-chat-drawer .online-chat-head {
+        padding-right: 118px;
+    }
+}
+
+@media (max-width: 380px) {
+    .online-room-create-panel .online-room-mode-card-image-wrap {
+        flex-basis: 92px;
+    }
+
+    .online-room-create-panel .online-room-mode-card-content {
+        padding: 10px;
+    }
+
+    .online-room-page.is-lobby-page .online-room-header {
+        grid-template-columns: 58px minmax(0, 1fr) 48px;
+        padding: 8px;
+    }
+
+    .online-room-page.is-lobby-page .online-room-back-button {
+        padding: 0 7px;
+        font-size: 0.72rem;
+    }
+
+    .online-room-page.is-lobby-page .online-room-title-block h1 {
+        font-size: 0.98rem;
+    }
+
+    .online-room-page.is-lobby-page .online-room-status {
+        padding: 0 7px;
+        font-size: 0.72rem;
+    }
+
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-lobby-stage .online-player-card,
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-player-card {
+        min-height: 128px;
+        padding: 8px;
+    }
+
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-player-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+    }
+
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-player-metrics span {
+        font-size: 0.55rem;
+    }
+}
+
+@media (max-width: 560px) {
+    .online-room-page.is-lobby-page .online-lobby-layout {
+        min-height: calc(100svh - 72px);
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        align-content: stretch;
+        padding: 8px 8px 54px;
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-stage {
+        min-height: 0;
+        display: grid;
+        grid-template-rows: minmax(0, 1fr) auto;
+        align-content: stretch;
+    }
+
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-lobby-stage .online-lobby-players {
+        height: 100%;
+        min-height: 0;
+        align-items: stretch;
+    }
+
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-lobby-stage .online-player-card,
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-player-card {
+        min-height: clamp(164px, 33svh, 238px);
+    }
+
+    .online-room-page.is-lobby-page .online-lobby-side-info {
+        margin-bottom: 8px;
+    }
+
+    .online-room-page.is-playing .online-room-header {
+        height: 64px;
+        min-height: 64px;
+        grid-template-columns: 56px minmax(0, 1fr) 64px;
+        align-items: center;
+        gap: 6px;
+        padding: 8px;
+    }
+
+    .online-room-page.is-playing .online-room-title-block {
+        order: 0;
+        min-width: 0;
+    }
+
+    .online-room-page.is-playing .online-room-title-block span {
+        overflow: hidden;
+        font-size: 0.5rem;
+        letter-spacing: 0.1em;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .online-room-page.is-playing .online-room-title-block h1 {
+        overflow: hidden;
+        font-size: 0.98rem;
+        letter-spacing: 0.04em;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .online-room-page.is-playing .online-room-back-button {
+        width: auto;
+        min-height: 34px;
+        padding: 0 8px;
+        border-radius: 10px;
+        font-size: 0.72rem;
+    }
+
+    .online-room-page.is-playing .online-room-status {
+        justify-self: end;
+        min-height: 34px;
+        min-width: 0;
+        padding: 0 8px;
+        font-size: 0.78rem;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game {
+        min-height: calc(100svh - 64px);
+        padding: 8px;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-game-layout {
+        min-height: calc(100svh - 80px);
+        gap: 8px;
+    }
+
+    .online-room-page.is-playing .online-game-side-tools {
+        grid-template-columns: 52px minmax(0, 1fr);
+        gap: 6px;
+    }
+
+    .online-room-page.is-playing .online-game-spectators {
+        min-height: 50px;
+        border-radius: 14px;
+    }
+
+    .online-room-page.is-playing .online-game-spectators strong {
+        font-size: 0.94rem;
+    }
+
+    .online-room-page.is-playing .online-game-spectators small {
+        font-size: 0.5rem;
+        letter-spacing: 0.04em;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-powerups {
+        grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+        gap: 6px;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-powerups button {
+        min-height: 50px;
+        padding: 6px;
+        border-radius: 14px;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-powerups span {
+        font-size: 0.5rem;
+        letter-spacing: 0.04em;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-powerups strong {
+        margin-top: 2px;
+        font-size: 1.08rem;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-game-main {
+        gap: 6px;
+        padding: 0;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-game-scoreboard {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-player-card {
+        min-height: 62px;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 8px;
+        padding: 7px;
+        border-radius: 14px;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-player-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        font-size: 0.95rem;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-player-card-head {
+        min-width: 0;
+        gap: 7px;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-player-card-head strong {
+        overflow: hidden;
+        font-size: 0.78rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-player-card-head span {
+        font-size: 0.5rem;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-player-metrics {
+        grid-column: 1 / -1;
+        justify-content: stretch;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 4px;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-player-metrics span {
+        min-height: 22px;
+        justify-content: center;
+        padding: 0 4px;
+        font-size: 0.52rem;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-question-card {
+        gap: 6px;
+        padding: 9px;
+        border-radius: 14px;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-question-card h2 {
+        font-size: 1.02rem;
+        line-height: 1.08;
+    }
+
+    .online-room-page.is-playing .online-question-head span,
+    .online-room-page.is-playing .online-question-head strong {
+        font-size: 0.58rem;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-answer-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-answer-button {
+        min-height: 42px;
+        padding: 7px;
+        border-radius: 11px;
+        font-size: 0.78rem;
+        line-height: 1.15;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-question-card.has-image,
+    .online-room-page.is-playing .online-room-main.is-game .online-question-card.has-map {
+        grid-template-rows: auto auto minmax(150px, auto) auto;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-question-image-frame {
+        min-height: 150px;
+        border-radius: 14px;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-question-image {
+        max-height: 150px;
+        padding: 6px;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-map-frame,
+    .online-room-page.is-playing .online-room-main.is-game .online-map {
+        min-height: 180px;
+    }
+
+    .online-room-page.is-playing .online-map-answer-form {
+        grid-template-columns: minmax(0, 1fr) 96px;
+        gap: 6px;
+    }
+
+    .online-room-page.is-playing .online-map-answer-form input,
+    .online-room-page.is-playing .online-map-answer-form button {
+        min-height: 42px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-game-feedback {
+        min-height: 32px;
+        padding: 5px 9px;
+        border-radius: 11px;
+        font-size: 0.72rem;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-chat-panel {
+        min-height: 230px;
+        border-radius: 16px;
+    }
+}
+
+@media (max-width: 380px) {
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-lobby-stage .online-player-card,
+    .online-room-page.is-lobby-page .online-room-main.is-lobby .online-player-card {
+        min-height: clamp(146px, 31svh, 214px);
+    }
+
+    .online-room-page.is-playing .online-room-header {
+        grid-template-columns: 50px minmax(0, 1fr) 58px;
+        padding: 7px;
+    }
+
+    .online-room-page.is-playing .online-room-back-button {
+        padding: 0 6px;
+        font-size: 0.68rem;
+    }
+
+    .online-room-page.is-playing .online-room-title-block h1 {
+        font-size: 0.9rem;
+    }
+
+    .online-room-page.is-playing .online-room-status {
+        padding: 0 6px;
+        font-size: 0.7rem;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game {
+        padding: 6px;
+    }
+
+    .online-room-page.is-playing .online-game-side-tools {
+        grid-template-columns: 46px minmax(0, 1fr);
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-player-metrics span {
+        font-size: 0.48rem;
+    }
+
+    .online-room-page.is-playing .online-room-main.is-game .online-answer-button {
+        min-height: 38px;
+        font-size: 0.72rem;
     }
 }

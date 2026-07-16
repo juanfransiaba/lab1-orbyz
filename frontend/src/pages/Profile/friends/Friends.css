@@ -618,3 +618,240 @@
         padding: 16px;
     }
 }
+
+@media (max-width: 560px) {
+    .friends-page {
+        min-height: 100dvh;
+    }
+
+    .friends-header {
+        height: 64px;
+        min-height: 64px;
+        grid-template-columns: 58px minmax(0, 1fr) 58px;
+        gap: 6px;
+        padding: 0 8px;
+    }
+
+    .friends-header-actions,
+    .friends-title-wrap,
+    .friends-header-tools {
+        width: auto;
+        min-width: 0;
+        justify-content: center;
+    }
+
+    .friends-header-spacer {
+        display: block;
+        width: 58px;
+    }
+
+    .friends-back-button {
+        width: auto;
+        min-height: 34px;
+        padding: 0 8px;
+        border-radius: 10px;
+        font-size: 0.68rem;
+        white-space: nowrap;
+    }
+
+    .friends-title-kicker {
+        font-size: 0.48rem;
+        letter-spacing: 0.16em;
+    }
+
+    .friends-title {
+        font-size: 1.16rem;
+        letter-spacing: 0.08em;
+    }
+
+    .friends-main {
+        width: 100%;
+        padding: 8px 8px 12px;
+        gap: 8px;
+    }
+
+    .friends-panel {
+        border-radius: 16px;
+        box-shadow:
+            0 10px 18px rgba(15, 23, 42, 0.07),
+            inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    }
+
+    .friends-search-panel,
+    .friends-column-panel {
+        padding: 10px;
+    }
+
+    .friends-panel-heading {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .friends-panel-label {
+        margin-bottom: 3px;
+        font-size: 0.56rem;
+        letter-spacing: 0.06em;
+    }
+
+    .friends-panel-heading h2,
+    .friends-section-head h2 {
+        font-size: 0.98rem;
+        line-height: 1.1;
+    }
+
+    .friends-panel-description {
+        display: none;
+    }
+
+    .friends-summary-chips {
+        justify-content: flex-end;
+        gap: 5px;
+    }
+
+    .friends-summary-chip,
+    .friends-status-pill,
+    .friends-score-pill,
+    .friends-count-badge,
+    .friends-mini-chip {
+        min-height: 24px;
+        padding: 0 7px;
+        font-size: 0.62rem;
+    }
+
+    .friends-search-form {
+        grid-template-columns: minmax(0, 1fr) 84px;
+        gap: 8px;
+        align-items: end;
+    }
+
+    .friends-search-input-wrap {
+        gap: 5px;
+    }
+
+    .friends-search-label {
+        font-size: 0.68rem;
+    }
+
+    .friends-search-input {
+        min-height: 38px;
+        padding: 0 10px;
+        border-radius: 11px;
+        font-size: 0.78rem;
+    }
+
+    .friends-feedback {
+        margin-top: 8px;
+        padding: 8px 10px;
+        border-radius: 11px;
+        font-size: 0.72rem;
+    }
+
+    .friends-results-list,
+    .friends-card-list {
+        margin-top: 8px;
+        gap: 7px;
+    }
+
+    .friends-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .friends-section-head {
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+
+    .friends-column-panel {
+        min-height: 0;
+    }
+
+    .friends-user-row,
+    .friends-card-row {
+        align-items: center;
+        flex-direction: row;
+        gap: 7px;
+        padding: 8px;
+        border-radius: 13px;
+    }
+
+    .friends-user-main {
+        gap: 7px;
+    }
+
+    .friends-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 0.72rem;
+    }
+
+    .friends-user-copy h3 {
+        font-size: 0.72rem;
+    }
+
+    .friends-user-copy p {
+        margin-top: 2px;
+        font-size: 0.62rem;
+        line-height: 1.22;
+    }
+
+    .friends-user-actions,
+    .friends-action-group,
+    .friends-user-side-meta {
+        width: auto;
+        justify-content: flex-end;
+        gap: 5px;
+        flex-shrink: 0;
+    }
+
+    .friends-primary-button,
+    .friends-success-button,
+    .friends-secondary-button,
+    .friends-danger-button,
+    .friends-primary-button.is-compact {
+        width: auto;
+        min-height: 30px;
+        padding: 0 8px;
+        border-radius: 9px;
+        font-size: 0.62rem;
+        white-space: nowrap;
+    }
+
+    .friends-empty-state {
+        min-height: 88px;
+        padding: 12px;
+        border-radius: 14px;
+        font-size: 0.72rem;
+    }
+
+    .friends-sent-strip {
+        margin-top: 10px;
+        padding-top: 8px;
+    }
+
+    .friends-sent-strip p {
+        margin-bottom: 6px;
+        font-size: 0.68rem;
+    }
+
+    .friends-chip-list {
+        gap: 5px;
+    }
+}
+
+@media (max-width: 380px) {
+    .friends-grid,
+    .friends-panel-heading {
+        grid-template-columns: 1fr;
+    }
+
+    .friends-summary-chips,
+    .friends-user-actions,
+    .friends-action-group,
+    .friends-user-side-meta {
+        justify-content: flex-start;
+    }
+}

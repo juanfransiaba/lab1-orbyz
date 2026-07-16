@@ -1099,3 +1099,343 @@
         white-space: normal;
     }
 }
+
+@media (max-width: 560px) {
+    .profile-confirm-overlay,
+    .profile-avatar-modal-backdrop {
+        align-items: flex-start;
+        padding: 14px;
+        overflow-y: auto;
+    }
+
+    .profile-confirm-modal,
+    .profile-avatar-modal {
+        padding: 22px 18px;
+        border-radius: 20px;
+    }
+
+    .profile-confirm-actions {
+        flex-direction: column-reverse;
+    }
+
+    .profile-confirm-secondary,
+    .profile-confirm-danger,
+    .profile-avatar-modal-close {
+        width: 100%;
+    }
+
+    .profile-avatar-modal-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .profile-avatar-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-header {
+        height: auto;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 16px;
+    }
+
+    .profile-header-actions,
+    .profile-header-tools {
+        min-width: 0;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .profile-back-button,
+    .profile-friends-button,
+    .profile-manage-button {
+        width: 100%;
+    }
+
+    .profile-title {
+        font-size: 1.48rem;
+    }
+
+    .profile-user-card,
+    .profile-side-card,
+    .profile-history-card {
+        padding: 16px;
+        border-radius: 22px;
+    }
+
+    .profile-side-actions {
+        min-height: 0;
+        gap: 12px;
+    }
+
+    .profile-side-button {
+        min-height: 92px;
+        padding: 0 18px;
+        font-size: 1.02rem;
+    }
+}
+
+@media (max-width: 560px) {
+    .profile-header {
+        height: 64px;
+        min-height: 64px;
+        grid-template-columns: 70px minmax(0, 1fr) 70px;
+        align-items: center;
+        gap: 6px;
+        padding: 8px;
+    }
+
+    .profile-header-actions,
+    .profile-header-tools {
+        width: auto;
+        min-width: 0;
+    }
+
+    .profile-header-actions {
+        justify-content: flex-start;
+    }
+
+    .profile-header-tools {
+        justify-content: flex-end;
+    }
+
+    .profile-back-button,
+    .profile-friends-button,
+    .profile-manage-button {
+        width: auto;
+        min-height: 34px;
+        padding: 0 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+    }
+
+    .profile-title-wrap {
+        min-width: 0;
+    }
+
+    .profile-title-kicker {
+        overflow: hidden;
+        font-size: 0.46rem;
+        letter-spacing: 0.08em;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .profile-title {
+        overflow: hidden;
+        font-size: 1rem;
+        letter-spacing: 0.05em;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .profile-main {
+        width: 100%;
+        max-width: none;
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .profile-user-card,
+    .profile-side-card,
+    .profile-history-card {
+        padding: 10px;
+        border-radius: 18px;
+    }
+
+    .profile-user-top {
+        display: grid;
+        grid-template-columns: 70px minmax(0, 1fr);
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .profile-avatar {
+        width: 68px;
+        height: 68px;
+        font-size: 1.45rem;
+    }
+
+    .profile-avatar-edit {
+        inset: auto 6px 6px;
+        min-height: 18px;
+        font-size: 0.52rem;
+    }
+
+    .profile-label {
+        margin-bottom: 3px;
+        font-size: 0.62rem;
+        letter-spacing: 0.05em;
+    }
+
+    .profile-user-info h2 {
+        overflow-wrap: anywhere;
+        font-size: 1.15rem;
+        line-height: 1.05;
+    }
+
+    .profile-subtitle {
+        margin-top: 3px;
+        font-size: 0.72rem;
+        line-height: 1.25;
+    }
+
+    .profile-navigation-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+        margin-bottom: 10px;
+        padding: 7px;
+        border-radius: 14px;
+    }
+
+    .profile-navigation-button {
+        min-height: 46px;
+        padding: 0 8px;
+        border-radius: 12px;
+        font-size: 0.76rem;
+        line-height: 1.15;
+    }
+
+    .profile-fields {
+        gap: 8px;
+    }
+
+    .profile-field {
+        gap: 5px;
+    }
+
+    .profile-field-header {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .profile-field label {
+        font-size: 0.78rem;
+    }
+
+    .profile-edit-button,
+    .profile-cancel-button {
+        font-size: 0.74rem;
+    }
+
+    .profile-field-box,
+    .profile-field-value {
+        min-height: 42px;
+        padding: 0 10px;
+        border-radius: 12px;
+        font-size: 0.82rem;
+    }
+
+    .profile-actions-row {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        margin-top: 0;
+    }
+
+    .profile-save-button {
+        min-height: 42px;
+        padding: 0 12px;
+        border-radius: 12px;
+        font-size: 0.82rem;
+    }
+
+    .profile-success-message,
+    .profile-error-message {
+        font-size: 0.76rem;
+    }
+
+    .profile-account-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+        margin-top: 10px;
+        padding-top: 10px;
+    }
+
+    .profile-account-actions .profile-logout-button,
+    .profile-account-actions .profile-delete-button {
+        min-height: 42px;
+        border-radius: 12px;
+        font-size: 0.76rem;
+    }
+
+    .profile-avatar-modal {
+        padding: 16px 12px;
+    }
+
+    .profile-avatar-modal-header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 36px;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    .profile-avatar-modal-close {
+        width: 36px;
+        height: 36px;
+    }
+
+    .profile-avatar-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .profile-avatar-option {
+        min-height: 142px;
+        gap: 7px;
+        padding: 10px;
+        border-radius: 14px;
+    }
+
+    .profile-avatar-option-image {
+        width: 62px;
+        height: 62px;
+    }
+
+    .profile-avatar-option strong {
+        font-size: 0.78rem;
+        line-height: 1.15;
+    }
+
+    .profile-avatar-option small {
+        min-height: 22px;
+        font-size: 0.66rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .profile-header {
+        grid-template-columns: 62px minmax(0, 1fr) 62px;
+        padding: 7px;
+    }
+
+    .profile-back-button,
+    .profile-friends-button,
+    .profile-manage-button {
+        padding: 0 6px;
+        font-size: 0.66rem;
+    }
+
+    .profile-main {
+        padding: 6px;
+    }
+
+    .profile-user-top {
+        grid-template-columns: 60px minmax(0, 1fr);
+        gap: 8px;
+    }
+
+    .profile-avatar {
+        width: 58px;
+        height: 58px;
+    }
+
+    .profile-navigation-button,
+    .profile-account-actions .profile-logout-button,
+    .profile-account-actions .profile-delete-button {
+        font-size: 0.7rem;
+    }
+}

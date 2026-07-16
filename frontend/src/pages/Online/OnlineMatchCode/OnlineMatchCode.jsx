@@ -1318,7 +1318,11 @@ function OnlineMatchCode() {
     }
 
     return (
-        <div className={`online-room-page ${phase === "playing" ? "is-playing" : ""}`}>
+        <div
+            className={`online-room-page ${
+                phase === "playing" ? "is-playing" : ""
+            } ${phase === "lobby" ? "is-lobby-page" : ""}`}
+        >
             <header className="online-room-header">
                 <div className="online-room-header-glow" />
                 <button

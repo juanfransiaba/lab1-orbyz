@@ -698,6 +698,39 @@
 }
 
 @media (max-width: 640px) {
+    .admin-header {
+        height: auto;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 16px;
+    }
+
+    .admin-header-actions,
+    .admin-header-spacer {
+        min-width: 0;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .admin-header-spacer {
+        display: none;
+    }
+
+    .admin-title {
+        font-size: 1.48rem;
+    }
+
+    .admin-hero,
+    .admin-tabs,
+    .admin-content {
+        width: min(100%, calc(100% - 24px));
+    }
+
+    .admin-hero,
+    .admin-panel {
+        padding: 18px;
+    }
+
     .admin-hero-stats,
     .admin-tabs,
     .admin-form-actions,
@@ -725,5 +758,334 @@
     .admin-table td {
         padding: 12px 10px;
         font-size: 0.92rem;
+    }
+}
+
+@media (max-width: 560px) {
+    .admin-page {
+        min-height: 100dvh;
+        padding-bottom: 12px;
+    }
+
+    .admin-header {
+        height: 64px;
+        min-height: 64px;
+        grid-template-columns: 58px minmax(0, 1fr) 58px;
+        gap: 6px;
+        padding: 0 8px;
+    }
+
+    .admin-header-actions,
+    .admin-title-wrap {
+        min-width: 0;
+        width: auto;
+        justify-content: center;
+    }
+
+    .admin-header-spacer {
+        display: block;
+        width: 58px;
+        min-width: 0;
+    }
+
+    .admin-back-button {
+        width: auto;
+        min-width: 0;
+        min-height: 34px;
+        padding: 0 8px;
+        border-radius: 9px;
+        font-size: 0.66rem;
+        white-space: nowrap;
+    }
+
+    .admin-title-kicker {
+        font-size: 0.48rem;
+        letter-spacing: 0.16em;
+    }
+
+    .admin-title {
+        font-size: 1.12rem;
+        letter-spacing: 0.08em;
+    }
+
+    .admin-hero,
+    .admin-tabs,
+    .admin-content {
+        width: 100%;
+    }
+
+    .admin-hero {
+        grid-template-columns: minmax(0, 1fr) 108px;
+        gap: 8px;
+        margin-top: 8px;
+        padding: 10px;
+        border-radius: 12px;
+    }
+
+    .admin-eyebrow {
+        margin-bottom: 5px;
+        font-size: 0.52rem;
+        letter-spacing: 0.06em;
+    }
+
+    .admin-hero h2 {
+        font-size: 1rem;
+        line-height: 1.08;
+    }
+
+    .admin-hero p {
+        margin-top: 5px;
+        font-size: 0.66rem;
+        line-height: 1.32;
+    }
+
+    .admin-hero-stats {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .admin-stat-card {
+        min-height: 50px;
+        padding: 7px;
+        border-radius: 9px;
+    }
+
+    .admin-stat-label {
+        font-size: 0.5rem;
+        letter-spacing: 0.04em;
+    }
+
+    .admin-stat-card strong {
+        margin-top: 4px;
+        font-size: 1rem;
+    }
+
+    .admin-stat-note {
+        margin-top: 2px;
+        font-size: 0.56rem;
+    }
+
+    .admin-tabs {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
+        gap: 6px;
+        margin-top: 8px;
+        padding: 0 8px 8px;
+        border-bottom-color: rgba(148, 163, 184, 0.18);
+    }
+
+    .admin-tab {
+        width: 100%;
+        min-height: 32px;
+        padding: 0 6px;
+        border-radius: 9px;
+        font-size: 0.62rem;
+        line-height: 1.1;
+    }
+
+    .admin-content {
+        margin-top: 8px;
+        padding: 0 8px;
+    }
+
+    .admin-section {
+        gap: 8px;
+    }
+
+    .admin-section-header h2 {
+        font-size: 1rem;
+    }
+
+    .admin-section-header p {
+        margin-top: 3px;
+        font-size: 0.66rem;
+        line-height: 1.35;
+    }
+
+    .admin-summary-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .admin-summary-item {
+        padding: 9px;
+        border-radius: 10px;
+    }
+
+    .admin-summary-label {
+        font-size: 0.54rem;
+        letter-spacing: 0.04em;
+    }
+
+    .admin-summary-item strong {
+        margin-top: 4px;
+        font-size: 1rem;
+    }
+
+    .admin-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .admin-panel {
+        padding: 10px;
+        border-radius: 12px;
+    }
+
+    .admin-panel-header {
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+    }
+
+    .admin-panel-header-inline {
+        gap: 8px;
+    }
+
+    .admin-panel-header h3 {
+        font-size: 0.84rem;
+    }
+
+    .admin-panel-header p {
+        margin-top: 3px;
+        font-size: 0.64rem;
+        line-height: 1.3;
+    }
+
+    .admin-search-field {
+        gap: 4px;
+    }
+
+    .admin-search-field span,
+    .admin-field span {
+        font-size: 0.64rem;
+    }
+
+    .admin-search-field input {
+        min-height: 34px;
+        padding: 0 9px;
+        border-radius: 8px;
+        font-size: 0.72rem;
+    }
+
+    .admin-form {
+        gap: 8px;
+    }
+
+    .admin-field {
+        gap: 5px;
+    }
+
+    .admin-field input,
+    .admin-field textarea,
+    .admin-field select,
+    .admin-role-select {
+        min-height: 34px;
+        padding: 8px 9px;
+        border-radius: 8px;
+        font-size: 0.72rem;
+    }
+
+    .admin-field textarea {
+        min-height: 76px;
+    }
+
+    .admin-form-actions,
+    .admin-list-card-actions {
+        flex-direction: row;
+        gap: 6px;
+    }
+
+    .admin-button {
+        width: auto;
+        min-height: 32px;
+        padding: 0 9px;
+        border-radius: 8px;
+        font-size: 0.64rem;
+        white-space: nowrap;
+    }
+
+    .admin-feedback {
+        margin-top: 8px;
+        padding: 8px 9px;
+        border-radius: 8px;
+        font-size: 0.66rem;
+    }
+
+    .admin-list {
+        gap: 7px;
+    }
+
+    .admin-list-card {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        padding: 9px;
+        border-radius: 10px;
+    }
+
+    .admin-list-card-main h4 {
+        font-size: 0.78rem;
+    }
+
+    .admin-meta {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+        margin-top: 7px;
+    }
+
+    .admin-meta dt {
+        font-size: 0.52rem;
+        letter-spacing: 0.04em;
+    }
+
+    .admin-meta dd {
+        margin-top: 2px;
+        font-size: 0.64rem;
+    }
+
+    .admin-empty {
+        padding: 8px 0;
+        font-size: 0.68rem;
+        line-height: 1.35;
+    }
+
+    .admin-list-footer {
+        margin-top: 8px;
+    }
+
+    .admin-table-wrap {
+        border-radius: 10px;
+    }
+
+    .admin-table {
+        min-width: 520px;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 8px;
+        font-size: 0.68rem;
+    }
+
+    .admin-role-badge {
+        min-height: 24px;
+        padding: 0 7px;
+        font-size: 0.62rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .admin-hero {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-summary-strip,
+    .admin-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-list-card {
+        align-items: stretch;
+        flex-direction: column;
     }
 }

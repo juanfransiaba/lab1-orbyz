@@ -26,8 +26,13 @@ body,
   color: var(--color-text);
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   line-height: 1.5;
+  overflow-x: hidden;
 }
 
 button,
@@ -35,9 +40,25 @@ input,
 textarea,
 select {
   font: inherit;
+  min-width: 0;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+@media (max-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
 }

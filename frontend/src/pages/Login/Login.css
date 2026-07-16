@@ -155,3 +155,19 @@
         font-size: 1.8rem;
     }
 }
+
+@media (max-width: 640px) {
+    .login-left {
+        min-height: 100vh;
+        padding: 28px 18px;
+    }
+
+    .login-right {
+        display: none;
+    }
+
+    .login-title {
+        margin-bottom: 24px;
+        font-size: 1.65rem;
+    }
+}

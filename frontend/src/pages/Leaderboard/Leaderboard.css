@@ -494,3 +494,227 @@
         justify-self: start;
     }
 }
+
+@media (max-width: 560px) {
+    .leaderboard-header {
+        height: 64px;
+        min-height: 64px;
+        grid-template-columns: 58px minmax(0, 1fr) 58px;
+        align-items: center;
+        gap: 6px;
+        padding: 8px;
+    }
+
+    .leaderboard-header-actions,
+    .leaderboard-header-spacer,
+    .leaderboard-header-tools {
+        width: 58px;
+        min-width: 0;
+    }
+
+    .leaderboard-header-actions {
+        justify-content: flex-start;
+    }
+
+    .leaderboard-header-spacer {
+        display: block;
+    }
+
+    .leaderboard-back-button {
+        width: auto;
+        min-height: 34px;
+        padding: 0 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+    }
+
+    .leaderboard-title-wrap {
+        min-width: 0;
+    }
+
+    .leaderboard-title-kicker {
+        overflow: hidden;
+        font-size: 0.46rem;
+        letter-spacing: 0.08em;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .leaderboard-title {
+        overflow: hidden;
+        font-size: 1rem;
+        letter-spacing: 0.05em;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .leaderboard-main {
+        width: 100%;
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .leaderboard-hero {
+        grid-template-columns: minmax(0, 1fr) 88px;
+        gap: 8px;
+        padding: 12px;
+        border-radius: 16px;
+    }
+
+    .leaderboard-eyebrow,
+    .leaderboard-player-summary span {
+        font-size: 0.54rem;
+        letter-spacing: 0.04em;
+    }
+
+    .leaderboard-hero-copy h2 {
+        margin-top: 6px;
+        font-size: 1.16rem;
+        line-height: 1.05;
+    }
+
+    .leaderboard-hero-copy p {
+        margin-top: 6px;
+        font-size: 0.68rem;
+        line-height: 1.25;
+    }
+
+    .leaderboard-player-summary {
+        min-height: 88px;
+        padding: 9px;
+        border-radius: 13px;
+    }
+
+    .leaderboard-player-summary strong {
+        margin-top: 5px;
+        font-size: 1.35rem;
+    }
+
+    .leaderboard-player-summary p {
+        margin-top: 4px;
+        font-size: 0.62rem;
+        line-height: 1.15;
+    }
+
+    .leaderboard-panel {
+        padding: 8px;
+        border-radius: 16px;
+    }
+
+    .leaderboard-podium {
+        min-height: 190px;
+        grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr) minmax(0, 0.92fr);
+        align-items: end;
+        gap: 6px;
+        padding: 4px 0 0;
+    }
+
+    .leaderboard-podium-card.rank-1,
+    .leaderboard-podium-card.rank-2,
+    .leaderboard-podium-card.rank-3 {
+        grid-column: auto;
+    }
+
+    .leaderboard-podium-card.rank-1 {
+        grid-column: 2;
+        min-height: 178px;
+    }
+
+    .leaderboard-podium-card.rank-2 {
+        grid-column: 1;
+        min-height: 148px;
+    }
+
+    .leaderboard-podium-card.rank-3 {
+        grid-column: 3;
+        min-height: 136px;
+    }
+
+    .leaderboard-podium-card {
+        padding: 30px 6px 10px;
+        border-radius: 16px 16px 10px 10px;
+    }
+
+    .leaderboard-rank {
+        top: 8px;
+        min-width: 38px;
+        min-height: 26px;
+        padding: 0 8px;
+        font-size: 0.66rem;
+    }
+
+    .leaderboard-avatar,
+    .rank-1 .leaderboard-avatar {
+        width: 42px;
+        height: 42px;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+    }
+
+    .leaderboard-podium-card h3 {
+        font-size: 0.72rem;
+    }
+
+    .leaderboard-podium-card strong {
+        margin-top: 5px;
+        font-size: 1.05rem;
+    }
+
+    .leaderboard-podium-card > span:last-child {
+        font-size: 0.62rem;
+    }
+
+    .leaderboard-table {
+        margin-top: 8px;
+        border-radius: 14px;
+    }
+
+    .leaderboard-row {
+        grid-template-columns: 42px minmax(0, 1fr) 58px;
+        gap: 7px;
+        min-height: 40px;
+        padding: 6px 8px;
+    }
+
+    .leaderboard-row-rank,
+    .leaderboard-row strong {
+        font-size: 0.74rem;
+    }
+
+    .leaderboard-row-player {
+        gap: 7px;
+        font-size: 0.74rem;
+    }
+
+    .leaderboard-row-avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .leaderboard-header {
+        grid-template-columns: 52px minmax(0, 1fr) 52px;
+        padding: 7px;
+    }
+
+    .leaderboard-header-actions,
+    .leaderboard-header-spacer,
+    .leaderboard-header-tools {
+        width: 52px;
+    }
+
+    .leaderboard-back-button {
+        padding: 0 6px;
+        font-size: 0.66rem;
+    }
+
+    .leaderboard-main {
+        padding: 6px;
+    }
+
+    .leaderboard-hero {
+        grid-template-columns: minmax(0, 1fr) 76px;
+    }
+}

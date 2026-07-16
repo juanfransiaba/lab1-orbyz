@@ -1282,3 +1282,474 @@
         width: 100%;
     }
 }
+
+@media (max-width: 560px) {
+    .tournaments-header {
+        min-height: 64px;
+        grid-template-columns: 58px minmax(0, 1fr) 58px;
+        align-items: center;
+        gap: 6px;
+        padding: 8px;
+    }
+
+    .tournaments-header-actions,
+    .tournaments-header-spacer {
+        width: 58px;
+        min-width: 0;
+        justify-content: flex-start;
+    }
+
+    .tournaments-header-spacer {
+        display: block;
+    }
+
+    .tournaments-back-button {
+        width: auto;
+        min-height: 34px;
+        padding: 0 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+    }
+
+    .tournaments-title-wrap {
+        min-width: 0;
+    }
+
+    .tournaments-title-kicker {
+        overflow: hidden;
+        font-size: 0.46rem;
+        letter-spacing: 0.08em;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .tournaments-title {
+        overflow: hidden;
+        font-size: 1rem;
+        letter-spacing: 0.05em;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .tournaments-main {
+        width: 100%;
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .tournaments-arena,
+    .tournaments-arena-content {
+        min-height: 188px;
+    }
+
+    .tournaments-arena {
+        border-radius: 16px;
+    }
+
+    .tournaments-arena::after {
+        background:
+            linear-gradient(90deg, rgba(8, 21, 44, 0.96) 0%, rgba(16, 40, 69, 0.7) 56%, rgba(16, 40, 69, 0.18) 100%),
+            linear-gradient(180deg, rgba(8, 21, 44, 0.08) 0%, rgba(8, 21, 44, 0.38) 100%);
+    }
+
+    .tournaments-arena-content {
+        gap: 10px;
+        padding: 14px;
+    }
+
+    .tournaments-arena .tournaments-eyebrow {
+        min-height: 22px;
+        padding: 0 8px;
+        font-size: 0.52rem;
+        letter-spacing: 0.04em;
+    }
+
+    .tournaments-arena-copy h2 {
+        max-width: 12ch;
+        margin-top: 7px;
+        font-size: 1.55rem;
+        line-height: 0.98;
+    }
+
+    .tournaments-arena-copy p {
+        max-width: 34ch;
+        margin-top: 7px;
+        font-size: 0.7rem;
+        line-height: 1.24;
+    }
+
+    .tournaments-arena-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+        margin-top: 10px;
+    }
+
+    .tournaments-arena-actions a,
+    .tournaments-arena-actions button {
+        width: 100%;
+        min-height: 36px;
+        padding: 0 8px;
+        border-radius: 11px;
+        font-size: 0.7rem;
+    }
+
+    .tournaments-setup {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .tournaments-create-card,
+    .tournaments-join-card,
+    .tournaments-list-card,
+    .tournaments-detail,
+    .tournaments-spectator-card,
+    .tournaments-participants-card,
+    .tournaments-bracket-card {
+        padding: 10px;
+        border-radius: 15px;
+    }
+
+    .tournaments-create-card,
+    .tournaments-join-card {
+        min-height: 0;
+        gap: 10px;
+    }
+
+    .tournaments-card-head,
+    .tournaments-list-head,
+    .tournaments-actions {
+        gap: 8px;
+    }
+
+    .tournaments-card-head span,
+    .tournaments-join-card > div > span,
+    .tournaments-list-item span,
+    .tournaments-eyebrow,
+    .tournaments-card-head span,
+    .tournaments-list-head span,
+    .tournaments-status,
+    .tournaments-code-box span,
+    .tournaments-summary span,
+    .tournaments-section-head span,
+    .tournaments-spectator-match span,
+    .tournaments-match-top span {
+        min-height: 20px;
+        padding: 0 7px;
+        font-size: 0.5rem;
+        letter-spacing: 0.04em;
+    }
+
+    .tournaments-card-head h3,
+    .tournaments-join-card h3,
+    .tournaments-list-head h3 {
+        margin-top: 5px;
+        font-size: 0.92rem;
+        line-height: 1.08;
+    }
+
+    .tournaments-card-head p,
+    .tournaments-join-card p,
+    .tournaments-muted,
+    .tournaments-hint {
+        font-size: 0.66rem;
+        line-height: 1.2;
+    }
+
+    .tournaments-form-grid,
+    .tournaments-edit-card form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+        margin-top: 10px;
+    }
+
+    .tournaments-create-card label,
+    .tournaments-edit-card label {
+        gap: 5px;
+        font-size: 0.56rem;
+        letter-spacing: 0.04em;
+    }
+
+    .tournaments-create-card input,
+    .tournaments-create-card select,
+    .tournaments-join-card input,
+    .tournaments-list-head select,
+    .tournaments-edit-card input,
+    .tournaments-edit-card select {
+        min-height: 36px;
+        padding: 0 9px;
+        border-radius: 11px;
+        font-size: 0.76rem;
+    }
+
+    .tournaments-primary-button,
+    .tournaments-join-card button,
+    .tournaments-actions button,
+    .tournaments-edit-card button,
+    .tournaments-match-player button,
+    .tournaments-play-match-button {
+        min-height: 36px;
+        padding: 0 9px;
+        border-radius: 11px;
+        font-size: 0.72rem;
+    }
+
+    .tournaments-code-form {
+        grid-template-columns: minmax(0, 1fr) 70px;
+        gap: 7px;
+    }
+
+    .tournaments-code-form input,
+    .tournaments-code-form button {
+        min-height: 40px;
+    }
+
+    .tournaments-code-form input {
+        font-size: 0.95rem;
+        letter-spacing: 0.1em;
+    }
+
+    .tournaments-browse-strip {
+        align-items: center;
+        flex-direction: row;
+        gap: 8px;
+        padding: 10px;
+        border-radius: 15px;
+    }
+
+    .tournaments-browse-strip strong {
+        margin-top: 3px;
+        font-size: 0.78rem;
+    }
+
+    .tournaments-browse-strip button {
+        width: auto;
+        min-height: 36px;
+        padding: 0 9px;
+        border-radius: 11px;
+        font-size: 0.7rem;
+    }
+
+    .tournaments-workspace,
+    .tournaments-content-grid,
+    .tournaments-list-card,
+    .tournaments-detail {
+        gap: 8px;
+    }
+
+    .tournaments-detail {
+        min-height: 0;
+    }
+
+    .tournaments-list-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 112px;
+        align-items: end;
+    }
+
+    .tournaments-list-head select {
+        width: 100%;
+    }
+
+    .tournaments-list {
+        gap: 7px;
+    }
+
+    .tournaments-list-item {
+        gap: 5px;
+        padding: 9px;
+        border-radius: 12px;
+    }
+
+    .tournaments-list-item strong {
+        font-size: 0.82rem;
+    }
+
+    .tournaments-list-item small {
+        font-size: 0.66rem;
+    }
+
+    .tournaments-detail-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 96px;
+        gap: 8px;
+        padding: 10px;
+        border-radius: 14px;
+    }
+
+    .tournaments-detail-head h2 {
+        margin-top: 5px;
+        font-size: 1.05rem;
+        line-height: 1.08;
+    }
+
+    .tournaments-detail-head p {
+        margin-top: 4px;
+        font-size: 0.66rem;
+        line-height: 1.2;
+    }
+
+    .tournaments-code-box {
+        width: auto;
+        min-width: 0;
+        padding: 9px;
+        border-radius: 12px;
+    }
+
+    .tournaments-code-box strong {
+        margin-top: 4px;
+        font-size: 0.9rem;
+        letter-spacing: 0.08em;
+    }
+
+    .tournaments-summary {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .tournaments-summary div {
+        padding: 8px;
+        border-radius: 11px;
+    }
+
+    .tournaments-summary strong {
+        margin-top: 4px;
+        font-size: 0.72rem;
+    }
+
+    .tournaments-summary small {
+        margin-top: 3px;
+        font-size: 0.6rem;
+        line-height: 1.15;
+    }
+
+    .tournaments-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tournaments-actions button {
+        width: 100%;
+    }
+
+    .tournaments-edit-card summary {
+        padding: 10px;
+        border-radius: 12px;
+        font-size: 0.72rem;
+    }
+
+    .tournaments-spectator-list {
+        grid-template-columns: 1fr;
+        gap: 7px;
+    }
+
+    .tournaments-spectator-match {
+        grid-template-columns: minmax(0, 1fr) 82px;
+        gap: 7px;
+        padding: 8px;
+        border-radius: 12px;
+    }
+
+    .tournaments-participant {
+        gap: 7px;
+        padding: 7px;
+        border-radius: 11px;
+    }
+
+    .tournaments-participant > span {
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        font-size: 0.76rem;
+    }
+
+    .tournaments-participant strong,
+    .tournaments-match-player strong {
+        font-size: 0.76rem;
+    }
+
+    .tournaments-participant small,
+    .tournaments-match-card small {
+        font-size: 0.62rem;
+    }
+
+    .tournaments-match-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .tournaments-match-card {
+        gap: 6px;
+        padding: 8px;
+        border-radius: 12px;
+    }
+
+    .tournaments-match-player {
+        min-height: 34px;
+        gap: 5px;
+        padding: 6px;
+        border-radius: 10px;
+    }
+
+    .tournaments-match-player button {
+        min-height: 28px;
+        padding: 0 7px;
+        border-radius: 9px;
+        font-size: 0.64rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .tournaments-header {
+        grid-template-columns: 52px minmax(0, 1fr) 52px;
+        padding: 7px;
+    }
+
+    .tournaments-header-actions,
+    .tournaments-header-spacer {
+        width: 52px;
+    }
+
+    .tournaments-back-button {
+        padding: 0 6px;
+        font-size: 0.66rem;
+    }
+
+    .tournaments-main {
+        padding: 6px;
+    }
+
+    .tournaments-arena,
+    .tournaments-arena-content {
+        min-height: 172px;
+    }
+
+    .tournaments-setup,
+    .tournaments-match-list {
+        gap: 6px;
+    }
+
+    .tournaments-create-card,
+    .tournaments-join-card,
+    .tournaments-list-card,
+    .tournaments-detail,
+    .tournaments-spectator-card,
+    .tournaments-participants-card,
+    .tournaments-bracket-card {
+        padding: 8px;
+    }
+
+    .tournaments-card-head h3,
+    .tournaments-join-card h3,
+    .tournaments-list-head h3 {
+        font-size: 0.84rem;
+    }
+
+    .tournaments-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tournaments-actions {
+        grid-template-columns: 1fr;
+    }
+}

@@ -653,3 +653,55 @@
         display: none;
     }
 }
+
+@media (max-width: 420px) {
+    .main-menu-header {
+        height: auto;
+        min-height: 92px;
+        grid-template-columns: 58px 1fr 104px;
+        padding: 12px;
+    }
+
+    .main-menu-logo-box,
+    .main-menu-header-spacer {
+        width: 58px;
+    }
+
+    .main-menu-logo {
+        width: 42px;
+        height: 42px;
+        transform: scale(1.4);
+    }
+
+    .main-menu-title-wrap {
+        width: min(136px, 100%);
+    }
+
+    .main-menu-title-kicker {
+        font-size: 0.46rem;
+        letter-spacing: 0.1em;
+    }
+
+    .main-menu-title {
+        font-size: 1.18rem;
+        letter-spacing: 0.08em;
+    }
+
+    .main-menu-header-actions {
+        min-width: 104px;
+    }
+
+    .main-menu-options {
+        padding: 10px 10px 16px;
+    }
+
+    .main-menu-row {
+        min-height: 142px;
+        border-radius: 18px;
+    }
+
+    .main-menu-row-left {
+        min-height: 142px;
+        padding: 16px;
+    }
+}

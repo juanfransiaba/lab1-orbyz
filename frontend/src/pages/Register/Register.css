@@ -122,4 +122,33 @@
     .register-page {
         grid-template-columns: 1fr;
     }
+
+    .register-left,
+    .register-right {
+        min-height: 50vh;
+    }
+
+    .register-left {
+        padding: 32px 24px;
+    }
+
+    .register-title {
+        font-size: 1.8rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .register-left {
+        min-height: 100vh;
+        padding: 28px 18px;
+    }
+
+    .register-right {
+        display: none;
+    }
+
+    .register-title {
+        margin-bottom: 24px;
+        font-size: 1.65rem;
+    }
 }
