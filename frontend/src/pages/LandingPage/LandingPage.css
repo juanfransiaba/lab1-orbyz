@@ -318,3 +318,119 @@
         flex-direction: column;
     }
 }
+
+@media (max-width: 560px) {
+    .landing-page {
+        min-height: 100dvh;
+        overflow-x: hidden;
+    }
+
+    .landing-header {
+        height: 58px;
+        min-height: 58px;
+        padding: 7px 12px;
+        justify-content: flex-start;
+        background: linear-gradient(180deg, rgba(8, 21, 44, 0.72), rgba(8, 21, 44, 0));
+    }
+
+    .landing-brand {
+        width: 46px;
+        height: 46px;
+        justify-content: flex-start;
+        overflow: visible;
+    }
+
+    .landing-logo {
+        width: 40px;
+        height: 40px;
+        transform: scale(1.38);
+        transform-origin: left center;
+    }
+
+    .landing-main {
+        width: 100%;
+        padding: 0;
+    }
+
+    .landing-hero {
+        width: 100%;
+        min-height: 100dvh;
+        height: 100dvh;
+        margin-left: 0;
+        align-items: center;
+        justify-content: center;
+        padding: 72px 18px 28px;
+    }
+
+    .landing-hero-overlay {
+        background:
+            linear-gradient(180deg, rgba(8, 21, 44, 0.5) 0%, rgba(8, 21, 44, 0.74) 100%),
+            linear-gradient(135deg, rgba(11, 30, 60, 0.38), rgba(31, 78, 140, 0.28));
+    }
+
+    .landing-hero-content {
+        width: min(100%, 340px);
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .landing-kicker {
+        margin-bottom: 12px;
+        padding: 6px 10px;
+        font-size: 0.62rem;
+        letter-spacing: 0.06em;
+        line-height: 1.2;
+    }
+
+    .landing-hero h1 {
+        font-size: clamp(3rem, 16vw, 4.45rem);
+        line-height: 0.92;
+        letter-spacing: 0.1em;
+        padding-left: 0.1em;
+    }
+
+    .landing-hero h2 {
+        max-width: 25ch;
+        margin-top: 14px;
+        font-size: 0.98rem;
+        line-height: 1.28;
+    }
+
+    .landing-actions {
+        width: min(286px, 100%);
+        gap: 9px;
+        margin-top: 22px;
+    }
+
+    .landing-primary-cta,
+    .landing-secondary-cta {
+        min-height: 42px;
+        padding: 0 14px;
+        border-radius: 12px;
+        font-size: 0.86rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .landing-hero {
+        padding: 66px 14px 24px;
+    }
+
+    .landing-kicker {
+        font-size: 0.56rem;
+    }
+
+    .landing-hero h1 {
+        font-size: clamp(2.65rem, 15vw, 3.45rem);
+    }
+
+    .landing-hero h2 {
+        font-size: 0.88rem;
+    }
+
+    .landing-actions {
+        width: min(260px, 100%);
+    }
+}

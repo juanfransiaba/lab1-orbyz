@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import "./LandingPage.css";
 
 import img1 from "../../assets/images/imagen.jpg";
@@ -7,7 +8,6 @@ import img3 from "../../assets/images/imagen5.jpg";
 import img4 from "../../assets/images/imagen4.jpg";
 import img5 from "../../assets/images/imagen6.jpg";
 import logo from "../../assets/images/logo.png";
-import {Link} from "react-router-dom";
 
 function LandingPage() {
     const images = [img1, img2, img3, img4, img5];
@@ -19,7 +19,7 @@ function LandingPage() {
         }, 3000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [images.length]);
 
     return (
         <div className="landing-page">
@@ -30,7 +30,7 @@ function LandingPage() {
 
                 <nav className="landing-nav" aria-label="Acciones principales">
                     <Link className="landing-nav-link" to="/login">
-                        Iniciar sesión
+                        Iniciar sesion
                     </Link>
                     <Link className="landing-nav-button" to="/register">
                         Registrarse
@@ -43,10 +43,12 @@ function LandingPage() {
                     <div className="landing-hero-background">
                         {images.map((image, index) => (
                             <img
-                                key={index}
+                                key={image}
                                 src={image}
                                 alt={`Slide ${index + 1}`}
-                                className={`landing-hero-image ${index === current ? "active" : ""}`}
+                                className={`landing-hero-image ${
+                                    index === current ? "active" : ""
+                                }`}
                             />
                         ))}
                         <div className="landing-hero-overlay" />
@@ -56,7 +58,8 @@ function LandingPage() {
                         <p className="landing-kicker">Juego de geografia social</p>
                         <h1>ORBYZ</h1>
                         <h2>
-                            Aprende geografía jugando con una experiencia clara y competitiva.
+                            Aprende geografia jugando con una experiencia clara y
+                            competitiva.
                         </h2>
 
                         <div className="landing-actions">
