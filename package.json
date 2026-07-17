@@ -1,0 +1,12 @@
+{
+  "name": "orbyz",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "build": "npm install --prefix frontend --legacy-peer-deps && npm run build --prefix frontend && npm install --prefix backend",
+    "start": "node backend/index.js"
+  }
+}
