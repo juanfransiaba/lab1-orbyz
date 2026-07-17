@@ -13,6 +13,12 @@ import img7 from "../../assets/images/imagen7.jpg";
 const PASSWORD_REQUIREMENTS_TEXT =
     "La contrasena debe tener al menos 8 caracteres, incluir un numero y un caracter especial.";
 
+const OAUTH_PROVIDERS = [
+    { id: "google", label: "Google", badge: "G" },
+    { id: "microsoft", label: "Microsoft", badge: "M" },
+    { id: "github", label: "GitHub", badge: "GH" },
+];
+
 function Register() {
     const images = [img1, img2, img3, img4, img5, img6, img7];
     const [current, setCurrent] = useState(0);
@@ -113,6 +119,20 @@ function Register() {
         }
     };
 
+    const handleOAuthRegister = (providerId) => {
+        const apiUrl = import.meta.env.VITE_API_URL;
+
+        if (!apiUrl) {
+            setError("Falta configurar VITE_API_URL en el frontend.");
+            return;
+        }
+
+        const redirectUrl = `${window.location.origin}/auth/callback`;
+        window.location.href = `${apiUrl}/auth/oauth/${providerId}?redirect=${encodeURIComponent(
+            redirectUrl
+        )}`;
+    };
+
     return (
         <div className="register-page">
             <section className="register-left">
@@ -120,6 +140,25 @@ function Register() {
                     <span className="register-tag">Register</span>
 
                     <h1 className="register-title">Crear cuenta</h1>
+
+                    <div className="register-oauth">
+                        <div className="register-oauth-divider">
+                            <span>Registrarse con</span>
+                        </div>
+                        <div className="register-oauth-grid">
+                            {OAUTH_PROVIDERS.map((provider) => (
+                                <button
+                                    type="button"
+                                    key={provider.id}
+                                    className={`register-oauth-button is-${provider.id}`}
+                                    onClick={() => handleOAuthRegister(provider.id)}
+                                >
+                                    <span aria-hidden="true">{provider.badge}</span>
+                                    {provider.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
 
                     <form className="register-form" onSubmit={handleSubmit}>
                         <div className="form-group">

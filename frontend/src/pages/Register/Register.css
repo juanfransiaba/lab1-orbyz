@@ -33,6 +33,87 @@
     margin-bottom: 32px;
 }
 
+.register-oauth {
+    margin-bottom: 24px;
+}
+
+.register-oauth-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.register-oauth-divider::before,
+.register-oauth-divider::after {
+    content: "";
+    height: 1px;
+    flex: 1;
+    background: var(--color-border);
+}
+
+.register-oauth-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px;
+    margin-top: 14px;
+}
+
+.register-oauth-button {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--color-primary);
+    cursor: pointer;
+    font-size: 0.84rem;
+    font-weight: 800;
+    transition:
+        transform 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.register-oauth-button span {
+    width: 22px;
+    height: 22px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1f4e8c;
+    font-size: 0.64rem;
+    font-weight: 900;
+}
+
+.register-oauth-button:hover {
+    transform: translateY(-1px);
+    border-color: rgba(59, 130, 246, 0.4);
+    box-shadow: 0 10px 20px rgba(15, 32, 61, 0.08);
+}
+
+.register-oauth-button.is-google span {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.register-oauth-button.is-microsoft span {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.register-oauth-button.is-github span {
+    background: #111827;
+    color: #ffffff;
+}
+
 .register-form {
     display: flex;
     flex-direction: column;
@@ -150,5 +231,18 @@
     .register-title {
         margin-bottom: 24px;
         font-size: 1.65rem;
+    }
+
+    .register-oauth {
+        margin-bottom: 20px;
+    }
+
+    .register-oauth-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .register-oauth-button {
+        min-height: 42px;
+        font-size: 0.86rem;
     }
 }

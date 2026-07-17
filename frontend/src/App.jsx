@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import Login from "./pages/Login/Login.jsx";
+import AuthCallback from "./pages/Login/AuthCallback.jsx";
 import LandingPage from "./pages/LandingPage/LandingPage.jsx";
 import Register from "./pages/Register/Register.jsx";
 import MainMenu from "./pages/Menu/MainMenu.jsx";
@@ -30,6 +31,7 @@ function App() {
             <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/register" element={<Register />} />
 
                 <Route
