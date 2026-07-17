@@ -63,7 +63,7 @@ app.use("/tournaments", tournamentsRoutes);
 app.use("/store", storeRoutes);
 
 // ── Servir el frontend compilado (Vite build) ──
-const frontendDist = path.join(__dirname, "..", "frontend", "dist");
+const frontendDist = path.join(__dirname, "..", "frontEnd", "dist");
 
 if (fs.existsSync(frontendDist)) {
     app.use(express.static(frontendDist));

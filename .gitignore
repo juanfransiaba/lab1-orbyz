@@ -3,3 +3,4 @@ node_modules/
 backend/.env
 .idea/
 frontend/.vite-build-check/
+orbyz_dump.sql
