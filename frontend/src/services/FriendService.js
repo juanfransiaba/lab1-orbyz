@@ -77,3 +77,10 @@ export async function removeFriendship(friendshipId) {
         method: "DELETE",
     });
 }
+
+export async function inviteFriendToRoom(friendId, code) {
+    return requestJSON("/friends/invite", {
+        method: "POST",
+        body: JSON.stringify({ friendId, code }),
+    });
+}

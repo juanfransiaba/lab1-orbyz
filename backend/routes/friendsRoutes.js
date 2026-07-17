@@ -11,6 +11,7 @@ const {
     rejectFriendRequest,
     getFriends,
     removeFriendship,
+    inviteFriendToRoom,
 } = require('../controllers/friendsController');
 
 // Todas las rutas requieren estar logueado
@@ -23,5 +24,6 @@ router.get('/requests/sent', getSentRequests);
 router.put('/:friendshipId/accept', acceptFriendRequest);
 router.put('/:friendshipId/reject', rejectFriendRequest);
 router.delete('/:friendshipId', removeFriendship);
+router.post('/invite', inviteFriendToRoom);
 
 module.exports = router;

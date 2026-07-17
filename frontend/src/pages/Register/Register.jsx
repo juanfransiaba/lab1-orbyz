@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import "./Register.css";
+import { Link, useNavigate, useLocation } from "react-router-dom";import "./Register.css";
 
 import img1 from "../../assets/images/imagen.jpg";
 import img2 from "../../assets/images/imagen2.jpg";
@@ -31,6 +30,10 @@ function Register() {
     const [loading, setLoading] = useState(false);
 
     const navigate = useNavigate();
+    const location = useLocation();
+    const redirectParam = new URLSearchParams(location.search).get("redirect");
+    const redirectTo =
+        redirectParam && redirectParam.startsWith("/") ? redirectParam : "/mainmenu";
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -111,7 +114,7 @@ function Register() {
             }
 
             localStorage.setItem("token", data.token);
-            navigate("/mainmenu");
+            navigate(redirectTo);
         } catch (err) {
             setError("Error al conectar con el servidor.");
         } finally {
@@ -127,7 +130,12 @@ function Register() {
             return;
         }
 
-        const redirectUrl = `${window.location.origin}/auth/callback`;
+        // Si venimos de una invitación, pasamos el destino al callback en ?next=
+        let redirectUrl = `${window.location.origin}/auth/callback`;
+        if (redirectTo && redirectTo !== "/mainmenu") {
+            redirectUrl += `?next=${encodeURIComponent(redirectTo)}`;
+        }
+
         window.location.href = `${apiUrl}/auth/oauth/${providerId}?redirect=${encodeURIComponent(
             redirectUrl
         )}`;
@@ -217,8 +225,7 @@ function Register() {
 
                     <div className="register-links">
                         <p>
-                            Ya tenes cuenta? <Link to="/login">Iniciar sesion</Link>
-                        </p>
+                            Ya tenes cuenta? <Link to={`/login${location.search}`}>Iniciar sesion</Link>                        </p>
                     </div>
                 </div>
             </section>

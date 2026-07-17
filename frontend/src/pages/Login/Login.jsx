@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import "./Login.css";
+import { Link, useNavigate, useLocation } from "react-router-dom";import "./Login.css";
 
 import img1 from "../../assets/images/imagen.jpg";
 import img2 from "../../assets/images/imagen2.jpg";
@@ -20,6 +19,11 @@ function Login() {
     const images = [img1, img2, img3, img4, img5, img6, img7];
     const [current, setCurrent] = useState(0);
     const navigate = useNavigate();
+
+    const location = useLocation();
+    const redirectParam = new URLSearchParams(location.search).get("redirect");
+    const redirectTo =
+        redirectParam && redirectParam.startsWith("/") ? redirectParam : "/mainmenu";
 
     const [identifier, setIdentifier] = useState("");
     const [password, setPassword] = useState("");
@@ -65,7 +69,7 @@ function Login() {
             }
 
             localStorage.setItem("token", data.token);
-            navigate("/mainmenu");
+            navigate(redirectTo);
         } catch {
             setError("Error al conectar con el servidor.");
         } finally {
@@ -81,7 +85,12 @@ function Login() {
             return;
         }
 
-        const redirectUrl = `${window.location.origin}/auth/callback`;
+        // Si venimos de una invitación, pasamos el destino al callback en ?next=
+        let redirectUrl = `${window.location.origin}/auth/callback`;
+        if (redirectTo && redirectTo !== "/mainmenu") {
+            redirectUrl += `?next=${encodeURIComponent(redirectTo)}`;
+        }
+
         window.location.href = `${apiUrl}/auth/oauth/${providerId}?redirect=${encodeURIComponent(
             redirectUrl
         )}`;
@@ -146,8 +155,7 @@ function Login() {
 
                     <div className="login-links">
                         <p>
-                            No tenes cuenta? <Link to="/register">Registrarse</Link>
-                        </p>
+                            No tenes cuenta? <Link to={`/register${location.search}`}>Registrarse</Link>                        </p>
                         <p>
                             Olvidaste tu contrasena? <Link to="/recover">Recuperar</Link>
                         </p>

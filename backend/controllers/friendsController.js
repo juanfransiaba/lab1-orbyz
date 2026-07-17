@@ -1,4 +1,5 @@
 const pool = require("../db");
+const { sendRoomInviteEmail } = require("../utils/mailer");
 
 // ────────────────────────────────────────────────
 // Helper: buscar amistad existente entre dos usuarios (en cualquier dirección)
@@ -263,6 +264,64 @@ const removeFriendship = async (req, res) => {
     }
 };
 
+// ────────────────────────────────────────────────
+// POST /friends/invite  { friendId, code }
+//   — invita a un amigo a tu sala online por mail
+// ────────────────────────────────────────────────
+const inviteFriendToRoom = async (req, res) => {
+    try {
+        const inviterId = req.user.user_id;
+        const { friendId, code } = req.body;
+
+        const cleanCode = String(code || "").trim().toUpperCase();
+
+        if (!friendId || !cleanCode) {
+            return res.status(400).json({ message: "Falta el amigo o el código de sala." });
+        }
+
+        // Verificar que sea realmente un amigo aceptado
+        const friendship = await pool.query(
+            `SELECT 1 FROM friendships
+             WHERE status = 'accepted'
+               AND ((requester_id = $1 AND addressee_id = $2)
+                 OR (requester_id = $2 AND addressee_id = $1))`,
+            [inviterId, friendId]
+        );
+
+        if (friendship.rows.length === 0) {
+            return res.status(403).json({ message: "Ese usuario no es tu amigo." });
+        }
+
+        const friendRow = await pool.query(
+            "SELECT username, email FROM users WHERE user_id = $1",
+            [friendId]
+        );
+        const inviterRow = await pool.query(
+            "SELECT username FROM users WHERE user_id = $1",
+            [inviterId]
+        );
+
+        const friend = friendRow.rows[0];
+        const inviter = inviterRow.rows[0];
+
+        if (!friend?.email) {
+            return res.status(404).json({ message: "El amigo no tiene un email cargado." });
+        }
+
+        await sendRoomInviteEmail({
+            to: friend.email,
+            toUsername: friend.username,
+            fromUsername: inviter?.username || "Un amigo",
+            code: cleanCode,
+        });
+
+        res.json({ message: "Invitación enviada." });
+    } catch (error) {
+        console.error("Error en inviteFriendToRoom:", error);
+        res.status(500).json({ message: "No se pudo enviar la invitación." });
+    }
+};
+
 module.exports = {
     sendFriendRequest,
     getReceivedRequests,
@@ -271,4 +330,5 @@ module.exports = {
     rejectFriendRequest,
     getFriends,
     removeFriendship,
+    inviteFriendToRoom,
 };
