@@ -868,6 +868,7 @@
     box-shadow:
         0 16px 24px rgba(3, 10, 24, 0.22),
         inset 0 2px 0 rgba(255, 255, 255, 0.72);
+    overflow: hidden;
 }
 
 .store-avatar-frame span {
@@ -884,13 +885,12 @@
 }
 
 .store-avatar-frame img {
-    width: 66px;
-    height: 66px;
+    width: 100%;
+    height: 100%;
     display: block;
-    border-radius: 999px;
-    object-fit: contain;
+    border-radius: inherit;
+    object-fit: cover;
     object-position: center;
-    transform: scale(0.9);
     background: #0b1e3c;
 }
 
@@ -917,6 +917,22 @@
 
 .store-avatar-art-gigachad .store-avatar-frame {
     border-color: #facc15;
+}
+
+.store-avatar-art-explorer .store-avatar-frame img {
+    object-position: 61% 50%;
+}
+
+.store-avatar-art-perrito .store-avatar-frame {
+    border-color: #86efac;
+}
+
+.store-avatar-art-gato .store-avatar-frame {
+    border-color: #fdba74;
+}
+
+.store-avatar-art-gato .store-avatar-frame img {
+    object-position: 50% 34%;
 }
 
 .store-avatar-art-gigachad .store-avatar-badge {
@@ -1460,8 +1476,8 @@
     }
 
     .store-avatar-frame img {
-        width: 40px;
-        height: 40px;
+        width: 100%;
+        height: 100%;
     }
 
     .store-avatar-badge {
