@@ -10,10 +10,13 @@ function AuthCallback() {
     useEffect(() => {
         const token = searchParams.get("token");
         const oauthError = searchParams.get("error");
+        const nextParam = searchParams.get("next");
+        const next =
+            nextParam && nextParam.startsWith("/") ? nextParam : "/mainmenu";
 
         if (token) {
             localStorage.setItem("token", token);
-            navigate("/mainmenu", { replace: true });
+            navigate(next, { replace: true });
             return;
         }
 

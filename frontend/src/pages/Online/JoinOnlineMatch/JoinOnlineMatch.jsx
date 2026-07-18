@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { disconnectSocket } from "../../../services/socket.js";
 import { connectOnlineSocket, emitWithAck } from "../../../services/OnlineSocketService.js";
 import { joinAsSpectator } from "../../../services/OnlineSpectatorService.js";
@@ -29,12 +29,21 @@ function canOfferSpectatorMode(message = "") {
 
 function JoinOnlineMatch() {
     const navigate = useNavigate();
-    const [roomCode, setRoomCode] = useState("");
+    const location = useLocation();
+
+    // Código que puede venir en el link de invitación: /online/join?code=XXXXX
+    const inviteCode = (new URLSearchParams(location.search).get("code") || "")
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, "")
+        .slice(0, 5);
+
+    const [roomCode, setRoomCode] = useState(inviteCode);
     const [loading, setLoading] = useState(false);
     const [spectatorLoading, setSpectatorLoading] = useState(false);
     const [spectatorAvailable, setSpectatorAvailable] = useState(false);
     const [connectionStatus, setConnectionStatus] = useState("Conectando...");
     const [error, setError] = useState("");
+    const autoJoinedRef = useRef(false);
     const normalizedCode = roomCode.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
     useEffect(() => {
@@ -51,7 +60,7 @@ function JoinOnlineMatch() {
                     setConnectionStatus("Sin conexion");
                     setError(
                         connectionError.message ||
-                            "No se pudo conectar al servidor online."
+                        "No se pudo conectar al servidor online."
                     );
                 }
             });
@@ -61,17 +70,14 @@ function JoinOnlineMatch() {
         };
     }, []);
 
-    async function handleJoinRoom(event) {
-        event.preventDefault();
+    async function joinWithCode(code) {
         setLoading(true);
         setError("");
         setSpectatorAvailable(false);
 
         try {
             await connectOnlineSocket();
-            const response = await emitWithAck("room:join", {
-                code: normalizedCode,
-            });
+            const response = await emitWithAck("room:join", { code });
 
             navigate("/online/match", {
                 state: { room: response.room },
@@ -83,6 +89,20 @@ function JoinOnlineMatch() {
         } finally {
             setLoading(false);
         }
+    }
+
+    // Si llegó con código en el link (invitación), se une solo.
+    useEffect(() => {
+        if (autoJoinedRef.current) return;
+        if (inviteCode.length !== 5) return;
+        autoJoinedRef.current = true;
+        joinWithCode(inviteCode);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [inviteCode]);
+
+    function handleJoinRoom(event) {
+        event.preventDefault();
+        joinWithCode(normalizedCode);
     }
 
     async function handleSpectateRoom() {

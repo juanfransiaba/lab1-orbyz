@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
 function decodeToken(token) {
     try {
@@ -11,22 +11,27 @@ function decodeToken(token) {
 }
 
 function ProtectedRoute({ children, requiredRole }) {
+    const location = useLocation();
     const token = localStorage.getItem("token");
 
+    const loginTo = `/login?redirect=${encodeURIComponent(
+        location.pathname + location.search
+    )}`;
+
     if (!token) {
-        return <Navigate to="/login" replace />;
+        return <Navigate to={loginTo} replace />;
     }
 
     const payload = decodeToken(token);
 
     if (!payload) {
         localStorage.removeItem("token");
-        return <Navigate to="/login" replace />;
+        return <Navigate to={loginTo} replace />;
     }
 
     if (payload.exp && payload.exp * 1000 < Date.now()) {
         localStorage.removeItem("token");
-        return <Navigate to="/login" replace />;
+        return <Navigate to={loginTo} replace />;
     }
 
     if (requiredRole) {

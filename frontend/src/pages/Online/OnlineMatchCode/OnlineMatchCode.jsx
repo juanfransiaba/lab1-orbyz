@@ -17,7 +17,7 @@ import {
 } from "../../../services/OnlineSocketService.js";
 import { onChatMessage, sendChatMessage } from "../../../services/OnlineChatService.js";
 import "../OnlineRoom.css";
-
+import LobbyInvitePanel from "../LobbyInvitePanel/LobbyInvitePanel.jsx";
 const SCREAMER_IMAGES = {
     screamer: "/images/paises/screamer.jpg",
     "screamer-2": "/images/paises/Screamer2.jpg",
@@ -1389,6 +1389,7 @@ function OnlineMatchCode() {
                                     <span>{roomPlayers.length} / 2</span>
                                     <small>jugadores</small>
                                 </div>
+                                {room?.code && <LobbyInvitePanel code={room.code} />}
                             </aside>
 
                             <div className="online-lobby-stage">

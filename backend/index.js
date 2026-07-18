@@ -2,6 +2,7 @@ require("dotenv").config();
 const matchesRoutes = require("./routes/matchesRoutes");
 
 const path = require("path");
+const fs = require("fs");
 const http = require("http");
 const express = require("express");
 const cors = require("cors");
@@ -20,6 +21,17 @@ const app = express();
 function isAllowedLocalOrigin(origin) {
     if (!origin) {
         return true;
+    }
+
+    // Origen público del front en producción (Railway/Vercel/etc.)
+    if (process.env.FRONTEND_URL) {
+        try {
+            if (new URL(origin).origin === new URL(process.env.FRONTEND_URL).origin) {
+                return true;
+            }
+        } catch {
+            // origin invalido: seguimos con el chequeo de abajo
+        }
     }
 
     return /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}):\d+$/.test(origin);
@@ -50,9 +62,21 @@ app.use("/notifications", notificationsRoutes);
 app.use("/tournaments", tournamentsRoutes);
 app.use("/store", storeRoutes);
 
-app.get("/", (req, res) => {
-    res.send("Backend funcionando");
-});
+// ── Servir el frontend compilado (Vite build) ──
+const frontendDist = path.join(__dirname, "..", "frontEnd", "dist");
+
+if (fs.existsSync(frontendDist)) {
+    app.use(express.static(frontendDist));
+
+    // SPA fallback: cualquier GET que no sea de la API devuelve index.html
+    // (para que rutas de React como /online/join anden al refrescar)
+    app.use((req, res, next) => {
+        if (req.method !== "GET") {
+            return next();
+        }
+        res.sendFile(path.join(frontendDist, "index.html"));
+    });
+}
 
 // ── Server HTTP + Socket.IO ──
 const server = http.createServer(app);

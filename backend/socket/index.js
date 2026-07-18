@@ -14,6 +14,17 @@ function isAllowedLocalOrigin(origin) {
         return true;
     }
 
+    // Origen público del front en producción (Railway/Vercel/etc.)
+    if (process.env.FRONTEND_URL) {
+        try {
+            if (new URL(origin).origin === new URL(process.env.FRONTEND_URL).origin) {
+                return true;
+            }
+        } catch {
+            // origin invalido: seguimos con el chequeo de abajo
+        }
+    }
+
     return /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}):\d+$/.test(origin);
 }
 
