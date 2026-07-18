@@ -536,6 +536,22 @@
     transform: none;
 }
 
+.store-card.is-owned {
+    border-color: rgba(34, 197, 94, 0.36);
+}
+
+.store-card.is-owned .store-card-owned {
+    background: rgba(34, 197, 94, 0.18);
+    border-color: rgba(74, 222, 128, 0.34);
+    color: #bbf7d0;
+}
+
+.store-card.is-owned .store-card-footer button {
+    background: rgba(148, 163, 184, 0.78);
+    color: #e2e8f0;
+    box-shadow: none;
+}
+
 .store-modal-backdrop {
     position: fixed;
     inset: 0;

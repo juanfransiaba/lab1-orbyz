@@ -211,7 +211,7 @@ function clearMercadoPagoReturnParams() {
 
 function getMercadoPagoResultDialog(order, statusHint) {
     const normalizedStatus = String(
-        order?.paymentStatus || order?.status || statusHint || ""
+        order?.paymentStatus || statusHint || order?.status || ""
     ).toLowerCase();
     const coins = Number(order?.coins || 0).toLocaleString("es-AR");
 
@@ -228,11 +228,7 @@ function getMercadoPagoResultDialog(order, statusHint) {
         normalizedStatus === "in_process" ||
         normalizedStatus === "pending_payment"
     ) {
-        return {
-            tone: "confirm",
-            title: "Pago pendiente",
-            message: "Mercado Pago todavia esta procesando el pago. Las monedas se acreditan cuando quede aprobado.",
-        };
+        return null;
     }
 
     if (
@@ -248,11 +244,7 @@ function getMercadoPagoResultDialog(order, statusHint) {
         };
     }
 
-    return {
-        tone: "confirm",
-        title: "Pago recibido",
-        message: "Todavia no pudimos confirmar la aprobacion. Si el pago se aprueba, las monedas se acreditan automaticamente.",
-    };
+    return null;
 }
 
 function Store() {
@@ -268,6 +260,7 @@ function Store() {
     const [screamerPicker, setScreamerPicker] = useState(null);
     const [selectedScreamerImageId, setSelectedScreamerImageId] = useState("screamer");
     const [purchasing, setPurchasing] = useState(false);
+    const [storeRefreshKey, setStoreRefreshKey] = useState(0);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -322,16 +315,26 @@ function Store() {
                             balance: Number(statusData.balance) || 0,
                             inventory: statusData.inventory || {},
                         });
-                        if (statusData.order?.credited) {
-                            clearPendingCoinOrder(statusData.order.orderId);
-                        }
-                        setDialog(
-                            getMercadoPagoResultDialog(
-                                statusData.order,
-                                pendingCoinOrder.status
-                            )
+                        const resultDialog = getMercadoPagoResultDialog(
+                            statusData.order,
+                            pendingCoinOrder.status
                         );
+
+                        if (
+                            !resultDialog ||
+                            statusData.order?.credited ||
+                            resultDialog.tone === "error"
+                        ) {
+                            clearPendingCoinOrder(
+                                statusData.order?.orderId || pendingCoinOrder.orderId
+                            );
+                        }
+
+                        if (resultDialog) {
+                            setDialog(resultDialog);
+                        }
                     } else {
+                        clearPendingCoinOrder(pendingCoinOrder.orderId);
                         setDialog({
                             tone: "error",
                             title: "No se pudo confirmar el pago",
@@ -353,7 +356,23 @@ function Store() {
         };
 
         void fetchStoreState();
-    }, [navigate]);
+    }, [navigate, storeRefreshKey]);
+
+    useEffect(() => {
+        const refreshPendingPayment = () => {
+            if (!document.hidden && getPendingCoinOrder()) {
+                setStoreRefreshKey((currentKey) => currentKey + 1);
+            }
+        };
+
+        window.addEventListener("focus", refreshPendingPayment);
+        document.addEventListener("visibilitychange", refreshPendingPayment);
+
+        return () => {
+            window.removeEventListener("focus", refreshPendingPayment);
+            document.removeEventListener("visibilitychange", refreshPendingPayment);
+        };
+    }, []);
 
     const currentCoins = Number(storeState.balance || 0).toLocaleString("es-AR");
     const activeCategory =
@@ -363,6 +382,10 @@ function Store() {
 
     const handleBuy = (item, type) => {
         if (purchasing) {
+            return;
+        }
+
+        if (type === "avatars" && getOwnedQuantity(type, item.id) > 0) {
             return;
         }
 
@@ -406,6 +429,9 @@ function Store() {
             return;
         }
 
+        const mercadoPagoTab =
+            pendingType === "coins" ? window.open("about:blank", "_blank") : null;
+
         setPurchasing(true);
 
         try {
@@ -426,6 +452,7 @@ function Store() {
                 const data = await response.json();
 
                 if (!response.ok) {
+                    mercadoPagoTab?.close();
                     setDialog({
                         tone: "error",
                         title:
@@ -445,6 +472,7 @@ function Store() {
                 const checkoutUrl = data.initPoint || data.sandboxInitPoint;
 
                 if (!checkoutUrl) {
+                    mercadoPagoTab?.close();
                     setDialog({
                         tone: "error",
                         title: "No se pudo iniciar el pago",
@@ -455,7 +483,27 @@ function Store() {
                 }
 
                 savePendingCoinOrder(data.order);
-                window.location.href = checkoutUrl;
+                setPendingPurchase(null);
+
+                if (mercadoPagoTab) {
+                    mercadoPagoTab.opener = null;
+                    mercadoPagoTab.location.href = checkoutUrl;
+                    setDialog({
+                        tone: "confirm",
+                        title: "Mercado Pago abierto",
+                        message:
+                            "Abrimos el pago en otra pestana. Cuando termines, volve a Orbyz y actualizaremos tus monedas automaticamente.",
+                    });
+                } else {
+                    window.open(checkoutUrl, "_blank", "noopener,noreferrer");
+                    setDialog({
+                        tone: "confirm",
+                        title: "Abrir Mercado Pago",
+                        message:
+                            "Si no se abrio una pestana nueva, habilita las ventanas emergentes del navegador y volve a intentar.",
+                    });
+                }
+
                 return;
             }
 
@@ -483,6 +531,8 @@ function Store() {
                     title:
                         data.code === "INSUFFICIENT_COINS"
                             ? "Monedas insuficientes"
+                            : data.code === "ITEM_ALREADY_OWNED"
+                              ? "Avatar obtenido"
                             : "No se pudo comprar",
                     message: data.message || "No se pudo completar la compra.",
                 });
@@ -508,6 +558,7 @@ function Store() {
                         : `${pendingItem.name} quedo guardado en tu inventario.`,
             });
         } catch {
+            mercadoPagoTab?.close();
             setDialog({
                 tone: "error",
                 title: "Error de conexion",
@@ -778,9 +829,13 @@ function StoreCarousel({ title, items, type, onBuy, ownedQuantityFor, purchasing
 }
 
 function StoreItemCard({ item, type, ownedQuantity, onBuy, purchasing }) {
+    const isAvatarOwned = type === "avatars" && ownedQuantity > 0;
+
     return (
                     <article
-                        className={`store-card store-card-${type} store-card-${item.variant}`}
+                        className={`store-card store-card-${type} store-card-${item.variant}${
+                            isAvatarOwned ? " is-owned" : ""
+                        }`}
                     >
                         <div className="store-card-visual">
                             {type === "coins" ? (
@@ -810,6 +865,8 @@ function StoreItemCard({ item, type, ownedQuantity, onBuy, purchasing }) {
                             <span className="store-card-owned">
                                 {type === "coins"
                                     ? `Compraste ${ownedQuantity}`
+                                    : isAvatarOwned
+                                      ? "OBTENIDO"
                                     : `Tenes ${ownedQuantity}`}
                             </span>
                         </div>
@@ -819,9 +876,9 @@ function StoreItemCard({ item, type, ownedQuantity, onBuy, purchasing }) {
                             <button
                                 type="button"
                                 onClick={() => onBuy(item, type)}
-                                disabled={purchasing}
+                                disabled={purchasing || isAvatarOwned}
                             >
-                                Comprar
+                                {isAvatarOwned ? "Obtenido" : "Comprar"}
                             </button>
                         </div>
                     </article>

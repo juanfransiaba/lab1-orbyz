@@ -246,6 +246,27 @@ async function purchaseStoreItem(req, res) {
         }
 
         const currentBalance = Number(userResult.rows[0].balance) || 0;
+
+        if (itemType === "avatars") {
+            const ownedAvatarResult = await client.query(
+                `SELECT quantity
+                 FROM store_inventory
+                 WHERE user_id = $1
+                    AND item_type = 'avatars'
+                    AND item_id = $2
+                    AND quantity > 0`,
+                [userId, itemId]
+            );
+
+            if (ownedAvatarResult.rows.length > 0) {
+                await client.query("ROLLBACK");
+                return res.status(409).json({
+                    code: "ITEM_ALREADY_OWNED",
+                    message: "Ya tenes este avatar.",
+                });
+            }
+        }
+
         let costCoins = 0;
         let coinsDelta = 0;
 
