@@ -47,8 +47,9 @@ function OfflineGameLayout({
     hideOptions = false,
     feedbackTone,
 }) {
-    const [imageStatus, setImageStatus] = useState("idle");
-    const [showImageLoader, setShowImageLoader] = useState(false);
+    const [loadedImageSrc, setLoadedImageSrc] = useState("");
+    const [failedImageSrc, setFailedImageSrc] = useState("");
+    const [showImageLoaderForSrc, setShowImageLoaderForSrc] = useState("");
     const normalizedOptions = options.map(normalizeOption);
     const hasCheckedAnswer =
         selectedOption !== undefined &&
@@ -56,31 +57,28 @@ function OfflineGameLayout({
         correctOption !== undefined &&
         correctOption !== null;
     const hasImage = Boolean(imageSrc);
+    const imageStatus = !hasImage
+        ? "idle"
+        : failedImageSrc === imageSrc
+          ? "error"
+          : loadedImageSrc === imageSrc
+            ? "loaded"
+            : "loading";
     const isImageLoading = hasImage && imageStatus === "loading";
     const hasImageError = hasImage && imageStatus === "error";
+    const showImageLoader = isImageLoading && showImageLoaderForSrc === imageSrc;
 
     useEffect(() => {
-        if (!imageSrc) {
-            setImageStatus("idle");
-            setShowImageLoader(false);
-            return;
-        }
-
-        setImageStatus("loading");
-    }, [imageSrc]);
-
-    useEffect(() => {
-        if (!isImageLoading) {
-            setShowImageLoader(false);
-            return;
+        if (!isImageLoading || !imageSrc) {
+            return undefined;
         }
 
         const timeoutId = setTimeout(() => {
-            setShowImageLoader(true);
+            setShowImageLoaderForSrc(imageSrc);
         }, 300);
 
         return () => clearTimeout(timeoutId);
-    }, [isImageLoading]);
+    }, [imageSrc, isImageLoading]);
 
     const resolvedFeedbackTone =
         feedbackTone ||
@@ -201,15 +199,6 @@ function OfflineGameLayout({
                                 {hasImage && !hasImageError ? (
                                     <>
                                         <img
-                                            ref={(node) => {
-                                                if (
-                                                    node &&
-                                                    node.complete &&
-                                                    node.naturalWidth > 0
-                                                ) {
-                                                    setImageStatus("loaded");
-                                                }
-                                            }}
                                             src={imageSrc}
                                             alt={imageAlt || "Referencia visual del desafio"}
                                             className={`offline-game-layout-image ${
@@ -217,8 +206,15 @@ function OfflineGameLayout({
                                                     ? "is-contain"
                                                     : "is-cover"
                                             } ${isImageLoading ? "is-loading" : "is-loaded"}`}
-                                            onLoad={() => setImageStatus("loaded")}
-                                            onError={() => setImageStatus("error")}
+                                            onLoad={() => {
+                                                setLoadedImageSrc(imageSrc);
+                                                setFailedImageSrc("");
+                                                setShowImageLoaderForSrc("");
+                                            }}
+                                            onError={() => {
+                                                setFailedImageSrc(imageSrc);
+                                                setShowImageLoaderForSrc("");
+                                            }}
                                         />
 
                                         {showImageLoader ? (

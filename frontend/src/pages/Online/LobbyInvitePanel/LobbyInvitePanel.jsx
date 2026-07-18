@@ -12,7 +12,6 @@ function LobbyInvitePanel({ code }) {
 
     useEffect(() => {
         let active = true;
-        setLoading(true);
 
         getFriends()
             .then((data) => {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";import "./Register.css";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import "./Register.css";
 
 import img1 from "../../assets/images/imagen.jpg";
 import img2 from "../../assets/images/imagen2.jpg";
@@ -114,7 +115,7 @@ function Register() {
 
             localStorage.setItem("token", data.token);
             navigate(redirectTo);
-        } catch (err) {
+        } catch {
             setError("Error al conectar con el servidor.");
         } finally {
             setLoading(false);
@@ -224,7 +225,9 @@ function Register() {
 
                     <div className="register-links">
                         <p>
-                            Ya tenes cuenta? <Link to={`/login${location.search}`}>Iniciar sesion</Link>                        </p>
+                            Ya tenes cuenta?{" "}
+                            <Link to={`/login${location.search}`}>Iniciar sesion</Link>
+                        </p>
                     </div>
                 </div>
             </section>

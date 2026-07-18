@@ -1,15 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import "./Login.css";
 
 function AuthCallback() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const [error, setError] = useState("");
+    const token = searchParams.get("token");
+    const error =
+        searchParams.get("error") ||
+        (!token ? "No se pudo completar el inicio de sesion." : "");
 
     useEffect(() => {
-        const token = searchParams.get("token");
-        const oauthError = searchParams.get("error");
         const nextParam = searchParams.get("next");
         const next =
             nextParam && nextParam.startsWith("/") ? nextParam : "/mainmenu";
@@ -17,11 +18,8 @@ function AuthCallback() {
         if (token) {
             localStorage.setItem("token", token);
             navigate(next, { replace: true });
-            return;
         }
-
-        setError(oauthError || "No se pudo completar el inicio de sesion.");
-    }, [navigate, searchParams]);
+    }, [navigate, searchParams, token]);
 
     return (
         <div className="login-page auth-callback-page">

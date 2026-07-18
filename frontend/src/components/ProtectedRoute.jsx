@@ -29,7 +29,7 @@ function ProtectedRoute({ children, requiredRole }) {
         return <Navigate to={loginTo} replace />;
     }
 
-    if (payload.exp && payload.exp * 1000 < Date.now()) {
+    if (payload.exp && payload.exp * 1000 < new Date().getTime()) {
         localStorage.removeItem("token");
         return <Navigate to={loginTo} replace />;
     }

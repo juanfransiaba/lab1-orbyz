@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 function UsersSection({
                           users,
@@ -26,19 +26,17 @@ function UsersSection({
         );
     }, [users]);
 
-    useEffect(() => {
-        setRoleDrafts(
-            users.reduce((acc, user) => {
-                acc[user.id] = user.role;
-                return acc;
-            }, {})
-        );
-    }, [users]);
-
     async function handleSave(userId) {
+        const user = users.find((currentUser) => currentUser.id === userId);
+        const nextRole = roleDrafts[userId] || user?.role;
+
+        if (!nextRole) {
+            return;
+        }
+
         onClearMessages();
         setSavingUserId(userId);
-        await onUpdateRole(userId, roleDrafts[userId]);
+        await onUpdateRole(userId, nextRole);
         setSavingUserId(null);
     }
 
