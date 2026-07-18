@@ -28,13 +28,40 @@ function normalizeInventory(rows) {
     }, {});
 }
 
+function normalizeBaseUrl(rawUrl, fallbackUrl) {
+    const value = String(rawUrl || fallbackUrl || "").trim();
+
+    if (!value) {
+        return "";
+    }
+
+    const hostOnlyValue = value.replace(/^\/+/, "");
+    const isLocalHost =
+        /^(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?(?:\/|$)/i.test(hostOnlyValue) ||
+        /^192\.168\.\d{1,3}\.\d{1,3}(?::\d+)?(?:\/|$)/.test(hostOnlyValue) ||
+        /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d+)?(?:\/|$)/.test(hostOnlyValue) ||
+        /^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}(?::\d+)?(?:\/|$)/.test(
+            hostOnlyValue
+        );
+    const withProtocol = /^https?:\/\//i.test(value)
+        ? value
+        : `${isLocalHost ? "http" : "https"}://${hostOnlyValue}`;
+
+    try {
+        const url = new URL(withProtocol);
+        return url.origin.replace(/\/$/, "");
+    } catch {
+        return String(fallbackUrl || "").replace(/\/$/, "");
+    }
+}
+
 function getFrontendUrl(req) {
-    return (
+    return normalizeBaseUrl(
         process.env.FRONTEND_URL ||
-        process.env.CLIENT_URL ||
-        req.get("origin") ||
+            process.env.CLIENT_URL ||
+            req.get("origin"),
         "http://localhost:5173"
-    ).replace(/\/$/, "");
+    );
 }
 
 function getBackendPublicUrl(req) {
@@ -44,10 +71,10 @@ function getBackendPublicUrl(req) {
         process.env.MP_WEBHOOK_BASE_URL;
 
     if (explicitUrl) {
-        return explicitUrl.replace(/\/$/, "");
+        return normalizeBaseUrl(explicitUrl, "");
     }
 
-    return `${req.protocol}://${req.get("host")}`.replace(/\/$/, "");
+    return normalizeBaseUrl(`${req.protocol}://${req.get("host")}`, "");
 }
 
 function isLocalOrPrivateUrl(url) {
@@ -82,7 +109,12 @@ function getMercadoPagoWebhookUrl(req) {
 }
 
 function canUseMercadoPagoAutoReturn(frontendUrl) {
-    return frontendUrl.startsWith("https://") && !isLocalOrPrivateUrl(frontendUrl);
+    try {
+        const url = new URL(frontendUrl);
+        return url.protocol === "https:" && !isLocalOrPrivateUrl(frontendUrl);
+    } catch {
+        return false;
+    }
 }
 
 async function getBalanceAndInventory(userId) {

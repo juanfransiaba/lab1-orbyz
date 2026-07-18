@@ -12,7 +12,6 @@ import img7 from "../../assets/images/imagen7.jpg";
 
 const OAUTH_PROVIDERS = [
     { id: "google", label: "Google", badge: "G" },
-    { id: "microsoft", label: "Microsoft", badge: "M" },
     { id: "github", label: "GitHub", badge: "GH" },
 ];
 

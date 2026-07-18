@@ -56,18 +56,18 @@
 
 .register-oauth-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 9px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
     margin-top: 14px;
 }
 
 .register-oauth-button {
-    min-height: 44px;
+    min-height: 46px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 7px;
-    padding: 0 10px;
+    padding: 0 14px;
     border: 1px solid var(--color-border);
     border-radius: 10px;
     background: #ffffff;
@@ -102,11 +102,6 @@
 .register-oauth-button.is-google span {
     background: #fef2f2;
     color: #dc2626;
-}
-
-.register-oauth-button.is-microsoft span {
-    background: #eff6ff;
-    color: #2563eb;
 }
 
 .register-oauth-button.is-github span {

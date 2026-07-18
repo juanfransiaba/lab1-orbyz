@@ -15,7 +15,6 @@ const PASSWORD_REQUIREMENTS_TEXT =
 
 const OAUTH_PROVIDERS = [
     { id: "google", label: "Google", badge: "G" },
-    { id: "microsoft", label: "Microsoft", badge: "M" },
     { id: "github", label: "GitHub", badge: "GH" },
 ];
 

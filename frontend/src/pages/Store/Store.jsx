@@ -431,6 +431,8 @@ function Store() {
                         title:
                             data.code === "MERCADO_PAGO_NOT_CONFIGURED"
                                 ? "Mercado Pago no configurado"
+                                : data.code === "MERCADO_PAGO_UNAUTHORIZED"
+                                  ? "Mercado Pago no autorizado"
                                 : "No se pudo iniciar el pago",
                         message:
                             data.message ||
