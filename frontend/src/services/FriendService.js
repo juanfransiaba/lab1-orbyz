@@ -1,3 +1,5 @@
+import { getSocket } from "./socket.js";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 function getToken() {
@@ -83,4 +85,10 @@ export async function inviteFriendToRoom(friendId, code) {
         method: "POST",
         body: JSON.stringify({ friendId, code }),
     });
+}
+
+export function onFriendAccepted(handler) {
+    const socket = getSocket();
+    socket.on("friend:accepted", handler);
+    return () => socket.off("friend:accepted", handler);
 }

@@ -34,6 +34,24 @@ function getNotificationText(notification) {
         return `${username} te paso en el ranking`;
     }
 
+    if (notification.type === "friend_request") {
+        const username = notification.payload?.fromUsername || "Alguien";
+        return `${username} te mando una solicitud de amistad`;
+    }
+
+    if (notification.type === "friend_accepted") {
+        const username = notification.payload?.byUsername || "Alguien";
+        return `${username} acepto tu solicitud de amistad`;
+    }
+
+    if (notification.type === "room_invite") {
+        const username = notification.payload?.fromUsername || "Un amigo";
+        const code = notification.payload?.code
+            ? ` (sala ${notification.payload.code})`
+            : "";
+        return `${username} te invito a una partida online${code}`;
+    }
+
     return "Tenes una nueva notificacion";
 }
 

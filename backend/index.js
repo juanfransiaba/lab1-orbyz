@@ -52,6 +52,28 @@ app.use(
 app.use(express.json());
 app.use("/static", express.static(path.join(__dirname, "static")));
 
+// ── Frontend compilado (Vite build) ──
+const frontendDist = path.join(__dirname, "..", "frontEnd", "dist");
+const hasFrontend = fs.existsSync(frontendDist);
+
+// SPA: si es una NAVEGACION del navegador (refrescar o entrar directo a una URL),
+// servimos index.html aunque la ruta coincida con una de la API (ej. /tournaments,
+// /ranking, /friends, /store). Las llamadas fetch/XHR del front NO son "navigate",
+// asi que siguen pegandole normalmente a la API.
+if (hasFrontend) {
+    app.use((req, res, next) => {
+        const isNavigation =
+            req.method === "GET" && req.headers["sec-fetch-mode"] === "navigate";
+        const isBackendPath =
+            req.path.startsWith("/auth") || req.path.startsWith("/static");
+
+        if (isNavigation && !isBackendPath) {
+            return res.sendFile(path.join(frontendDist, "index.html"));
+        }
+        next();
+    });
+}
+
 app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
 app.use("/api/paises", paisesRoutes);
@@ -62,14 +84,10 @@ app.use("/notifications", notificationsRoutes);
 app.use("/tournaments", tournamentsRoutes);
 app.use("/store", storeRoutes);
 
-// ── Servir el frontend compilado (Vite build) ──
-const frontendDist = path.join(__dirname, "..", "frontEnd", "dist");
-
-if (fs.existsSync(frontendDist)) {
+// Assets del front (js/css/imagenes) + fallback final para el resto de rutas SPA
+if (hasFrontend) {
     app.use(express.static(frontendDist));
 
-    // SPA fallback: cualquier GET que no sea de la API devuelve index.html
-    // (para que rutas de React como /online/join anden al refrescar)
     app.use((req, res, next) => {
         if (req.method !== "GET") {
             return next();

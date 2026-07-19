@@ -6,11 +6,13 @@ import {
     getFriends,
     getReceivedRequests,
     getSentRequests,
+    onFriendAccepted,
     rejectFriendRequest,
     removeFriendship,
     searchUsers,
     sendFriendRequest,
 } from "../../../services/FriendService.js";
+import { connectSocket } from "../../../services/socket.js";
 import "./Friends.css";
 
 function extractArray(response, fallbackKeys = []) {
@@ -100,6 +102,15 @@ function Friends() {
         };
 
         void init();
+    }, []);
+
+    useEffect(() => {
+        connectSocket();
+        const unsubscribe = onFriendAccepted(() => {
+            loadFriendsData().catch(() => {});
+        });
+        return () => unsubscribe();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     async function handleSearchSubmit(event) {

@@ -119,7 +119,7 @@ function canUseMercadoPagoAutoReturn(frontendUrl) {
 
 async function getBalanceAndInventory(userId) {
     const [userResult, inventoryRows] = await Promise.all([
-        pool.query("SELECT COALESCE(score, 0) AS balance FROM users WHERE user_id = $1", [
+        pool.query("SELECT COALESCE(coins, 0) AS balance FROM users WHERE user_id = $1", [
             userId,
         ]),
         getInventory(userId),
@@ -167,7 +167,7 @@ async function getStoreState(req, res) {
 
         const userId = req.user.user_id;
         let userResult = await pool.query(
-            "SELECT COALESCE(score, 0) AS balance FROM users WHERE user_id = $1",
+            "SELECT COALESCE(coins, 0) AS balance FROM users WHERE user_id = $1",
             [userId]
         );
 
@@ -188,7 +188,7 @@ async function getStoreState(req, res) {
             );
 
             userResult = await pool.query(
-                "SELECT COALESCE(score, 0) AS balance FROM users WHERE user_id = $1",
+                "SELECT COALESCE(coins, 0) AS balance FROM users WHERE user_id = $1",
                 [userId]
             );
         }
@@ -236,7 +236,7 @@ async function purchaseStoreItem(req, res) {
         await client.query("BEGIN");
 
         const userResult = await client.query(
-            "SELECT COALESCE(score, 0) AS balance FROM users WHERE user_id = $1 FOR UPDATE",
+            "SELECT COALESCE(coins, 0) AS balance FROM users WHERE user_id = $1 FOR UPDATE",
             [userId]
         );
 
@@ -290,9 +290,9 @@ async function purchaseStoreItem(req, res) {
 
         const updatedUser = await client.query(
             `UPDATE users
-             SET score = COALESCE(score, 0) + $1
+             SET coins = COALESCE(coins, 0) + $1
              WHERE user_id = $2
-             RETURNING COALESCE(score, 0) AS balance`,
+             RETURNING COALESCE(coins, 0) AS balance`,
             [coinsDelta, userId]
         );
 

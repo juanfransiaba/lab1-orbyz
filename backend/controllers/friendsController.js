@@ -1,4 +1,6 @@
 const pool = require("../db");
+const { getIO } = require("../socket/ioRef");
+const { createNotification } = require("../utils/notifications");
 const { sendRoomInviteEmail } = require("../utils/mailer");
 
 // ────────────────────────────────────────────────
@@ -45,6 +47,12 @@ const sendFriendRequest = async (req, res) => {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
+        const requesterRow = await pool.query(
+            "SELECT username FROM users WHERE user_id = $1",
+            [requesterId]
+        );
+        const requesterUsername = requesterRow.rows[0]?.username || "Alguien";
+
         // Chequear si ya existe una amistad en cualquier dirección
         const existing = await findFriendshipBetween(requesterId, addresseeIdNum);
 
@@ -66,6 +74,10 @@ const sendFriendRequest = async (req, res) => {
                  RETURNING *`,
                 [requesterId, addresseeIdNum, existing.friendship_id]
             );
+            createNotification(addresseeIdNum, "friend_request", {
+                fromUsername: requesterUsername,
+            });
+
             return res.status(201).json({
                 message: "Solicitud enviada",
                 friendship: rows[0],
@@ -78,6 +90,10 @@ const sendFriendRequest = async (req, res) => {
              RETURNING *`,
             [requesterId, addresseeIdNum]
         );
+
+        createNotification(addresseeIdNum, "friend_request", {
+            fromUsername: requesterUsername,
+        });
 
         res.status(201).json({
             message: "Solicitud enviada",
@@ -161,9 +177,28 @@ const acceptFriendRequest = async (req, res) => {
             });
         }
 
+        const friendship = rows[0];
+
+        // Aviso en tiempo real al que ENVIÓ la solicitud (requester) para que su
+        // lista de amigos se refresque sola.
+        const io = getIO();
+        if (io) {
+            io.to(`user:${friendship.requester_id}`).emit("friend:accepted", {
+                friendshipId: friendship.friendship_id,
+            });
+        }
+
+        const accepterRow = await pool.query(
+            "SELECT username FROM users WHERE user_id = $1",
+            [userId]
+        );
+        createNotification(friendship.requester_id, "friend_accepted", {
+            byUsername: accepterRow.rows[0]?.username || "Alguien",
+        });
+
         res.json({
             message: "Solicitud aceptada",
-            friendship: rows[0],
+            friendship,
         });
     } catch (error) {
         console.error("Error en acceptFriendRequest:", error);
@@ -304,16 +339,29 @@ const inviteFriendToRoom = async (req, res) => {
         const friend = friendRow.rows[0];
         const inviter = inviterRow.rows[0];
 
-        if (!friend?.email) {
-            return res.status(404).json({ message: "El amigo no tiene un email cargado." });
-        }
-
-        await sendRoomInviteEmail({
-            to: friend.email,
-            toUsername: friend.username,
+        // Notificación in-app (campanita) — canal principal de la invitación
+        createNotification(friendId, "room_invite", {
             fromUsername: inviter?.username || "Un amigo",
             code: cleanCode,
         });
+
+        // Mail best-effort: si no hay email o el SMTP está bloqueado (Railway),
+        // no rompemos la invitación (la campanita ya avisó).
+        if (friend?.email) {
+            try {
+                await sendRoomInviteEmail({
+                    to: friend.email,
+                    toUsername: friend.username,
+                    fromUsername: inviter?.username || "Un amigo",
+                    code: cleanCode,
+                });
+            } catch (mailError) {
+                console.error(
+                    "No se pudo enviar el mail de invitación:",
+                    mailError.message
+                );
+            }
+        }
 
         res.json({ message: "Invitación enviada." });
     } catch (error) {

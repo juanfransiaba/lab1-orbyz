@@ -96,6 +96,12 @@ let ensureTablesPromise = null;
 function ensureStoreTables() {
     if (!ensureTablesPromise) {
         ensureTablesPromise = (async () => {
+            // Billetera de monedas SEPARADA de los puntos del juego (users.score).
+            // Antes las monedas se sumaban a score e inflaban el ranking.
+            await pool.query(`
+                ALTER TABLE users ADD COLUMN IF NOT EXISTS coins INTEGER NOT NULL DEFAULT 0
+            `);
+
             await pool.query(`
                 CREATE TABLE IF NOT EXISTS store_inventory (
                     user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
@@ -410,7 +416,7 @@ async function applyMercadoPagoPayment(payment) {
         if (!order.credited) {
             await client.query(
                 `UPDATE users
-                 SET score = COALESCE(score, 0) + $1
+                 SET coins = COALESCE(coins, 0) + $1
                  WHERE user_id = $2`,
                 [Number(order.coins) || 0, order.user_id]
             );
